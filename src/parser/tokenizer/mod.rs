@@ -12,12 +12,6 @@ pub enum TokenType {
     Punc(char)
 }
 
-pub enum ConsumeResult {
-    Token(Token),
-    Invalid(char),
-    None
-}
-
 pub struct Range {
     pub start: LoC,
     pub end: LoC
@@ -29,23 +23,44 @@ impl fmt::Display for Range {
     }
 }
 
+pub struct Error {
+    pub range: Range,
+    pub msg: String
+}
+
+impl Error {
+    pub fn format(&self, source: &str) -> String {
+        let mut col = String::new();
+        for x in 0..=self.range.end.col {
+            if x >= self.range.start.col { col.push('^'); }
+            else { col.push(' '); };
+        };
+        let line = source.split('\n').nth(self.range.start.line as usize - 1);
+        format!("{}\n\n{}\n{} {}", line.unwrap(), col, self.msg, self.range)
+    }
+}
+
 pub struct Token {
     pub range: Range,
     pub val: TokenType
 }
 
-pub struct Tokenizer {
-    keywords: Vec<&'static str>,
+pub struct Tokenizer<'a> {
+    keywords: Vec<&'a str>,
     operators: Vec<char>,
+    current: Option<Token>,
+    pub errors: Vec<Error>,
     pub input: InputParser
 }
 
-impl Tokenizer {
+impl<'a> Tokenizer<'a> {
 
-    pub fn new(code: &str) -> Self {
+    pub fn new(code: &'a str) -> Self {
         Tokenizer {
             keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&'],
+            current: None,
+            errors: vec![],
             input: InputParser::new(code)
         }
     }
@@ -55,9 +70,16 @@ impl Tokenizer {
         let start = self.input.loc();
         let mut str = String::new();
         loop {
-            let character = self.input.consume().unwrap();
-            if character == '"' { break; };
-            str.push(character);
+            match self.input.consume() {
+                Some(character) => {
+                    if character == '"' { break; };
+                    str.push(character);
+                },
+                None => {
+                    self.error(String::from("Expected end of string"), start, self.input.loc());
+                    break;
+                }
+            }
         };
         Token { val: TokenType::Str(str), range: Range {start, end: self.input.loc()} }
     }
@@ -73,7 +95,10 @@ impl Tokenizer {
                 '0'..='9' => num.push(self.input.consume().unwrap()),
                 '.' => {
                     self.input.consume();
-                    if dot { break; };
+                    if dot {
+                        self.error(String::from("Numbers cannot contain more than one decimal point"), start, self.input.loc()); 
+                        break;
+                     };
                     dot = true;
                     num.push(ch);
                 },
@@ -119,13 +144,14 @@ impl Tokenizer {
         let mut op = String::new();
         while !self.input.is_eof() {
             let ch = self.input.peek(0).unwrap();
-            if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) };
+            if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) }
+            else { break; };
         };
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
     }
 
-    pub fn consume(&mut self) -> ConsumeResult {
-        if self.input.is_eof() { return ConsumeResult::None; };
+    fn consume(&mut self) -> Option<Token> {
+        if self.input.is_eof() { return None; };
         let tok = self.input.peek(0).unwrap();
         if tok == '/' && self.input.peek(1) == Some('/') {
             self.input.consume();
@@ -133,17 +159,42 @@ impl Tokenizer {
             return self.consume();
         };
         match tok {
-            '"' => ConsumeResult::Token(self.parse_str()),
-            '0'..='9' => ConsumeResult::Token(self.parse_num()),
+            '"' => Some(self.parse_str()),
+            '0'..='9' => Some(self.parse_num()),
             ' ' | '\n' | '\t' => {
                 self.input.consume();
                 self.consume()
             },
-            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' => ConsumeResult::Token(self.parse_op()),
-            ',' | '.' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => ConsumeResult::Token(self.parse_punc()),
-            'a'..='z' | 'A'..='Z' | '_' | '$' => ConsumeResult::Token(self.parse_ident()),
-            ch => ConsumeResult::Invalid(ch)
+            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' => Some(self.parse_op()),
+            ',' | '.' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
+            'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
+            ch => {
+                self.error(format!("Invalid character {}", ch), self.input.loc(), self.input.loc());
+                self.input.consume();
+                None
+            } 
         }
     }
+
+    pub fn next(&mut self) -> Option<Token> {
+        if self.current.is_some() {
+            return self.current.take()
+        } else {
+            return self.consume();
+        };
+    }
+
+    pub fn peek(&mut self) -> Option<&Token> {
+        if self.current.is_some() {
+            return self.current.as_ref();
+        };
+        self.current = self.consume();
+        self.current.as_ref()
+    }
+
+    pub fn error(&mut self, msg: String, start: LoC, end: LoC) {
+        self.errors.push(Error { msg, range: Range {start, end} });
+    }
+
 
 }

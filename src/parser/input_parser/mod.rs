@@ -7,10 +7,17 @@ pub struct InputParser {
     pos: usize
 }
 
+#[derive(Copy)]
 pub struct LoC {
     pub pos: usize,
     pub line: i32,
     pub col: i32
+}
+
+impl std::clone::Clone for LoC {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl InputParser {

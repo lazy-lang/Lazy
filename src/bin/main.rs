@@ -1,13 +1,14 @@
-use lazy::parser::tokenizer::{Tokenizer, TokenType, ConsumeResult};
+use lazy::parser::tokenizer::{Tokenizer, TokenType};
 
 fn main() {
-    let mut p = Tokenizer::new("\"Hi\" 3.14 hello
+    let source = "\"Hi\" \"3.1.4\";
     
-    emit .||");
+    emit .|| ... . . \"Hello there";
+    let mut p = Tokenizer::new(&source);
     while !p.input.is_eof() {
-        let tok = p.consume();
+        let tok = p.next();
         match tok {
-            ConsumeResult::Token(token) => {
+            Some(token) => {
             match token.val {
             TokenType::Str(val) => {
                 println!("Found string: {} {}", val, token.range)
@@ -32,10 +33,11 @@ fn main() {
             }
         }
     },
-    ConsumeResult::Invalid(chr) => {
-        println!("Invalid character {}", chr);
-    },
     _ => {}
     }
+    }
+    for error in &p.errors {
+        println!("{}", error.format(&source));
+        break;
     }
 }
