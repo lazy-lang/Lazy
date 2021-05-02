@@ -1,42 +1,45 @@
-use lazy::parser::tokenizer::{Tokenizer, TokenType};
+use lazy::parser::ast::{Parser};
+use lazy::parser::ast::model::{ASTAny, ASTExpression};
+
+fn print_ast(ast: &ASTExpression) {
+    match ast {
+        ASTExpression::Str(string) => {
+            print!("{}", string.value);
+        },
+        ASTExpression::Float(string) => {
+            print!("{}", string.value);
+        }
+        ASTExpression::Int(string) => {
+            print!("{}", string.value);
+        }
+        ASTExpression::Bool(string) => {
+            print!("{}", string.value);
+        }
+        ASTExpression::Var(string) => {
+            print!("{}", string.value);
+        }
+        ASTExpression::Binary(binary) => {
+            print_ast(&binary.left);
+            print!("{}", binary.op);
+            print_ast(&binary.right);
+        }
+        _ => {}
+    }
+}
 
 fn main() {
-    let source = "\"Hi\" \"3.1.4\";
-    
-    emit .|| ... . . \"Hello there";
-    let mut p = Tokenizer::new(&source);
-    while !p.input.is_eof() {
-        let tok = p.next();
-        match tok {
-            Some(token) => {
-            match token.val {
-            TokenType::Str(val) => {
-                println!("Found string: {} {}", val, token.range)
-            },
-            TokenType::Int(val) => {
-                println!("Found integer: {} {}", val, token.range);
-            },
-            TokenType::Float(val) => {
-                println!("Found float: {} {}", val, token.range);
-            },
-            TokenType::Var(val) => {
-                println!("Found variable: {} {}", val, token.range);
-            },
-            TokenType::Kw(val) => {
-                println!("Found keyword: {} {}", val, token.range);
-            },
-            TokenType::Op(val) => {
-                println!("Found operator: {} {}", val, token.range);
-            },
-            TokenType::Punc(val) => {
-                println!("Found punctuation: {} {}", val, token.range);
+    let source = "\"Hi\" + \"3.1.4\" + (3 + 3)";
+    let mut p = Parser::new(&source);
+    let res = p.parse();
+    for ast in res {
+        match ast {
+            ASTAny::Expression(val) => {             
+                print_ast(&val);
             }
+            _ => {}
         }
-    },
-    _ => {}
-    }
-    }
-    for error in &p.errors {
+    };
+    for error in &p.tokens.errors {
         println!("{}", error.format(&source));
         break;
     }

@@ -70,17 +70,6 @@ me.name;
 me.age;
 ```
 
-### tuples
-
-```
-struct Something {
-    things: [str, int]
-}
-
-let me = Something{things: ["Google", 19] };
-me.things.0;
-```
-
 ## Actors
 
 An `actor` is very similar to a **process** in erlang. Every `actor` has it's own memory region which is isolated, and a single state, which only the actor can access, which acts as the single source of truth.
@@ -99,15 +88,15 @@ actor Person with PersonObj {
         state = PersonObj{name, age};
     }
 
-    AgeUp => {
+    on AgeUp => {
         state.age++;
     }
 
-    ChangeName(name: str) => {
+    on ChangeName(name: str) => {
         state.name = name;
     }
 
-    Print => {
+    on Print => {
         print "Name: ${state.name} Age: ${state.age}\n";
     }
 
@@ -150,7 +139,7 @@ actor PersonList with Option<Node> {
         }
     }
 
-    AgeUp => {
+    on AgeUp => {
         let node = state;
         while node {
             emit node->AgeUp;
@@ -158,7 +147,7 @@ actor PersonList with Option<Node> {
         }
     }
 
-    Print => {
+    on Print => {
         let node = state;
         while node {
             emit node->Print;
@@ -215,7 +204,7 @@ actor Server with SomeOf<{req: (path: str)}> {
 
 actor ServerHandler {
 
-    req(path: str) {
+    on req(path: str) {
         print path;
     }
 

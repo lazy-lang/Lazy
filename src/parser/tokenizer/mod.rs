@@ -7,6 +7,7 @@ pub enum TokenType {
     Float(f32),
     Int(i32),
     Kw(String),
+    Bool(bool),
     Var(String),
     Op(String),
     Punc(char)
@@ -57,7 +58,7 @@ impl<'a> Tokenizer<'a> {
 
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct"],
+            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&'],
             current: None,
             errors: vec![],
@@ -130,6 +131,8 @@ impl<'a> Tokenizer<'a> {
                 None => break
             }
         };
+        if ident == "true" { return Token { val: TokenType::Bool(true), range: Range {start, end: self.input.loc()} } }
+        else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
         let token_type = if self.keywords.iter().any(|&i| i == ident) { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
@@ -187,7 +190,7 @@ impl<'a> Tokenizer<'a> {
     pub fn peek(&mut self) -> Option<&Token> {
         if self.current.is_some() {
             return self.current.as_ref();
-        };
+        }
         self.current = self.consume();
         self.current.as_ref()
     }
