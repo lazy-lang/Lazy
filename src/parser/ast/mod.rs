@@ -1,6 +1,8 @@
 
 use super::tokenizer::{Tokenizer, TokenType, Range};
+use super::input_parser::LoC;
 pub mod model;
+pub mod utils;
 use model::{ASTAny, ASTExpression, ASTInt, ASTFloat, ASTStr, ASTBool, ASTVar, ASTBinary};
 
 pub struct Parser<'a> {

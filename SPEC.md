@@ -132,7 +132,7 @@ struct Node {
 
 actor PersonList with Option<Node> {
 
-    Add(person: Person) => {
+    on Add(person: Person) => {
         match state {
             None => state = Node<T>{value: person},
             Some => state.next = Node<T>{value: person}

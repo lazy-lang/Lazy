@@ -13,9 +13,16 @@ pub enum TokenType {
     Punc(char)
 }
 
+#[derive(Copy)]
 pub struct Range {
     pub start: LoC,
     pub end: LoC
+}
+
+impl std::clone::Clone for Range {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl fmt::Display for Range {
