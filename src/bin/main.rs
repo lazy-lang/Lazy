@@ -20,8 +20,9 @@ fn print_ast(ast: &ASTExpression) {
         }
         ASTExpression::Binary(binary) => {
             print_ast(&binary.left);
-            print!("{}", binary.op);
+            print!(" {} ", binary.op);
             print_ast(&binary.right);
+            print!("(Range: {}", binary.range);
         }
         _ => {}
     }

@@ -1,5 +1,5 @@
 
-use super::tokenizer::{Tokenizer, TokenType};
+use super::tokenizer::{Tokenizer, TokenType, Range};
 pub mod model;
 use model::{ASTAny, ASTExpression, ASTInt, ASTFloat, ASTStr, ASTBool, ASTVar, ASTBinary};
 
@@ -29,6 +29,7 @@ impl<'a> Parser<'a> {
 
     fn parse_binary(&mut self, left: Option<ASTExpression>, prec: i8) -> Option<ASTExpression> {
         let left_tok = left?;
+        let start = self.tokens.input.loc();
         let next = self.tokens.peek();
         if next.is_none() { return Some(left_tok) };
         match &next.unwrap().val {
@@ -43,7 +44,8 @@ impl<'a> Parser<'a> {
                     return self.parse_binary(Some(ASTExpression::Binary(ASTBinary {
                         op:opval,
                         left: Box::from(left_tok),
-                        right: Box::from(right.unwrap())
+                        right: Box::from(right.unwrap()),
+                        range: Range { start, end: self.tokens.input.loc() }
                     })), prec);
                 }
                 Some(left_tok)
@@ -56,11 +58,11 @@ impl<'a> Parser<'a> {
 
         let token = self.tokens.next()?;
         match token.val {
-            TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value } )),
-            TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value })),
-            TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value })),
-            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value })),
-            TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value })),
+            TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value, range: token.range } )),
+            TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
+            TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
+            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range })),
+            TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
             TokenType::Punc(val) => {
                 match val {
                     // Expression wrapper
