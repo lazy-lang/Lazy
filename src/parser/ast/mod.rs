@@ -39,7 +39,7 @@ impl<'a> Parser<'a> {
                 let opval = val.to_string();
                 let other_prec = Self::get_prec(&val);
                 if other_prec > prec {
-                    self.tokens.next();
+                    self.tokens.consume();
                     let exp = self.parse_expression_part();
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { return Some(left_tok) };
@@ -65,8 +65,8 @@ impl<'a> Parser<'a> {
             TokenType::Op(val) => {
                 match val.as_str() {
                     "." => {
-                        self.tokens.next();
-                        let target = self.tokens.next();
+                        self.tokens.consume();
+                        let target = self.tokens.consume();
                         if target.is_none() { 
                             self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
@@ -88,7 +88,7 @@ impl<'a> Parser<'a> {
                         }
                     },
                     "?" => {
-                        self.tokens.next();
+                        self.tokens.consume();
                         self.parse_suffix(Some(ASTExpression::Optional(
                             ASTOptional {
                                 value: Box::from(token.unwrap()),
@@ -105,7 +105,7 @@ impl<'a> Parser<'a> {
 
     fn parse_expression_part(&mut self) -> Option<ASTExpression> {
         let exp = {
-        let token = self.tokens.next()?;
+        let token = self.tokens.consume()?;
         match token.val {
             TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value, range: token.range } )),
             TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
@@ -135,7 +135,7 @@ impl<'a> Parser<'a> {
                     // Expression wrapper
                     '(' => {
                         let exp = self.parse_expression();
-                        self.tokens.next(); // Skip )
+                        self.tokens.consume(); // Skip )
                         exp   
                     },
                     ';' => None,

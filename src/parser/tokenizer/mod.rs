@@ -163,20 +163,20 @@ impl<'a> Tokenizer<'a> {
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
     }
 
-    fn consume(&mut self) -> Option<Token> {
+    fn _next(&mut self) -> Option<Token> {
         if self.input.is_eof() { return None; };
         let tok = self.input.peek(0).unwrap();
         if tok == '/' && self.input.peek(1) == Some('/') {
             self.input.consume();
             self.input.consume();
-            return self.consume();
+            return self._next();
         };
         match tok {
             '"' => Some(self.parse_str()),
             '0'..='9' => Some(self.parse_num()),
             ' ' | '\n' | '\t' => {
                 self.input.consume();
-                self.consume()
+                self._next()
             },
             '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' => Some(self.parse_op()),
             ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
@@ -189,11 +189,11 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    pub fn next(&mut self) -> Option<Token> {
+    pub fn consume(&mut self) -> Option<Token> {
         if self.current.is_some() {
             self.current.take()
         } else {
-            self.consume()
+            self._next()
         }
     }
 
@@ -201,7 +201,7 @@ impl<'a> Tokenizer<'a> {
         if self.current.is_some() {
             return self.current.as_ref();
         }
-        self.current = self.consume();
+        self.current = self._next();
         self.current.as_ref()
     }
 
