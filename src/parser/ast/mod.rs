@@ -3,7 +3,7 @@ use super::tokenizer::{Tokenizer, TokenType, Range};
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;
-use model::{ASTAny, ASTExpression, ASTInt, ASTFloat, ASTStr, ASTBool, ASTVar, ASTBinary};
+use model::{ASTAny, ASTExpression, ASTInt, ASTFloat, ASTStr, ASTBool, ASTVar, ASTBinary, ASTUnary, ASTDotAccess};
 
 pub struct Parser<'a> {
     pub tokens: Tokenizer<'a>
@@ -56,8 +56,51 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression_part(&mut self) -> Option<ASTExpression> {
+    fn parse_suffix(&mut self, token: Option<ASTExpression>, optional: bool) -> Option<ASTExpression> {
+        if token.is_none() { return token };
+        let start = self.tokens.input.loc();
+        let next_token = self.tokens.peek();
+        if next_token.is_none() { return token };
+        match &next_token.unwrap().val {
+            TokenType::Op(val) => {
+                match val.as_str() {
+                    "." => {
+                        self.tokens.next();
+                        let target = self.tokens.next();
+                        if target.is_none() { 
+                            self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        };
+                        match target.unwrap().val {
+                            TokenType::Var(variable) => {
+                                self.parse_suffix(Some(ASTExpression::DotAccess(
+                                    ASTDotAccess {
+                                        optional,
+                                        target: variable,
+                                        value: Box::from(token.unwrap()),
+                                        range: Range { start, end: self.tokens.input.loc() }
+                                    }
+                                )), false)
+                            }
+                            _ => {
+                                self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                                None
+                            }
+                        }
+                    },
+                    "?" => {
+                        self.tokens.next();
+                        self.parse_suffix(token, true)
+                    },
+                    _ => token
+                }
+            },
+            _ => token
+        }
+    }
 
+    fn parse_expression_part(&mut self) -> Option<ASTExpression> {
+        let exp = {
         let token = self.tokens.next()?;
         match token.val {
             TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value, range: token.range } )),
@@ -65,6 +108,24 @@ impl<'a> Parser<'a> {
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
             TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range })),
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
+            TokenType::Op(value) => {
+                // Prefixes
+                match value.as_str() {
+                    "-" | "!" | "&" => {
+                        Some(ASTExpression::Unary(
+                            ASTUnary {
+                                op: value,
+                                value: Box::from(self.parse_expression()?),
+                                range: token.range
+                            }
+                        ))
+                    },
+                    _ => {
+                        self.tokens.error(format!("Unexpected operator {}", value), self.tokens.input.loc(), self.tokens.input.loc());
+                        None
+                    }
+                }
+            },
             TokenType::Punc(val) => {
                 match val {
                     // Expression wrapper
@@ -81,6 +142,8 @@ impl<'a> Parser<'a> {
             },
             _ => None
         }
+        };
+        self.parse_suffix(exp, false)
     }
 
     fn parse_expression(&mut self) -> Option<ASTExpression> {

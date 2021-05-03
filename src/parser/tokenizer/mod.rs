@@ -56,6 +56,7 @@ pub struct Token {
 pub struct Tokenizer<'a> {
     keywords: Vec<&'a str>,
     operators: Vec<char>,
+    standalone_operators: Vec<char>,
     current: Option<Token>,
     pub errors: Vec<Error>,
     pub input: InputParser
@@ -66,7 +67,8 @@ impl<'a> Tokenizer<'a> {
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
             keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on"],
-            operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&'],
+            operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
+            standalone_operators: vec!['?'],
             current: None,
             errors: vec![],
             input: InputParser::new(code)
@@ -153,6 +155,7 @@ impl<'a> Tokenizer<'a> {
         let start = self.input.loc();
         let mut op = String::new();
         while !self.input.is_eof() {
+            if self.standalone_operators.iter().any(|&i| i.to_string() == op) { break; };
             let ch = self.input.peek(0).unwrap();
             if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) }
             else { break; };
@@ -175,8 +178,8 @@ impl<'a> Tokenizer<'a> {
                 self.input.consume();
                 self.consume()
             },
-            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' => Some(self.parse_op()),
-            ',' | '.' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
+            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' => Some(self.parse_op()),
+            ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
                 self.error(format!("Invalid character {}", ch), self.input.loc(), self.input.loc());

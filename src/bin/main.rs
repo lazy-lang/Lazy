@@ -1,44 +1,48 @@
 use lazy::parser::ast::{Parser};
 use lazy::parser::ast::model::{ASTAny, ASTExpression};
-use lazy::parser::ast::utils::{full_expression_range};
 
-fn print_ast(ast: &ASTExpression, main: bool) {
+fn print_ast(ast: &ASTExpression) {
     match ast {
         ASTExpression::Str(string) => {
-            print!("{}", string.value);
+            println!("String: {}", string.value);
         },
         ASTExpression::Float(string) => {
-            print!("{}", string.value);
+            println!("Float: {}", string.value);
         }
         ASTExpression::Int(string) => {
-            print!("{}", string.value);
+            println!("Int: {}", string.value);
         }
         ASTExpression::Bool(string) => {
-            print!("{}", string.value);
+            println!("Bool: {}", string.value);
         }
         ASTExpression::Var(string) => {
-            print!("{}", string.value);
-        }
+            println!("Variable: {}", string.value);
+        },
         ASTExpression::Binary(binary) => {
-            print_ast(&binary.left, false);
-            print!(" {} ", binary.op);
-            print_ast(&binary.right, false);
-            if main {
-                print!("(Range: {}", full_expression_range(ast));
-            }
+            print_ast(&binary.left);
+            println!("Binary: {}", binary.op);
+            print_ast(&binary.right);
+        }
+        ASTExpression::Unary(un) => {
+            println!("Unary: {}, ", un.op);
+            print_ast(&un.value);
+        },
+        ASTExpression::DotAccess(path) => {
+            print_ast(&path.value);
+            println!("Dot access: {} (optional: {})", path.target, path.optional);
         }
         _ => {}
     }
 }
 
 fn main() {
-    let source = "\"Hi\" + \"3.1.4\" + (3 + 3)\n+3";
+    let source = "hello.world.reee";
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {
         match ast {
             ASTAny::Expression(val) => {             
-                print_ast(&val, true);
+                print_ast(&val);
             }
             _ => {}
         }
