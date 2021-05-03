@@ -66,7 +66,7 @@ impl<'a> Tokenizer<'a> {
 
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on"],
+            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on", "single"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
             standalone_operators: vec!['?'], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
@@ -166,11 +166,22 @@ impl<'a> Tokenizer<'a> {
     fn _next(&mut self) -> Option<Token> {
         if self.input.is_eof() { return None; };
         let tok = self.input.peek(0).unwrap();
-        if tok == '/' && self.input.peek(1) == Some('/') {
+        if tok == '/' && self.input.peek(1)? == '/' {
             self.input.consume();
+            self.input.consume();
+            while !self.input.is_eof() {
+                if self.input.consume()? == '\n' { break; };
+            }
+            return self._next();
+        }
+        if tok == '/' && self.input.peek(1)? == '*' {
+            self.input.consume();
+            while !self.input.is_eof() {
+                if self.input.consume()? == '*' && self.input.peek(0)? =='/' { break; };
+            }
             self.input.consume();
             return self._next();
-        };
+        }
         match tok {
             '"' => Some(self.parse_str()),
             '0'..='9' => Some(self.parse_num()),

@@ -64,6 +64,12 @@ pub struct ASTDotAccess {
     pub range: Range
 }
 
+pub struct ASTArrowAccess {
+    pub value: Box<ASTExpression>,
+    pub target: String,
+    pub range: Range 
+}
+
 pub struct ASTOptional {
     pub value: Box<ASTExpression>,
     pub range: Range
@@ -104,6 +110,7 @@ pub enum ASTExpression {
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
+    ArrowAccess(ASTArrowAccess),
     Optional(ASTOptional)
 }
 

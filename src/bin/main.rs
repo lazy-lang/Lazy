@@ -4,7 +4,20 @@ use lazy::parser::ast::utils::{expression_to_string};
 
 
 fn main() {
-    let source = "true || false";
+    let source = "
+    
+    /*
+    Multi-line
+    comment */
+
+    // Single line comment
+    // Another comment
+
+    Single line comment
+
+    a.b.c->d;
+
+    ";
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {

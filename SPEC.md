@@ -44,13 +44,13 @@ myType = Types.Type2{3.14};
 myType = Types.Type3;
 
 match myType {
-    Types.Type1 => {
+    Types.Type1: {
         print "My type is a string which contains: " + myType;
     },
-    Types.Type2 => {
+    Types.Type2: {
         print "My type is a number which contains: " + myType;
     },
-    Types.Type3 => {
+    Types.Type3: {
         print "My type is empty...!"
     }
 }
@@ -97,7 +97,7 @@ actor Person with PersonObj {
     }
 
     on Print => {
-        print "Name: ${state.name} Age: ${state.age}\n";
+        emit Console->println{ msg: "Name: ${state.name} Age: ${state.age}\n" };
     }
 
 }
@@ -127,15 +127,19 @@ Arrays and hashmaps just don't make **sense** with the actor model. If you want 
 
 struct Node {
     value: Person,
-    next: Option<Person>
+    next: Node?
 }
 
-actor PersonList with Option<Node> {
+actor PersonList with Node? {
 
     on Add(person: Person) => {
         match state {
-            None => state = Node<T>{value: person},
-            Some => state.next = Node<T>{value: person}
+            None: state = Node{value: person},
+            Some: {
+                let new_node = Node{value: person}
+                new_node.next = state;
+                state = new_node;
+            }
         }
     }
 
@@ -156,19 +160,19 @@ actor PersonList with Option<Node> {
 
 }
 
-let people = PersonList;
+let people = PersonList{};
 
-emit people->Add {person: Person{name: "Google", age: 19} };
-emit people->Add {person: Person{name: "You", age: 21} };
+emit people->Add { person: Person{name: "Google", age: 19} };
+emit people->Add { person: Person{name: "You", age: 21} };
 
 emit people->AgeUp;
 
 emit people->Print;
 ```
 
-## Partial types (SomeOf)
+## Partial types
 
-The `SomeOf` type lets you pass structs and actors which are different, but have common methods / fields.
+You can also pass structs and actors which are different, but have common methods / fields.
 
 ```
 struct Animal {
@@ -181,7 +185,7 @@ struct Human {
     name: str
 }
 
-let me: SomeOf<{age: int}> = Animal{age: 3, name: "Google"}; // You will only be able to access the `age` field.
+let me: {age: int} = Animal{age: 3, name: "Google"}; // You will only be able to access the `age` field.
 
 me.name; // Error!
 me.age; // 3
@@ -193,9 +197,9 @@ me.age; // 19
 Same can be done with actors.
 
 ```
-actor Server with SomeOf<{req: (path: str)}> {
+actor Server with {req: (path: str)} {
 
-    Server(handler: SomeOf<{req: (path: str)}>) {
+    Server(handler: {req: (path: str)}) {
         state = handler;
     }
 
@@ -210,6 +214,30 @@ actor ServerHandler {
 
 }
 
-Server{handler: ServerHandler};
+Server{handler: ServerHandler{} };
 ```
 
+## Singleton actors
+
+You can use the `single` keyword to make it so an `actor` is a singleton.
+
+```
+struct _Db {
+    requests: RequestPool
+}
+
+single actor Db with _Db {
+
+    Db() {
+        state = ...
+    }
+
+    on insert(data: { id: int }) {
+        emit state->make { table: "USERS", data };
+    }
+
+}
+
+// No need to instantiate the actor
+emit Db->insert { id: 123 };
+```

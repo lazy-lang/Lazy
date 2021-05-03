@@ -87,6 +87,29 @@ impl<'a> Parser<'a> {
                             }
                         }
                     },
+                    "->" => {
+                        self.tokens.consume();
+                        let target = self.tokens.consume();
+                        if target.is_none() { 
+                            self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        };
+                        match target.unwrap().val {
+                            TokenType::Var(variable) => {
+                                Some(ASTExpression::ArrowAccess(
+                                    ASTArrowAccess {
+                                        target: variable,
+                                        value: Box::from(token.unwrap()),
+                                        range: Range { start, end: self.tokens.input.loc() }
+                                    }
+                                ))
+                            }
+                            _ => {
+                                self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                                None
+                            }
+                        }
+                    },
                     "?" => {
                         self.tokens.consume();
                         self.parse_suffix(Some(ASTExpression::Optional(
