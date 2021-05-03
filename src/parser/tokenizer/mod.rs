@@ -68,7 +68,7 @@ impl<'a> Tokenizer<'a> {
         Tokenizer {
             keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
-            standalone_operators: vec!['?'],
+            standalone_operators: vec!['?'], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
             errors: vec![],
             input: InputParser::new(code)
@@ -191,10 +191,10 @@ impl<'a> Tokenizer<'a> {
 
     pub fn next(&mut self) -> Option<Token> {
         if self.current.is_some() {
-            return self.current.take()
+            self.current.take()
         } else {
-            return self.consume();
-        };
+            self.consume()
+        }
     }
 
     pub fn peek(&mut self) -> Option<&Token> {

@@ -61,7 +61,11 @@ pub struct ASTUnary {
 pub struct ASTDotAccess {
     pub value: Box<ASTExpression>,
     pub target: String,
-    pub optional: bool,
+    pub range: Range
+}
+
+pub struct ASTOptional {
+    pub value: Box<ASTExpression>,
     pub range: Range
 }
 
@@ -99,7 +103,8 @@ pub enum ASTExpression {
     PairList(ASTPairList),
     Binary(ASTBinary),
     Unary(ASTUnary),
-    DotAccess(ASTDotAccess)
+    DotAccess(ASTDotAccess),
+    Optional(ASTOptional)
 }
 
 // Any statement

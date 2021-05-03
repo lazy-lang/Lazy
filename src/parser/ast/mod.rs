@@ -3,7 +3,7 @@ use super::tokenizer::{Tokenizer, TokenType, Range};
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;
-use model::{ASTAny, ASTExpression, ASTInt, ASTFloat, ASTStr, ASTBool, ASTVar, ASTBinary, ASTUnary, ASTDotAccess};
+use model::*;
 
 pub struct Parser<'a> {
     pub tokens: Tokenizer<'a>
@@ -17,8 +17,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn get_prec(op: &String) -> i8 {
-        match op.as_str() {
+    fn get_prec(op: &str) -> i8 {
+        match op {
             "=" => 1,
             "||" => 2,
             "&&" => 3,
@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { return Some(left_tok) };
                     return self.parse_binary(Some(ASTExpression::Binary(ASTBinary {
-                        op:opval,
+                        op: opval,
                         left: Box::from(left_tok),
                         right: Box::from(right.unwrap()),
                         range: Range { start, end: self.tokens.input.loc() }
@@ -56,7 +56,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_suffix(&mut self, token: Option<ASTExpression>, optional: bool) -> Option<ASTExpression> {
+    fn parse_suffix(&mut self, token: Option<ASTExpression>) -> Option<ASTExpression> {
         if token.is_none() { return token };
         let start = self.tokens.input.loc();
         let next_token = self.tokens.peek();
@@ -75,12 +75,11 @@ impl<'a> Parser<'a> {
                             TokenType::Var(variable) => {
                                 self.parse_suffix(Some(ASTExpression::DotAccess(
                                     ASTDotAccess {
-                                        optional,
                                         target: variable,
                                         value: Box::from(token.unwrap()),
                                         range: Range { start, end: self.tokens.input.loc() }
                                     }
-                                )), false)
+                                )))
                             }
                             _ => {
                                 self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
@@ -90,7 +89,12 @@ impl<'a> Parser<'a> {
                     },
                     "?" => {
                         self.tokens.next();
-                        self.parse_suffix(token, true)
+                        self.parse_suffix(Some(ASTExpression::Optional(
+                            ASTOptional {
+                                value: Box::from(token.unwrap()),
+                                range: Range { start, end: self.tokens.input.loc() }
+                            }
+                        )))
                     },
                     _ => token
                 }
@@ -111,7 +115,7 @@ impl<'a> Parser<'a> {
             TokenType::Op(value) => {
                 // Prefixes
                 match value.as_str() {
-                    "-" | "!" | "&" => {
+                    "-" | "!" => {
                         Some(ASTExpression::Unary(
                             ASTUnary {
                                 op: value,
@@ -134,6 +138,7 @@ impl<'a> Parser<'a> {
                         self.tokens.next(); // Skip )
                         exp   
                     },
+                    ';' => None,
                     _ => {
                         self.tokens.error(format!("Unexpected punctuation {}", val), self.tokens.input.loc(), self.tokens.input.loc());
                         None
@@ -143,7 +148,7 @@ impl<'a> Parser<'a> {
             _ => None
         }
         };
-        self.parse_suffix(exp, false)
+        self.parse_suffix(exp)
     }
 
     fn parse_expression(&mut self) -> Option<ASTExpression> {
@@ -155,10 +160,7 @@ impl<'a> Parser<'a> {
         let mut res = vec![];
         while !self.tokens.input.is_eof() {
             let parsed_expression = self.parse_expression();
-            match parsed_expression {
-                Some(exp) => res.push(ASTAny::Expression(exp)),
-                None => {}
-            }
+            if let Some(exp) = parsed_expression { res.push(ASTAny::Expression(exp)) }
         }
         res
     }

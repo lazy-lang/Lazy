@@ -24,3 +24,19 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
             _ => { Range { start: LoC { col: 0, pos: 0, line: 0 }, end: LoC { col: 0, pos: 0, line: 0 } } }
         }
 }
+
+pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> String {
+    let unwrapped = delimiter.unwrap_or(' ');
+    match ast {
+        ASTExpression::Str(str) => format!("{}Str ( {} )", unwrapped, str.value),
+        ASTExpression::Bool(boolean) => format!("{}Bool ( {} )", unwrapped, boolean.value),
+        ASTExpression::Int(i) => format!("{}Int ( {} )", unwrapped, i.value, ),
+        ASTExpression::Float(f) => format!("{}Float ( {} )", unwrapped, f.value),
+        ASTExpression::Binary(bin) => format!("{}Binary ( {} {} {} )", unwrapped, expression_to_string(&bin.left, delimiter), bin.op, expression_to_string(&bin.right, delimiter)),
+        ASTExpression::Unary(un) => format!("{}Unary ( {} {} )", unwrapped, un.op, expression_to_string(&un.value, delimiter)),
+        ASTExpression::Var(variable) => format!("{}Var ( {} )", variable.value, unwrapped),
+        ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
+        ASTExpression::DotAccess(op) => format!("{}DotAccess ( {} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
+        _ => String::from("Unknown")
+    }
+}
