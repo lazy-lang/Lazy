@@ -13,9 +13,7 @@ fn main() {
     // Single line comment
     // Another comment
 
-    Single line comment
-
-    a.b.c->d;
+    a.b.c->d->a;
 
     ";
     let mut p = Parser::new(&source);

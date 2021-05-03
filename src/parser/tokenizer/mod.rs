@@ -133,7 +133,7 @@ impl<'a> Tokenizer<'a> {
             match self.input.peek(0) {
                 Some(ch) => {
                     match ch {
-                        'a'..='z' | '0'..='9' | '_' => ident.push(self.input.consume().unwrap()),
+                        'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => ident.push(self.input.consume().unwrap()),
                         _ => break
                     }
                 },
@@ -165,7 +165,7 @@ impl<'a> Tokenizer<'a> {
 
     fn _next(&mut self) -> Option<Token> {
         if self.input.is_eof() { return None; };
-        let tok = self.input.peek(0).unwrap();
+        let tok = self.input.peek(0)?;
         if tok == '/' && self.input.peek(1)? == '/' {
             self.input.consume();
             self.input.consume();

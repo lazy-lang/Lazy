@@ -68,7 +68,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume();
                         let target = self.tokens.consume();
                         if target.is_none() { 
-                            self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                            self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
                             return None;
                         };
                         match target.unwrap().val {
@@ -82,7 +82,7 @@ impl<'a> Parser<'a> {
                                 )))
                             }
                             _ => {
-                                self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                                self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
                                 None
                             }
                         }
@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume();
                         let target = self.tokens.consume();
                         if target.is_none() { 
-                            self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                            self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
                             return None;
                         };
                         match target.unwrap().val {
@@ -105,7 +105,7 @@ impl<'a> Parser<'a> {
                                 ))
                             }
                             _ => {
-                                self.tokens.error(String::from("Expected a proper path"), self.tokens.input.loc(), self.tokens.input.loc());
+                                self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
                                 None
                             }
                         }
@@ -148,7 +148,7 @@ impl<'a> Parser<'a> {
                         ))
                     },
                     _ => {
-                        self.tokens.error(format!("Unexpected operator {}", value), self.tokens.input.loc(), self.tokens.input.loc());
+                        self.tokens.error(format!("Unexpected operator {}", value), token.range.start, token.range.end);
                         None
                     }
                 }
@@ -163,12 +163,15 @@ impl<'a> Parser<'a> {
                     },
                     ';' => None,
                     _ => {
-                        self.tokens.error(format!("Unexpected punctuation {}", val), self.tokens.input.loc(), self.tokens.input.loc());
+                        self.tokens.error(format!("Unexpected punctuation {}", val), token.range.start, token.range.end);
                         None
                     }
                 }
             },
-            _ => None
+            TokenType::Kw(val) => {
+                self.tokens.error(format!("Expected expression, found keyword {}", val), token.range.start, token.range.end);
+                None
+            }
         }
         };
         self.parse_suffix(exp)
