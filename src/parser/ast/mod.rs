@@ -1,5 +1,6 @@
 
 use super::tokenizer::{Tokenizer, TokenType, Range};
+use super::tokenizer::error::ErrorType;
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;
@@ -68,7 +69,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume();
                         let target = self.tokens.consume();
                         if target.is_none() { 
-                            self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::ProperProperty, start, self.tokens.input.loc());
                             return None;
                         };
                         match target.unwrap().val {
@@ -82,7 +83,7 @@ impl<'a> Parser<'a> {
                                 )))
                             }
                             _ => {
-                                self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
+                                self.tokens.error(ErrorType::ProperProperty, start, self.tokens.input.loc());
                                 None
                             }
                         }
@@ -91,11 +92,11 @@ impl<'a> Parser<'a> {
                         self.tokens.consume();
                         let target = self.tokens.consume();
                         if target.is_none() { 
-                            self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::ProperProperty, start, self.tokens.input.loc());
                             return None;
                         };
                         if self.tokens.is_next(TokenType::Op("->".to_string())) {
-                            self.tokens.error(String::from("Invalid arrow access"), self.tokens.input.loc(), self.tokens.input.loc());
+                            self.tokens.error(ErrorType::ArrowAccess, self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
                         }
                         match target.unwrap().val {
@@ -109,7 +110,7 @@ impl<'a> Parser<'a> {
                                 ))
                             }
                             _ => {
-                                self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
+                                self.tokens.error(ErrorType::ProperProperty, start, self.tokens.input.loc());
                                 None
                             }
                         }
@@ -134,7 +135,7 @@ impl<'a> Parser<'a> {
         let start = self.tokens.input.loc();
         if req_start {
             if !self.tokens.is_next(TokenType::Punc('{')) {
-            self.tokens.error(String::from("Expected start of block"), self.tokens.input.loc(), self.tokens.input.loc());
+            self.tokens.error(ErrorType::StartOfBlock, self.tokens.input.loc(), self.tokens.input.loc());
             return None;
             } else {
                 self.tokens.consume(); // skip {
@@ -149,9 +150,9 @@ impl<'a> Parser<'a> {
                 Some(expression) => res.push(ASTAny::Expression(expression)),
                 None => break
             };
-            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(String::from("Expected semicolon at the end of the expression")), Some(range)) { return None; };
+            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)) { return None; };
         }
-        self.tokens.skip_or_err(TokenType::Punc('}'), Some(String::from("Expected end of block")), Some(Range {start, end: self.tokens.input.loc()}));
+        self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range {start, end: self.tokens.input.loc()}));
         Some(ASTBlock {
             elements: res,
             range: Range { start, end: self.tokens.input.loc() }
@@ -180,7 +181,7 @@ impl<'a> Parser<'a> {
                         ))
                     },
                     _ => {
-                        self.tokens.error(format!("Unexpected operator {}", value), token.range.start, token.range.end);
+                        self.tokens.error(ErrorType::UnexpectedOp(value), token.range.start, token.range.end);
                         None
                     }
                 }
@@ -195,7 +196,7 @@ impl<'a> Parser<'a> {
                     },
                     '{' => Some(ASTExpression::Block(self.parse_block(false)?)),
                     _ => {
-                        self.tokens.error(format!("Unexpected punctuation {}", val), token.range.start, token.range.end);
+                        self.tokens.error(ErrorType::UnexpectedPunc(val), token.range.start, token.range.end);
                         None
                     }
                 }
@@ -221,7 +222,7 @@ impl<'a> Parser<'a> {
                                             )) 
                                         },
                                         None => {
-                                            self.tokens.error(String::from("Expected initializer"), token.range.start, token.range.end);
+                                            self.tokens.error(ErrorType::Expected("initializer".to_string()), token.range.start, token.range.end);
                                             return None;
                                         }
                                     }
@@ -235,11 +236,11 @@ impl<'a> Parser<'a> {
                                 ))
                             }
                         }
-                    self.tokens.error(String::from("Expected variable name"), token.range.start, token.range.end);
+                    self.tokens.error(ErrorType::Expected("variable name".to_string()), token.range.start, token.range.end);
                     None
                     },
                     _ => {
-                        self.tokens.error(format!("Expected expression, found keyword {}", val), token.range.start, token.range.end);
+                        self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword {}", val)), token.range.start, token.range.end);
                         None
                     }
                 }

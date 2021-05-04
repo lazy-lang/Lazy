@@ -12,13 +12,11 @@ fn main() {
     // Single line comment
     // Another comment
 
+
     {
-
-    let a = {
-        1 + 1;
-        2 + 2;
-    }
-
+        let a; {
+            let b = 5;
+        }
     }
     ";
     let mut p = Parser::new(&source);
