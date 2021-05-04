@@ -10,21 +10,19 @@ fn main() {
     comment */
 
     // Single line comment
-    // Another comment
-
-
     {
         let a; {
             let b = 5;
         }
     }
     ";
+    let vectored = source.split('\n').collect();
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {
         println!("{}", any_to_string(&ast, Some('\n')))
     };
     for error in &p.tokens.errors {
-        println!("{}", error.format(&source));
+        println!("{}", error.format(&vectored));
     }
 }

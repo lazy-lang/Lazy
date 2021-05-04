@@ -1,5 +1,6 @@
 
 use super::*;
+use colored::*;
 
 pub enum ErrorType {
     EndOfStr,
@@ -23,18 +24,19 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn format(&self, source: &str) -> String {
+    pub fn format(&self, source: &Vec<&str>) -> String {
+        // Multi-line errors
         if self.range.start.line != self.range.end.line {
             let mut line = String::new();
-            let lines: Vec<&str> = source.split('\n').collect();
-            for x in self.range.start.line..=self.range.end.line {
+            let end_line = self.range.end.line;
+            for x in self.range.start.line..=end_line {
                 let id = x as usize - 1;
-                line.push_str(&format!("{} | {}\n", x, lines[id]));
+                line.push_str(&format!("{} {}{} {}\n", x, " ".repeat(end_line.to_string().len() - x.to_string().len()), &"|".green(),source[id]));
                 if x == self.range.start.line {
                     let mut cols = String::new();
-                    cols.push_str(&" ".repeat(id.to_string().len() + 3));
-                    for col in 0..=lines[id].len() as i32 {
-                        if col >= self.range.start.col { cols.push('^'); }
+                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".green()));
+                    for col in 0..=source[id].len() as i32 {
+                        if col >= self.range.start.col { cols.push_str(&format!("{}", "^".red())); }
                         else { cols.push(' '); }
                     }
                     cols.push('\n');
@@ -42,26 +44,25 @@ impl Error {
                 }
                 if x == self.range.end.line {
                     let mut cols = String::new();
-                    cols.push_str(&" ".repeat(id.to_string().len() + 3));
-                    for col in 0..=lines[id].len() as i32 {
-                        if col >= self.range.end.col { cols.push('^'); }
+                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".green()));
+                    for col in 0..=source[id].len() as i32 {
+                        if col >= self.range.end.col { cols.push_str(&format!("{}", "^".red())); }
                         else { cols.push(' '); }
                     }
                     cols.push('\n');
                     line.push_str(&cols);
                 }
             }
-            return format!("\n{}\n\nError: {} {}", line, self.to_string(), self.range);
+            return format!("\n{}\n\n{} {}", line, self.to_string().red(), self.range);
         };
         let mut col = String::new();
         let start_line = self.range.start.line as usize;
         col.push_str(&" ".repeat(start_line.to_string().len() + 3));
         for x in 0..=self.range.end.col {
-            if x >= self.range.start.col { col.push('^'); }
+            if x >= self.range.start.col { col.push_str(&format!("{}", "^".red())); }
             else { col.push(' '); };
         };
-        let line = source.split('\n').nth(start_line - 1).unwrap();
-        format!("\n{} | {}\n\n{}\nError: {} {}", start_line, line, col, self.to_string(), self.range)
+        format!("\n{} | {}\n\n{}\n{} {}", start_line, source[start_line - 1], col, self.to_string().red(), self.range)
     }
 
     pub fn to_string(&self) -> String {
