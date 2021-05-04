@@ -31,10 +31,10 @@ impl Error {
             let end_line = self.range.end.line;
             for x in self.range.start.line..=end_line {
                 let id = x as usize - 1;
-                line.push_str(&format!("{} {}{} {}\n", x, " ".repeat(end_line.to_string().len() - x.to_string().len()), &"|".green(),source[id]));
+                line.push_str(&format!("{} {}{} {}\n", x, " ".repeat(end_line.to_string().len() - x.to_string().len()), &"|".cyan(),source[id]));
                 if x == self.range.start.line {
                     let mut cols = String::new();
-                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".green()));
+                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".cyan()));
                     for col in 0..=source[id].len() as i32 {
                         if col >= self.range.start.col { cols.push_str(&format!("{}", "^".red())); }
                         else { cols.push(' '); }
@@ -44,7 +44,7 @@ impl Error {
                 }
                 if x == self.range.end.line {
                     let mut cols = String::new();
-                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".green()));
+                    cols.push_str(&format!("{} {}", " ".repeat(end_line.to_string().len()), &"|".cyan()));
                     for col in 0..=source[id].len() as i32 {
                         if col >= self.range.end.col { cols.push_str(&format!("{}", "^".red())); }
                         else { cols.push(' '); }
@@ -62,7 +62,7 @@ impl Error {
             if x >= self.range.start.col { col.push_str(&format!("{}", "^".red())); }
             else { col.push(' '); };
         };
-        format!("\n{} | {}\n\n{}\n{} {}", start_line, source[start_line - 1], col, self.to_string().red(), self.range)
+        format!("\n{} {} {}\n\n{}\n{} {}", start_line, &"|".cyan(), source[start_line - 1], col, self.to_string().red(), self.range)
     }
 
     pub fn to_string(&self) -> String {
@@ -83,3 +83,11 @@ impl Error {
         }
     }
 }
+
+/*
+pub fn damage_control(tokenizer: &mut Tokenizer, err: &Error) {
+    match err.e_type {
+        ErrorType::Semicolon
+    }
+}
+*/

@@ -236,13 +236,15 @@ impl<'a> Tokenizer<'a> {
 
     pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ErrorType>, loc: Option<Range>) -> bool {
         let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
-        let next = self.consume();
+        let next = self.peek();
         match next {
             Some(token) => {
                 if token.val != tok {
-                    self.error(err.unwrap_or(ErrorType::ExpectedFound(tok.to_string(), token.val.to_string())), location.start, location.end);
+                    let other = token.val.to_string();
+                    self.error(err.unwrap_or(ErrorType::ExpectedFound(tok.to_string(), other)), location.start, location.end);
                     true
                 } else {
+                    self.consume();
                     false
                 }
             },

@@ -11,10 +11,12 @@ fn main() {
 
     // Single line comment
     {
-        let a; {
-            let b = 5;
-        }
-    }
+       let a = {};
+       let b =
+       let c;
+       let a = {};
+       let a = {};
+       let a = {};
     ";
     let vectored = source.split('\n').collect();
     let mut p = Parser::new(&source);

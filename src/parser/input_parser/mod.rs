@@ -25,6 +25,15 @@ impl std::fmt::Display for LoC {
     }
 }
 
+impl LoC {
+    pub fn inc(&self, line: i32, col: i32) -> LoC {
+        let mut clone = *self;
+        clone.line += line;
+        clone.col += col;
+        clone
+    }
+}
+
 impl InputParser {
 
     pub fn new(code: &str) -> Self {

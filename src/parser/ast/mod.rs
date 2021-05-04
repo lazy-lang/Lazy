@@ -101,14 +101,14 @@ impl<'a> Parser<'a> {
                         }
                         match target.unwrap().val {
                             TokenType::Var(variable) => {
-                                Some(ASTExpression::ArrowAccess(
+                                self.parse_suffix(Some(ASTExpression::ArrowAccess(
                                     ASTArrowAccess {
                                         target: variable,
                                         value: Box::from(token.unwrap()),
                                         range: Range { start, end: self.tokens.input.loc() }
                                     }
-                                ))
-                            }
+                                )))
+                            },
                             _ => {
                                 self.tokens.error(ErrorType::ProperProperty, start, self.tokens.input.loc());
                                 None
@@ -148,9 +148,9 @@ impl<'a> Parser<'a> {
             let range = utils::get_range_or(&exp, loc_before);
             match exp {
                 Some(expression) => res.push(ASTAny::Expression(expression)),
-                None => break
+                None => continue
             };
-            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)) { return None; };
+            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)) { continue };
         }
         self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range {start, end: self.tokens.input.loc()}));
         Some(ASTBlock {
@@ -194,6 +194,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume(); // Skip )
                         exp   
                     },
+                    ';' => None,
                     '{' => Some(ASTExpression::Block(self.parse_block(false)?)),
                     _ => {
                         self.tokens.error(ErrorType::UnexpectedPunc(val), token.range.start, token.range.end);
@@ -208,7 +209,7 @@ impl<'a> Parser<'a> {
                         if let Some(tok) = id {
                             if let TokenType::Var(name) = tok.val {
                                 if self.tokens.is_next(TokenType::Op("=".to_string())) {
-                                    self.tokens.consume(); // Skip =
+                                    let equals = self.tokens.consume().unwrap(); // Skip =
                                     let exp = self.parse_expression();
                                     return match exp {
                                         Some(expression) => {
@@ -222,7 +223,8 @@ impl<'a> Parser<'a> {
                                             )) 
                                         },
                                         None => {
-                                            self.tokens.error(ErrorType::Expected("initializer".to_string()), token.range.start, token.range.end);
+                                            self.tokens.error(ErrorType::Expected("initializer".to_string()), equals.range.end, equals.range.end);
+                                            println!("{}", self.tokens.peek().unwrap().val);
                                             return None;
                                         }
                                     }
