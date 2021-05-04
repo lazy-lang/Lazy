@@ -83,7 +83,7 @@ impl Error {
             }
             return format!("\n{}\n\nError: {} {}", line, self.msg, self.range);
         };
-        let mut col = String::from(" |\n");
+        let mut col = String::new();
         let start_line = self.range.start.line as usize;
         col.push_str(&" ".repeat(start_line.to_string().len() + 3));
         for x in 0..=self.range.end.col {

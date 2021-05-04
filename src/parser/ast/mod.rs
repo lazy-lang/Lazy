@@ -209,23 +209,28 @@ impl<'a> Parser<'a> {
                                 if self.tokens.is_next(TokenType::Op("=".to_string())) {
                                     self.tokens.consume(); // Skip =
                                     let exp = self.parse_expression();
-                                    if exp.is_none() {
-                                        self.tokens.error(String::from("Expected initializer"), token.range.start, token.range.end);
-                                        return None;
-                                    }
-                                    return Some(ASTExpression::Let(
-                                        ASTLet {
-                                            var: name,
-                                            value: Some(Box::from(exp.unwrap())),
-                                            range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                                    return match exp {
+                                        Some(expression) => {
+                                            let exp_end = utils::full_expression_range(&expression).end;
+                                            Some(ASTExpression::Let(
+                                                ASTLet {
+                                                    var: name,
+                                                    value: Some(Box::from(expression)),
+                                                    range: Range { start: token.range.start, end: exp_end }
+                                                }
+                                            )) 
+                                        },
+                                        None => {
+                                            self.tokens.error(String::from("Expected initializer"), token.range.start, token.range.end);
+                                            return None;
                                         }
-                                    ))
+                                    }
                                 };
                                 return Some(ASTExpression::Let(
                                     ASTLet {
                                         var: name,
                                         value: None,
-                                        range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                                        range: Range { start: token.range.start, end: tok.range.end }
                                     }
                                 ))
                             }
