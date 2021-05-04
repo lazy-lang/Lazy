@@ -20,6 +20,12 @@ impl std::clone::Clone for LoC {
     }
 }
 
+impl std::fmt::Display for LoC {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}:{})", self.line, self.col)
+    }
+}
+
 impl InputParser {
 
     pub fn new(code: &str) -> Self {
@@ -53,6 +59,10 @@ impl InputParser {
 
     pub fn loc(&self) -> LoC {
         LoC { pos: self.pos, line: self.line, col: self.col }
+    }
+
+    pub fn loc_inc(&self, col: i32, line: i32) -> LoC {
+        LoC { pos: self.pos, line: self.line + line, col: self.col + col }
     }
     
 }

@@ -94,6 +94,10 @@ impl<'a> Parser<'a> {
                             self.tokens.error(String::from("Expected a proper path"), start, self.tokens.input.loc());
                             return None;
                         };
+                        if self.tokens.is_next(TokenType::Op("->".to_string())) {
+                            self.tokens.error(String::from("Invalid arrow access"), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        }
                         match target.unwrap().val {
                             TokenType::Var(variable) => {
                                 Some(ASTExpression::ArrowAccess(
@@ -124,6 +128,32 @@ impl<'a> Parser<'a> {
             },
             _ => token
         }
+    }
+
+    fn parse_block(&mut self, req_start: bool) -> Option<ASTBlock> {
+        let start = self.tokens.input.loc();
+        if req_start {
+            if !self.tokens.is_next(TokenType::Punc('{')) {
+            self.tokens.error(String::from("Expected start of block"), self.tokens.input.loc(), self.tokens.input.loc());
+            return None;
+            } else {
+                self.tokens.consume(); // skip {
+            }
+        };
+        let mut res: Vec<ASTAny> = vec![];
+        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
+            let exp = self.parse_expression();
+            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(String::from("Expected semicolon (;)"))) { return None; };
+            match exp {
+                Some(expression) => res.push(ASTAny::Expression(expression)),
+                None => break
+            }
+        }
+        self.tokens.skip_or_err(TokenType::Punc('}'), Some(String::from("Expected end of block")));
+        Some(ASTBlock {
+            elements: res,
+            range: Range { start, end: self.tokens.input.loc() }
+        })
     }
 
     fn parse_expression_part(&mut self) -> Option<ASTExpression> {
@@ -161,7 +191,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume(); // Skip )
                         exp   
                     },
-                    ';' => None,
+                    '{' => Some(ASTExpression::Block(self.parse_block(false)?)),
                     _ => {
                         self.tokens.error(format!("Unexpected punctuation {}", val), token.range.start, token.range.end);
                         None
@@ -169,8 +199,43 @@ impl<'a> Parser<'a> {
                 }
             },
             TokenType::Kw(val) => {
-                self.tokens.error(format!("Expected expression, found keyword {}", val), token.range.start, token.range.end);
-                None
+                match val.as_str() {
+                    "let" => {
+                        let id = self.tokens.consume();
+                        if let Some(tok) = id {
+                            if let TokenType::Var(name) = tok.val {
+                                if self.tokens.is_next(TokenType::Op("=".to_string())) {
+                                    self.tokens.consume(); // Skip =
+                                    let exp = self.parse_expression();
+                                    if exp.is_none() {
+                                        self.tokens.error(String::from("Expected initializer"), token.range.start, token.range.end);
+                                        return None;
+                                    }
+                                    return Some(ASTExpression::Let(
+                                        ASTLet {
+                                            var: name,
+                                            value: Some(Box::from(exp.unwrap())),
+                                            range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                                        }
+                                    ))
+                                };
+                                return Some(ASTExpression::Let(
+                                    ASTLet {
+                                        var: name,
+                                        value: None,
+                                        range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                                    }
+                                ))
+                            }
+                        }
+                    self.tokens.error(String::from("Expected variable name"), token.range.start, token.range.end);
+                    None
+                    },
+                    _ => {
+                        self.tokens.error(format!("Expected expression, found keyword {}", val), token.range.start, token.range.end);
+                        None
+                    }
+                }
             }
         }
         };
@@ -181,6 +246,21 @@ impl<'a> Parser<'a> {
         let exp = self.parse_expression_part();
         self.parse_binary(exp, 0)
     }
+
+    /*
+    fn parse_statement(&mut self) -> Option<ASTStatement> {
+        let token = self.tokens.consume()?;
+        match token.val {
+            TokenType::Kw(keyword) => {
+                match keyword.as_str() {
+                    _ => None
+                }
+            },
+            TokenType::Punc(';') => None,
+            _ => None
+        }
+    }
+    */
 
     pub fn parse(&mut self) -> Vec<ASTAny> {
         let mut res = vec![];

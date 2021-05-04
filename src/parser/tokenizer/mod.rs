@@ -2,6 +2,7 @@
 use std::fmt;
 use super::input_parser::{LoC, InputParser};
 
+#[derive(PartialEq)]
 pub enum TokenType {
     Str(String),
     Float(f32),
@@ -11,6 +12,21 @@ pub enum TokenType {
     Var(String),
     Op(String),
     Punc(char)
+}
+
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Str(string) => write!(f, "{}", string),
+            Self::Float(num) => write!(f, "{}", num),
+            Self::Int(num) => write!(f, "{}", num),
+            Self::Kw(kw) => write!(f, "{}", kw),
+            Self::Bool(bo) => write!(f, "{}", bo),
+            Self::Var(name) => write!(f, "{}", name),
+            Self::Op(op) => write!(f, "{}", op),
+            Self::Punc(punc) => write!(f, "{}", punc)
+        }
+    }
 }
 
 #[derive(Copy)]
@@ -216,9 +232,36 @@ impl<'a> Tokenizer<'a> {
         self.current.as_ref()
     }
 
+    #[inline]
     pub fn error(&mut self, msg: String, start: LoC, end: LoC) {
         self.errors.push(Error { msg, range: Range {start, end} });
     }
 
+    pub fn is_next(&mut self, tok: TokenType) -> bool {
+        let next = self.peek();
+        match next {
+            Some(token) => token.val == tok,
+            None => false
+        }
+    }
+
+    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<String>) -> bool {
+        let prev_loc = self.input.loc_inc(1, 0);
+        let next = self.consume();
+        match next {
+            Some(token) => {
+                if token.val != tok {
+                    self.error(err.unwrap_or(format!("Expected {}, found {}", tok, token.val)), prev_loc, prev_loc);
+                    true
+                } else {
+                    false
+                }
+            },
+            None => {
+                self.error(err.unwrap_or(format!("Expected {}",  tok)), prev_loc, self.input.loc());
+                true
+            }
+        }
+    }
 
 }

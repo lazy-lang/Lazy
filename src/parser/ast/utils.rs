@@ -1,4 +1,4 @@
-use super::{Range, ASTExpression, LoC};
+use super::{Range, ASTExpression, LoC, ASTAny, ASTStatement};
 
 pub fn full_expression_range(ast: &ASTExpression) -> Range {
             match ast {
@@ -25,6 +25,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                     let start = full_expression_range(&access.value);
                     Range { start: start.start, end: access.range.end }  
                 },
+                ASTExpression::Block(block) => block.range,
                 _ => { Range { start: LoC { col: 0, pos: 0, line: 0 }, end: LoC { col: 0, pos: 0, line: 0 } } }
         }
 }
@@ -42,6 +43,35 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
         ASTExpression::DotAccess(op) => format!("{}DotAccess ( {} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
         ASTExpression::ArrowAccess(op) => format!("{}ArrowAccess ( {} -> {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
+        ASTExpression::Block(block) => {
+            let mut strings: Vec<String> = vec![];
+            for thing in &block.elements {
+                match thing {
+                    ASTAny::Expression(exp) => {
+                        strings.push(expression_to_string(&exp, delimiter))
+                    },
+                    ASTAny::Statement(st) => {
+                        strings.push(statement_to_string(&st, delimiter));
+                    }
+                };
+            };
+            format!("{}Block {{ {} }}", unwrapped, strings.join("\n"))
+        },
+        ASTExpression::Let(st) => format!("{}Let ( {} = {} )", unwrapped, st.var, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
         _ => String::from("Unknown")
     }
 }
+
+pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> String {
+    let _unwrapped = delimiter.unwrap_or(' ');
+    match ast {
+        _ => String::from("Unknown")
+    } 
+}
+
+pub fn any_to_string(ast: &ASTAny, delimiter: Option<char>) -> String {
+    match ast {
+        ASTAny::Expression(exp) => expression_to_string(&exp, delimiter),
+        ASTAny::Statement(st) => statement_to_string(&st, delimiter)
+    }
+ }

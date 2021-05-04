@@ -1,6 +1,5 @@
 use lazy::parser::ast::{Parser};
-use lazy::parser::ast::model::{ASTAny};
-use lazy::parser::ast::utils::{expression_to_string};
+use lazy::parser::ast::utils::{any_to_string};
 
 
 fn main() {
@@ -13,15 +12,14 @@ fn main() {
     // Single line comment
     // Another comment
 
-    a.b.c->d->a;
-
+    {
+        let b = 5;
+    }
     ";
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {
-        if let ASTAny::Expression(val) = ast {
-            println!("{}\n", expression_to_string(&val, Some('\n')));
-        }
+        println!("{}", any_to_string(&ast, Some('\n')))
     };
     for error in &p.tokens.errors {
         println!("{}", error.format(&source));

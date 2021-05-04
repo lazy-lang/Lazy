@@ -33,8 +33,8 @@ pub struct ASTVar {
 
 // let statement
 pub struct ASTLet {
-    pub id: String,
-    pub value: ASTExpression,
+    pub var: String,
+    pub value: Option<Box<ASTExpression>>,
     pub range: Range,
 }
 
@@ -111,12 +111,13 @@ pub enum ASTExpression {
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
     ArrowAccess(ASTArrowAccess),
-    Optional(ASTOptional)
+    Optional(ASTOptional),
+    Block(ASTBlock),
+    Let(ASTLet)
 }
 
 // Any statement
 pub enum ASTStatement {
-    Let(ASTLet),
     EnumDeclaration(ASTEnumDeclaration)
 }
 
