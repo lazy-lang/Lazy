@@ -9,7 +9,6 @@ pub struct InputParser {
 
 #[derive(Copy)]
 pub struct LoC {
-    pub pos: usize,
     pub line: i32,
     pub col: i32
 }
@@ -58,11 +57,11 @@ impl InputParser {
     }
 
     pub fn loc(&self) -> LoC {
-        LoC { pos: self.pos, line: self.line, col: self.col }
+        LoC { line: self.line, col: self.col }
     }
 
     pub fn loc_inc(&self, col: i32, line: i32) -> LoC {
-        LoC { pos: self.pos, line: self.line + line, col: self.col + col }
+        LoC { line: self.line + line, col: self.col + col }
     }
     
 }

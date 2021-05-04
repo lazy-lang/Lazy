@@ -13,7 +13,9 @@ fn main() {
     // Another comment
 
     {
-        let b = 5;
+
+    4 + 5+ 6
+
     }
     ";
     let mut p = Parser::new(&source);

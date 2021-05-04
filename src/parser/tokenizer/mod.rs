@@ -54,13 +54,44 @@ pub struct Error {
 
 impl Error {
     pub fn format(&self, source: &str) -> String {
-        let mut col = String::new();
+        if self.range.start.line != self.range.end.line {
+            let mut line = String::new();
+            let lines: Vec<&str> = source.split('\n').collect();
+            for x in self.range.start.line..=self.range.end.line {
+                let id = x as usize - 1;
+                line.push_str(&format!("{} | {}\n", x, lines[id]));
+                if x == self.range.start.line {
+                    let mut cols = String::new();
+                    cols.push_str(&" ".repeat(id.to_string().len() + 3));
+                    for col in 0..=lines[id].len() as i32 {
+                        if col >= self.range.start.col { cols.push('^'); }
+                        else { cols.push(' '); }
+                    }
+                    cols.push('\n');
+                    line.push_str(&cols);
+                }
+                if x == self.range.end.line {
+                    let mut cols = String::new();
+                    cols.push_str(&" ".repeat(id.to_string().len() + 3));
+                    for col in 0..=lines[id].len() as i32 {
+                        if col >= self.range.end.col { cols.push('^'); }
+                        else { cols.push(' '); }
+                    }
+                    cols.push('\n');
+                    line.push_str(&cols);
+                }
+            }
+            return format!("\n{}\n\nError: {} {}", line, self.msg, self.range);
+        };
+        let mut col = String::from(" |\n");
+        let start_line = self.range.start.line as usize;
+        col.push_str(&" ".repeat(start_line.to_string().len() + 3));
         for x in 0..=self.range.end.col {
             if x >= self.range.start.col { col.push('^'); }
             else { col.push(' '); };
         };
-        let line = source.split('\n').nth(self.range.start.line as usize - 1);
-        format!("{}\n\n{}\n{} {}", line.unwrap(), col, self.msg, self.range)
+        let line = source.split('\n').nth(start_line - 1).unwrap();
+        format!("\n{} | {}\n\n{}\nError: {} {}", start_line, line, col, self.msg, self.range)
     }
 }
 
@@ -102,7 +133,8 @@ impl<'a> Tokenizer<'a> {
                     str.push(character);
                 },
                 None => {
-                    self.error(String::from("Expected end of string"), start, self.input.loc());
+                    let loc = self.input.loc();
+                    self.error(String::from("Expected end of string"), start, loc);
                     break;
                 }
             }
@@ -122,7 +154,8 @@ impl<'a> Tokenizer<'a> {
                 '.' => {
                     self.input.consume();
                     if dot {
-                        self.error(String::from("Numbers cannot contain more than one decimal point"), start, self.input.loc()); 
+                        let loc = self.input.loc();
+                        self.error(String::from("Numbers cannot contain more than one decimal point"), start, loc); 
                         break;
                      };
                     dot = true;
@@ -209,7 +242,8 @@ impl<'a> Tokenizer<'a> {
             ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
-                self.error(format!("Invalid character {}", ch), self.input.loc(), self.input.loc());
+                let loc = self.input.loc();
+                self.error(format!("Invalid character {}", ch), loc, loc);
                 self.input.consume();
                 None
             } 
@@ -245,20 +279,20 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<String>) -> bool {
-        let prev_loc = self.input.loc_inc(1, 0);
+    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<String>, loc: Option<Range>) -> bool {
+        let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
         let next = self.consume();
         match next {
             Some(token) => {
                 if token.val != tok {
-                    self.error(err.unwrap_or(format!("Expected {}, found {}", tok, token.val)), prev_loc, prev_loc);
+                    self.error(err.unwrap_or(format!("Expected {}, found {}", tok, token.val)), location.start, location.end);
                     true
                 } else {
                     false
                 }
             },
             None => {
-                self.error(err.unwrap_or(format!("Expected {}",  tok)), prev_loc, self.input.loc());
+                self.error(err.unwrap_or(format!("Expected {}",  tok)), location.start, location.end);
                 true
             }
         }

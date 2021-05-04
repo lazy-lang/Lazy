@@ -26,7 +26,8 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                     Range { start: start.start, end: access.range.end }  
                 },
                 ASTExpression::Block(block) => block.range,
-                _ => { Range { start: LoC { col: 0, pos: 0, line: 0 }, end: LoC { col: 0, pos: 0, line: 0 } } }
+                ASTExpression::Let(l) => l.range,
+                _ => { Range { start: LoC { col: 0, line: 0 }, end: LoC { col: 0, line: 0 } } }
         }
 }
 
@@ -74,4 +75,11 @@ pub fn any_to_string(ast: &ASTAny, delimiter: Option<char>) -> String {
         ASTAny::Expression(exp) => expression_to_string(&exp, delimiter),
         ASTAny::Statement(st) => statement_to_string(&st, delimiter)
     }
+ }
+
+ pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
+     match ast {
+         Some(exp) => full_expression_range(&exp),
+         None => Range { start: default, end: default }
+     }
  }

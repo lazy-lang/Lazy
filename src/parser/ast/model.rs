@@ -1,7 +1,7 @@
 
 use super::Range;
 
-// A string literal
+// A string literalz
 pub struct ASTStr {
     pub value: String,
     pub range: Range

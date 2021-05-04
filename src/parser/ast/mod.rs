@@ -142,14 +142,16 @@ impl<'a> Parser<'a> {
         };
         let mut res: Vec<ASTAny> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
+            let loc_before = self.tokens.input.loc();
             let exp = self.parse_expression();
-            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(String::from("Expected semicolon (;)"))) { return None; };
+            let range = utils::get_range_or(&exp, loc_before);
             match exp {
                 Some(expression) => res.push(ASTAny::Expression(expression)),
                 None => break
-            }
+            };
+            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(String::from("Expected semicolon at the end of the expression")), Some(range)) { return None; };
         }
-        self.tokens.skip_or_err(TokenType::Punc('}'), Some(String::from("Expected end of block")));
+        self.tokens.skip_or_err(TokenType::Punc('}'), Some(String::from("Expected end of block")), Some(Range {start, end: self.tokens.input.loc()}));
         Some(ASTBlock {
             elements: res,
             range: Range { start, end: self.tokens.input.loc() }
