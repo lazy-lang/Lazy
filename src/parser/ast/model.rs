@@ -38,9 +38,14 @@ pub struct ASTLet {
     pub range: Range,
 }
 
+pub struct ASTStruct {
+    pub name: String,
+    pub fields: ASTCurlyPairList
+}
+
 // A pair list {key: value}
-pub struct ASTPairList {
-    pub pairs: std::collections::HashMap::<String, Box<ASTExpression>>,
+pub struct ASTCurlyPairList {
+    pub pairs: Vec<(String, Option<ASTExpression>)>,
     pub range: Range
 }
 
@@ -77,7 +82,7 @@ pub struct ASTOptional {
 
 pub struct ASTEnumDeclaration {
     pub name: ASTVar,
-    pub values: ASTPairList,
+    pub values: ASTCurlyPairList,
     pub range: Range
 }
 
@@ -106,7 +111,6 @@ pub enum ASTExpression {
     Int(ASTInt),
     Bool(ASTBool),
     Var(ASTVar),
-    PairList(ASTPairList),
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
@@ -118,7 +122,8 @@ pub enum ASTExpression {
 
 // Any statement
 pub enum ASTStatement {
-    EnumDeclaration(ASTEnumDeclaration)
+    EnumDeclaration(ASTEnumDeclaration),
+    Struct(ASTStruct)
 }
 
 // Any
@@ -132,6 +137,6 @@ pub enum ASTAny {
 // - After an identifier, which is after either the 'enum' or 'struct' keyword
 pub enum ASTTypings {
     Var(ASTVar),
-    PairList(ASTPairList),
+    PairList(ASTCurlyPairList),
     EventType(ASTEventType)
 }

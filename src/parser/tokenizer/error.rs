@@ -8,6 +8,7 @@ pub enum ErrorType {
     InvalidCharacter(char),
     ExpectedFound(String, String),
     Expected(String),
+    ExpectedDelimiter(char),
     ProperProperty,
     ArrowAccess,
     StartOfBlock,
@@ -24,7 +25,7 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn format(&self, source: &Vec<&str>) -> String {
+    pub fn format(&self, source: &[&str]) -> String {
         // Multi-line errors
         if self.range.start.line != self.range.end.line {
             let mut line = String::new();
@@ -65,29 +66,25 @@ impl Error {
         format!("\n{} {} {}\n\n{}\n{} {}", start_line, &"|".cyan(), source[start_line - 1], col, self.to_string().red(), self.range)
     }
 
-    pub fn to_string(&self) -> String {
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.e_type {
-            ErrorType::EndOfStr => String::from("Expected end of string"),
-            ErrorType::DecimalPoint => String::from("Numbers cannot contain more than one decimal point"),
-            ErrorType::ProperProperty => String::from("Expected a property name"),
-            ErrorType::InvalidCharacter(character) => format!("Invalid character {}", character),
-            ErrorType::UnexpectedOp(op) => format!("Unexpected operator {}", op),
-            ErrorType::UnexpectedPunc(punc) => format!("Unexpected punctuation {}", punc),
-            ErrorType::Semicolon => String::from("Expected semicolon at the end of the expression"),
-            ErrorType::EndOfBlock => String::from("Expected end of block"),
-            ErrorType::Expected(val) => format!("Expected {}", val),
-            ErrorType::ExpectedFound(val, found) => format!("Expected {}, but found {}", val, found),
-            ErrorType::StartOfBlock => String::from("Expected start of block"),
-            ErrorType::ArrowAccess => String::from("Arrow access cannot be chained"),
-            ErrorType::Custom(msg) => msg.to_string()
+            ErrorType::EndOfStr => write!(f, "Expected end of string"),
+            ErrorType::DecimalPoint =>  write!(f, "Numbers cannot contain more than one decimal point"),
+            ErrorType::ProperProperty =>  write!(f, "Expected a property name"),
+            ErrorType::InvalidCharacter(character) =>  write!(f, "Invalid character {}", character),
+            ErrorType::UnexpectedOp(op) =>  write!(f, "Unexpected operator {}", op),
+            ErrorType::UnexpectedPunc(punc) =>  write!(f, "Unexpected punctuation {}", punc),
+            ErrorType::Semicolon =>  write!(f, "Expected semicolon at the end of the expression"),
+            ErrorType::EndOfBlock =>  write!(f, "Expected end of block"),
+            ErrorType::Expected(val) =>  write!(f, "Expected {}", val),
+            ErrorType::ExpectedFound(val, found) =>  write!(f, "Expected {}, but found {}", val, found),
+            ErrorType::StartOfBlock =>  write!(f, "Expected start of block"),
+            ErrorType::ArrowAccess =>  write!(f, "Arrow access cannot be chained"),
+            ErrorType::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
+            ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string())
         }
     }
 }
-
-/*
-pub fn damage_control(tokenizer: &mut Tokenizer, err: &Error) {
-    match err.e_type {
-        ErrorType::Semicolon
-    }
-}
-*/

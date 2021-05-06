@@ -10,15 +10,13 @@ fn main() {
     comment */
 
     // Single line comment
-    {
-       let a = {};
-       let b =
-       let c;
-       let a = {};
-       let a = {};
-       let a = {};
+    enum a {
+        a,
+        b: 2,
+        c: 3
+    }
     ";
-    let vectored = source.split('\n').collect();
+    let vectored: Vec<_> = source.split('\n').collect();
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {

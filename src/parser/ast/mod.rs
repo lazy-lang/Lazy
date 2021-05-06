@@ -131,16 +131,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_block(&mut self, req_start: bool) -> Option<ASTBlock> {
+    fn parse_block(&mut self) -> ASTBlock {
         let start = self.tokens.input.loc();
-        if req_start {
-            if !self.tokens.is_next(TokenType::Punc('{')) {
-            self.tokens.error(ErrorType::StartOfBlock, self.tokens.input.loc(), self.tokens.input.loc());
-            return None;
-            } else {
-                self.tokens.consume(); // skip {
-            }
-        };
         let mut res: Vec<ASTAny> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
             let loc_before = self.tokens.input.loc();
@@ -153,10 +145,65 @@ impl<'a> Parser<'a> {
             if self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)) { continue };
         }
         self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range {start, end: self.tokens.input.loc()}));
-        Some(ASTBlock {
+        ASTBlock {
             elements: res,
             range: Range { start, end: self.tokens.input.loc() }
-        })
+        }
+    }
+
+    fn parse_varname(&mut self) -> Option<ASTVar> {
+        let next = self.tokens.consume();
+        if next.is_none() { 
+            self.tokens.error(ErrorType::Expected(String::from("identifier")), self.tokens.input.loc(), self.tokens.input.loc());
+            return None;
+         };
+        let unwrapped = next.unwrap();
+        match unwrapped.val {
+            TokenType::Var(v) => Some(ASTVar { value: v, range: unwrapped.range}),
+            _ => {
+                self.tokens.error(ErrorType::Expected(String::from("identifier")), unwrapped.range.start, unwrapped.range.end);
+                None
+            }
+        }
+    }
+
+    fn parse_curly_pair(&mut self, allow_without_val: bool) -> ASTCurlyPairList {
+        let start = self.tokens.input.loc();
+        let mut res: Vec<(String, Option<ASTExpression>)> = vec![];
+        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
+            let tok_start = self.tokens.input.loc();
+            let key = self.parse_varname();
+            if key.is_none() { continue; };
+            match self.tokens.expect_punc(&[',', ':'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+                Some(ch) => {
+                    match ch {
+                        ',' => {
+                            if !allow_without_val {
+                                self.tokens.error(ErrorType::Expected(String::from("value")), tok_start, self.tokens.input.loc());
+                                continue;
+                            }
+                            res.push((key.unwrap().value, None));
+                        },
+                        ':' => {
+                            let exp = self.parse_expression();
+                            if exp.is_none() { 
+                                self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
+                                continue;
+                            }
+                            res.push((key.unwrap().value, exp));
+                        },
+                        _ => {}
+                    }
+                },
+                None => continue
+            };
+            if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
+        };
+        self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range { start, end: self.tokens.input.loc()}));
+        ASTCurlyPairList {
+            range: Range { start, end: self.tokens.input.loc() },
+            pairs: res
+        }
     }
 
     fn parse_expression_part(&mut self) -> Option<ASTExpression> {
@@ -195,7 +242,7 @@ impl<'a> Parser<'a> {
                         exp   
                     },
                     ';' => None,
-                    '{' => Some(ASTExpression::Block(self.parse_block(false)?)),
+                    '{' => Some(ASTExpression::Block(self.parse_block())),
                     _ => {
                         self.tokens.error(ErrorType::UnexpectedPunc(val), token.range.start, token.range.end);
                         None
@@ -205,8 +252,7 @@ impl<'a> Parser<'a> {
             TokenType::Kw(val) => {
                 match val.as_str() {
                     "let" => {
-                        let id = self.tokens.consume();
-                        if let Some(tok) = id {
+                        if let Some(tok) = self.tokens.consume() {
                             if let TokenType::Var(name) = tok.val {
                                 if self.tokens.is_next(TokenType::Op("=".to_string())) {
                                     let equals = self.tokens.consume().unwrap(); // Skip =
@@ -257,26 +303,58 @@ impl<'a> Parser<'a> {
         self.parse_binary(exp, 0)
     }
 
-    /*
     fn parse_statement(&mut self) -> Option<ASTStatement> {
         let token = self.tokens.consume()?;
         match token.val {
             TokenType::Kw(keyword) => {
                 match keyword.as_str() {
-                    _ => None
+                   "struct" => {
+                    if let Some(tok) = self.tokens.consume() {
+                        if let TokenType::Var(name) = tok.val {
+                            if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of struct fields"))), None) { return None; };
+                            return Some(ASTStatement::Struct(ASTStruct {
+                                name,
+                                fields: self.parse_curly_pair(false)
+                            }));
+                        };
+                    };
+                    self.tokens.error(ErrorType::Expected("struct name".to_string()), token.range.start, token.range.end);
+                    None
+                   }
+                   "enum" => {
+                    if let Some(tok) = self.tokens.consume() {
+                        if let TokenType::Var(name) = tok.val {
+                            if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum fields"))), None) { return None; };
+                            return Some(ASTStatement::Struct(ASTStruct {
+                                name,
+                                fields: self.parse_curly_pair(true)
+                            }));
+                        };
+                    };
+                    self.tokens.error(ErrorType::Expected("enum name".to_string()), token.range.start, token.range.end);
+                    None
+                   }
+                   _ => {
+                    self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
+                    self.tokens.input.skip_line();
+                    None
+                },
                 }
             },
             TokenType::Punc(';') => None,
-            _ => None
+            _ => {
+                self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
+                self.tokens.input.skip_line();
+                None
+            }
         }
     }
-    */
 
     pub fn parse(&mut self) -> Vec<ASTAny> {
         let mut res = vec![];
         while !self.tokens.input.is_eof() {
-            let parsed_expression = self.parse_expression();
-            if let Some(exp) = parsed_expression { res.push(ASTAny::Expression(exp)) }
+            let parsed_statement = self.parse_statement();
+            if let Some(exp) = parsed_statement { res.push(ASTAny::Statement(exp)) }
         }
         res
     }

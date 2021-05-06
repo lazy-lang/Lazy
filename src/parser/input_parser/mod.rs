@@ -65,6 +65,15 @@ impl InputParser {
         self.pos >= self.code.len()
     }
 
+    pub fn skip_line(&mut self) {
+        while self.code[self.pos] != '\n' {
+            self.pos += 1;
+        }
+        self.pos += 1;
+        self.col = 0;
+        self.line += 1;
+    }
+
     pub fn loc(&self) -> LoC {
         LoC { line: self.line, col: self.col }
     }

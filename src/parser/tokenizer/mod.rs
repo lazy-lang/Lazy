@@ -55,6 +55,7 @@ pub struct Token {
     pub val: TokenType
 }
 
+
 pub struct Tokenizer<'a> {
     keywords: Vec<&'a str>,
     operators: Vec<char>,
@@ -236,12 +237,11 @@ impl<'a> Tokenizer<'a> {
 
     pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ErrorType>, loc: Option<Range>) -> bool {
         let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
-        let next = self.peek();
-        match next {
+        match self.peek() {
             Some(token) => {
                 if token.val != tok {
                     let other = token.val.to_string();
-                    self.error(err.unwrap_or(ErrorType::ExpectedFound(tok.to_string(), other)), location.start, location.end);
+                    self.error(err.unwrap_or_else(|| ErrorType::ExpectedFound(tok.to_string(), other)), location.start, location.end);
                     true
                 } else {
                     self.consume();
@@ -249,8 +249,34 @@ impl<'a> Tokenizer<'a> {
                 }
             },
             None => {
-                self.error(err.unwrap_or(ErrorType::Expected(tok.to_string())), location.start, location.end);
+                self.error(err.unwrap_or_else(|| ErrorType::Expected(tok.to_string())), location.start, location.end);
                 true
+            }
+        }
+    }
+
+    pub fn expect_punc(&mut self, puncs: &[char], loc: Option<Range>) -> Option<char> {
+        let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
+        match self.peek() {
+            Some(tok) => {
+                match tok.val {
+                    TokenType::Punc(punc) => {
+                        if puncs.contains(&punc) { 
+                            self.consume();
+                            return Some(punc);
+                         };
+                        self.error(ErrorType::ExpectedFound(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), punc.to_string()), location.start, location.end);
+                        None
+                    },
+                    _ => {
+                        self.error(ErrorType::Expected(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
+                        None
+                    }
+                }
+            },
+            None => {
+                self.error(ErrorType::Expected(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
+                None
             }
         }
     }
