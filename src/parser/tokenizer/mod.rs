@@ -19,14 +19,14 @@ pub enum TokenType {
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Str(string) => write!(f, "{}", string),
-            Self::Float(num) => write!(f, "{}", num),
-            Self::Int(num) => write!(f, "{}", num),
-            Self::Kw(kw) => write!(f, "{}", kw),
-            Self::Bool(bo) => write!(f, "{}", bo),
-            Self::Var(name) => write!(f, "{}", name),
-            Self::Op(op) => write!(f, "{}", op),
-            Self::Punc(punc) => write!(f, "{}", punc)
+            Self::Str(string) => write!(f, "string {}", string),
+            Self::Float(num) => write!(f, "float {}", num),
+            Self::Int(num) => write!(f, "integer {}", num),
+            Self::Kw(kw) => write!(f, "keyword {}", kw),
+            Self::Bool(bo) => write!(f, "boolean {}", bo),
+            Self::Var(name) => write!(f, "identifier {}", name),
+            Self::Op(op) => write!(f, "operator {}", op),
+            Self::Punc(punc) => write!(f, "punctuation {}", punc)
         }
     }
 }
@@ -69,7 +69,7 @@ impl<'a> Tokenizer<'a> {
 
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on", "single"],
+            keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on", "single", "f"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
             standalone_operators: vec!['?'], // Operators which cannot be combined, but other separate operators can follow them
             current: None,

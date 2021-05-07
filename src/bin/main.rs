@@ -10,10 +10,13 @@ fn main() {
     comment */
 
     // Single line comment
-    enum a {
-        a,
-        b: 2,
-        c: 3
+    struct A {
+
+        a: f(b: str, c: 1) -> 3 {
+            1 + 1;
+            2 + 2;
+        },
+
     }
     ";
     let vectored: Vec<_> = source.split('\n').collect();

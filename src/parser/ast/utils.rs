@@ -1,4 +1,4 @@
-use super::{Range, ASTExpression, LoC, ASTAny, ASTStatement, ASTCurlyPairList};
+use super::{Range, ASTExpression, LoC, ASTAny, ASTStatement, ASTPairList, ASTBlock};
 
 pub fn full_expression_range(ast: &ASTExpression) -> Range {
             match ast {
@@ -44,36 +44,33 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
         ASTExpression::DotAccess(op) => format!("{}DotAccess (\n{} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
         ASTExpression::ArrowAccess(op) => format!("{}ArrowAccess (\n{} -> {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
-        ASTExpression::Block(block) => {
-            let mut strings: Vec<String> = vec![];
-            for thing in &block.elements {
-                match thing {
-                    ASTAny::Expression(exp) => {
-                        strings.push(expression_to_string(&exp, delimiter))
-                    },
-                    ASTAny::Statement(st) => {
-                        strings.push(statement_to_string(&st, delimiter));
-                    }
-                };
-            };
-            format!("{}Block {{ {} }}", unwrapped, strings.join("\n"))
-        },
+        ASTExpression::Block(block) => block_to_string(&block, delimiter),
+        ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { expression_to_string(func.return_type.as_ref().unwrap(), delimiter) }, block_to_string(&func.body, delimiter)),
         ASTExpression::Let(st) => format!("{}Let (\n{} = {} )", unwrapped, st.var, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
+        //_ => String::from("Unknown")
     }
 }
 
-pub fn curly_pair_list_to_string(list: &ASTCurlyPairList, delimiter: Option<char>) -> String {
+pub fn block_to_string(block: &ASTBlock, delimiter: Option<char>) -> String {
+    let mut strings: Vec<String> = vec![];
+    for thing in &block.elements {
+        strings.push(expression_to_string(&thing, delimiter))
+    };
+    format!("{}Block {{ {} }}", delimiter.unwrap_or(' '), strings.join("\n"))
+} 
+
+pub fn pair_list_to_string(list: &ASTPairList, delimiter: Option<char>) -> String {
     let mut pairs = String::new();
     for pair in &list.pairs {
         pairs.push_str(&format!("{}: {}{}", pair.0, if pair.1.is_some() { expression_to_string(pair.1.as_ref().unwrap(), delimiter) } else { String::from("None") }, "\n"));   
     };
-    format!("{}CurlyPairList {{\n {} }}", delimiter.unwrap_or(' '), pairs)
+    format!("{}PairList {{\n {} }}", delimiter.unwrap_or(' '), pairs)
 }
 
 pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> String {
     let unwrapped = delimiter.unwrap_or(' ');
     match ast {
-        ASTStatement::Struct(structure) => format!("{}Struct ( {} = {} )", unwrapped, structure.name, curly_pair_list_to_string(&structure.fields, delimiter)),
+        ASTStatement::Struct(structure) => format!("{}Struct ( {} = {} )", unwrapped, structure.name, pair_list_to_string(&structure.fields, delimiter)),
         _ => String::from("Unknown")
     } 
 }

@@ -40,11 +40,11 @@ pub struct ASTLet {
 
 pub struct ASTStruct {
     pub name: String,
-    pub fields: ASTCurlyPairList
+    pub fields: ASTPairList
 }
 
-// A pair list {key: value}
-pub struct ASTCurlyPairList {
+// A key value pair list
+pub struct ASTPairList {
     pub pairs: Vec<(String, Option<ASTExpression>)>,
     pub range: Range
 }
@@ -82,13 +82,20 @@ pub struct ASTOptional {
 
 pub struct ASTEnumDeclaration {
     pub name: ASTVar,
-    pub values: ASTCurlyPairList,
+    pub values: ASTPairList,
+    pub range: Range
+}
+
+pub struct ASTFunction {
+    pub params: ASTPairList,
+    pub body: ASTBlock,
+    pub return_type: Option<Box<ASTExpression>>,
     pub range: Range
 }
 
 // A block of expressions or statements 
 pub struct ASTBlock {
-    pub elements: Vec<ASTAny>,
+    pub elements: Vec<ASTExpression>,
     pub range: Range
 }
 
@@ -117,6 +124,7 @@ pub enum ASTExpression {
     ArrowAccess(ASTArrowAccess),
     Optional(ASTOptional),
     Block(ASTBlock),
+    Function(ASTFunction),
     Let(ASTLet)
 }
 
@@ -137,6 +145,6 @@ pub enum ASTAny {
 // - After an identifier, which is after either the 'enum' or 'struct' keyword
 pub enum ASTTypings {
     Var(ASTVar),
-    PairList(ASTCurlyPairList),
+    PairList(ASTPairList),
     EventType(ASTEventType)
 }
