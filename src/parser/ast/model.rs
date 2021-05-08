@@ -150,9 +150,15 @@ pub struct ASTVarTyping {
     pub range: Range
 }
 
+pub struct ASTPairTypingItem {
+    pub name: String,
+    pub value: Option<ASTTypings>,
+    pub optional: bool
+}
+
 // {key: typing_name},
 pub struct ASTPairListTyping {
-    pub pairs: Vec<(String, ASTTypings)>,
+    pub pairs: Vec<ASTPairTypingItem>,
     pub range: Range
 }
 

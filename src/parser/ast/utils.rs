@@ -66,7 +66,7 @@ pub fn list_typing_to_string(ast: &ASTListTyping, delimiter: Option<char>) -> St
     for typing in &ast.entries {
         strings.push(typing_to_string(&typing, delimiter));
     };
-    format!("{}TypingList < {} >", delimiter.unwrap_or(' '), strings.join("\n"))
+    format!("{}TypingList < {} >", delimiter.unwrap_or(' '), strings.join(" "))
 }
 
 pub fn block_to_string(block: &ASTBlock, delimiter: Option<char>) -> String {
@@ -88,7 +88,7 @@ pub fn pair_list_to_string(list: &ASTPairList, delimiter: Option<char>) -> Strin
 pub fn pair_list_typing_to_string(list: &ASTPairListTyping, delimiter: Option<char>) -> String {
     let mut pairs = String::new();
     for pair in &list.pairs {
-        pairs.push_str(&format!("{}: {}{}", pair.0, typing_to_string(&pair.1, delimiter), "\n"));   
+        pairs.push_str(&format!("{}: {}{}{}", pair.name, if pair.value.is_some() { typing_to_string(pair.value.as_ref().unwrap(), delimiter) } else { String::from("None") }, if pair.optional {"?"} else { "" }, "\n"));   
     };
     format!("{}PairList {{\n {} }}", delimiter.unwrap_or(' '), pairs)
 }

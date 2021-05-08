@@ -241,7 +241,10 @@ impl<'a> Parser<'a> {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname();
             if key.is_none() { continue; };
-            match self.tokens.expect_punc(&[',', ':'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
+                self.tokens.consume();
+            }
+            match self.tokens.expect_punc(&[',', ':', '?'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -275,12 +278,17 @@ impl<'a> Parser<'a> {
 
     fn parse_typing_pair_list(&mut self, allow_without_val: bool, closing_punc: char) -> ASTPairListTyping {
         let start = self.tokens.input.loc();
-        let mut res: Vec<(String, ASTTypings)> = vec![];
+        let mut res: Vec<ASTPairTypingItem> = vec![];
+        let mut is_optional = false;
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname();
             if key.is_none() { continue; };
-            match self.tokens.expect_punc(&[',', ':'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
+                self.tokens.consume();
+                is_optional = true;
+            }
+            match self.tokens.expect_punc(&[',', ':', '?'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -288,15 +296,17 @@ impl<'a> Parser<'a> {
                                 self.tokens.error(ErrorType::Expected(String::from("value")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            continue;
+                            res.push(ASTPairTypingItem {name: key.unwrap().value, value: None, optional: is_optional});
+                            is_optional = false;
                         },
                         ':' => {
                             let exp = self.parse_typing();
                             if exp.is_none() { 
-                                self.tokens.error(ErrorType::Expected(String::from("typing")), tok_start, self.tokens.input.loc());
+                                self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push((key.unwrap().value, exp.unwrap()));
+                            res.push(ASTPairTypingItem { name: key.unwrap().value, value: exp, optional: is_optional});
+                            is_optional = false;
                         },
                         _ => {}
                     }

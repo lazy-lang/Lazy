@@ -12,10 +12,7 @@ fn main() {
     // Single line comment
     struct A {
 
-        a: f(b: str) -> number {
-            1 + 1;
-        },
-        b: str<num>
+        a?: number,
 
     }
     ";
