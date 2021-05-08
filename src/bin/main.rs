@@ -12,7 +12,9 @@ fn main() {
     // Single line comment
     struct A<T> {
 
-        a?: {a?: b},
+        a?: f() {
+            let a<T> = b<M>;
+        },
 
     }
     ";

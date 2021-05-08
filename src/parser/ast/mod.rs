@@ -352,7 +352,12 @@ impl<'a> Parser<'a> {
             TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value, range: token.range } )),
             TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
-            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range, generics: None })),
+            TokenType::Var(value) => {
+                if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                    self.tokens.error(ErrorType::Unexpected(String::from("generic parameter")), self.tokens.input.loc(), self.tokens.input.loc());
+                }
+                Some(ASTExpression::Var(ASTVar { value, range: token.range, generics: None}))
+            },
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
             TokenType::Op(value) => {
                 // Prefixes

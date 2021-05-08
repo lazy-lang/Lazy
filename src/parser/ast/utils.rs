@@ -57,7 +57,7 @@ pub fn typing_to_string(ast: &ASTTypings, delimiter: Option<char>) -> String {
         ASTTypings::Tuple(tup) => list_typing_to_string(tup, delimiter),
         ASTTypings::Var(var) => format!("{}Var<{}> ( {} )", unwrapped, if var.generics.is_some() { list_typing_to_string(var.generics.as_ref().unwrap(), delimiter) } else { String::from("None") }, var.value),
         ASTTypings::PairList(list) => pair_list_typing_to_string(&list, delimiter),
-        ASTTypings::Function(func) => format!("{}FunctionTyping ({}) -> {}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_some() { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) } else { String::from("void") })
+        ASTTypings::Function(func) => format!("{}FunctionTyping ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_some() { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) } else { String::from("void") }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")})
     }
 }
 
