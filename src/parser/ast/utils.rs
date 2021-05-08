@@ -42,11 +42,11 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Unary(un) => format!("{}Unary ( {} {} )", unwrapped, un.op, expression_to_string(&un.value, delimiter)),
         ASTExpression::Var(variable) => format!("{}Var ( {} )", unwrapped, variable.value),
         ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
-        ASTExpression::DotAccess(op) => format!("{}DotAccess (\n{} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
+        ASTExpression::DotAccess(op) => format!("{}DotAccess (\n{} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target.value),
         ASTExpression::ArrowAccess(op) => format!("{}ArrowAccess (\n{} -> {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
         ASTExpression::Block(block) => block_to_string(&block, delimiter),
         ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")}),
-        ASTExpression::Let(st) => format!("{}Let (\n{} = {} )", unwrapped, st.var, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
+        ASTExpression::Let(st) => format!("{}Let (\n{} = {} )", unwrapped, st.var.value, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
         _ => String::from("Unknown")
     }
 }
@@ -96,7 +96,7 @@ pub fn pair_list_typing_to_string(list: &ASTPairListTyping, delimiter: Option<ch
 pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> String {
     let unwrapped = delimiter.unwrap_or(' ');
     match ast {
-        ASTStatement::Struct(structure) => format!("{}Struct ( {} = {} )", unwrapped, structure.name, pair_list_typing_to_string(&structure.fields, delimiter)),
+        ASTStatement::Struct(structure) => format!("{}Struct {} ( {} )", unwrapped, structure.name.value, pair_list_typing_to_string(&structure.fields, delimiter)),
         _ => String::from("Unknown")
     } 
 }

@@ -10,9 +10,9 @@ fn main() {
     comment */
 
     // Single line comment
-    struct A {
+    struct A<T> {
 
-        a?: number,
+        a?: {a?: b},
 
     }
     ";

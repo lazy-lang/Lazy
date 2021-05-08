@@ -28,19 +28,21 @@ pub struct ASTBool {
 // A variable / typing name  
 pub struct ASTVar {
     pub value: String,
+    pub generics: Option<ASTListTyping>,
     pub range: Range
 }
 
 // let statement
 pub struct ASTLet {
-    pub var: String,
+    pub var: ASTVar,
     pub value: Option<Box<ASTExpression>>,
     pub range: Range,
 }
 
 pub struct ASTStruct {
-    pub name: String,
-    pub fields: ASTPairListTyping
+    pub name: ASTVar,
+    pub fields: ASTPairListTyping,
+    pub range: Range
 }
 
 // A key value pair list
@@ -65,7 +67,7 @@ pub struct ASTUnary {
 
 pub struct ASTDotAccess {
     pub value: Box<ASTExpression>,
-    pub target: String,
+    pub target: ASTVar,
     pub range: Range
 }
 
@@ -81,7 +83,7 @@ pub struct ASTOptional {
 }
 
 pub struct ASTEnumDeclaration {
-    pub name: ASTVar,
+    pub name: String,
     pub values: ASTPairListTyping,
     pub range: Range
 }
@@ -143,13 +145,6 @@ pub enum ASTAny {
 // (param: typing_name) -> return_type
 // [type, type] 
 
-// TypingName, TypingName<...>
-pub struct ASTVarTyping {
-    pub value: String,
-    pub generics: Option<ASTListTyping>,
-    pub range: Range
-}
-
 pub struct ASTPairTypingItem {
     pub name: String,
     pub value: Option<ASTTypings>,
@@ -169,7 +164,7 @@ pub struct ASTListTyping {
 }
 
 pub enum ASTTypings {
-    Var(ASTVarTyping),
+    Var(ASTVar),
     PairList(ASTPairListTyping),
     Function(ASTFunction),
     Tuple(ASTListTyping)

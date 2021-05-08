@@ -71,7 +71,7 @@ impl<'a> Tokenizer<'a> {
         Tokenizer {
             keywords: vec!["main", "let", "emit", "match", "while", "if", "actor", "enum", "struct", "true", "false", "on", "single", "f"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
-            standalone_operators: vec!['?'], // Operators which cannot be combined, but other separate operators can follow them
+            standalone_operators: vec!['?', '>'], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
             errors: vec![],
             input: InputParser::new(code)
