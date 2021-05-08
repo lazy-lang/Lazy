@@ -13,7 +13,7 @@ fn main() {
     struct A<T> {
 
         a?: f() {
-            let a<T> = b<M>;
+            let a<T> = b<M> 1 + 1 --4;
         },
 
     }

@@ -167,14 +167,16 @@ impl<'a> Parser<'a> {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTExpression> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
-            let loc_before = self.tokens.input.loc();
             let exp = self.parse_expression();
-            let range = utils::get_range_or(&exp, loc_before);
             match exp {
                 Some(expression) => res.push(expression),
                 None => continue
             };
-            if self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)) { continue };
+            //Todo: Handle this better...
+            if self.tokens.is_next(TokenType::Punc(';')) {
+                self.tokens.consume();
+                continue;
+            }
         }
         self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range {start, end: self.tokens.input.loc()}));
         ASTBlock {
@@ -214,10 +216,7 @@ impl<'a> Parser<'a> {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
             if key.is_none() { continue; };
-            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
-                self.tokens.consume();
-            }
-            match self.tokens.expect_punc(&[',', ':', '?'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -353,10 +352,11 @@ impl<'a> Parser<'a> {
             TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
             TokenType::Var(value) => {
-                if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-                    self.tokens.error(ErrorType::Unexpected(String::from("generic parameter")), self.tokens.input.loc(), self.tokens.input.loc());
-                }
-                Some(ASTExpression::Var(ASTVar { value, range: token.range, generics: None}))
+                let generics = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                    self.tokens.consume();
+                    Some(self.parse_typing_list(false))
+                } else { None };
+                Some(ASTExpression::Var(ASTVar { value, range: token.range, generics}))
             },
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
             TokenType::Op(value) => {
