@@ -40,7 +40,7 @@ pub struct ASTLet {
 
 pub struct ASTStruct {
     pub name: String,
-    pub fields: ASTPairList
+    pub fields: ASTPairListTyping
 }
 
 // A key value pair list
@@ -82,26 +82,20 @@ pub struct ASTOptional {
 
 pub struct ASTEnumDeclaration {
     pub name: ASTVar,
-    pub values: ASTPairList,
+    pub values: ASTPairListTyping,
     pub range: Range
 }
 
 pub struct ASTFunction {
-    pub params: ASTPairList,
-    pub body: ASTBlock,
-    pub return_type: Option<Box<ASTExpression>>,
+    pub params: Box<ASTPairListTyping>,
+    pub body: Option<ASTBlock>,
+    pub return_type: Option<Box<ASTTypings>>,
     pub range: Range
 }
 
 // A block of expressions or statements 
 pub struct ASTBlock {
     pub elements: Vec<ASTExpression>,
-    pub range: Range
-}
-
-// Event typing (param: value_type)
-pub struct ASTEventType {
-    pub pairs: std::collections::HashMap::<String, ASTVar>,
     pub range: Range
 }
 
@@ -118,6 +112,7 @@ pub enum ASTExpression {
     Int(ASTInt),
     Bool(ASTBool),
     Var(ASTVar),
+    VarTyping(ASTVar),
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
@@ -140,11 +135,36 @@ pub enum ASTAny {
     Statement(ASTStatement)
 }
 
-// Typings are only allowed:
-// - After the 'with' keyword
-// - After an identifier, which is after either the 'enum' or 'struct' keyword
+
+// Typings
+// typing_name
+// TypingName<generics>
+// {key: typing_name},
+// (param: typing_name) -> return_type
+// [type, type] 
+
+// TypingName, TypingName<...>
+pub struct ASTVarTyping {
+    pub value: String,
+    pub generics: Option<ASTListTyping>,
+    pub range: Range
+}
+
+// {key: typing_name},
+pub struct ASTPairListTyping {
+    pub pairs: Vec<(String, ASTTypings)>,
+    pub range: Range
+}
+
+
+pub struct ASTListTyping {
+    pub entries: Vec<ASTTypings>,
+    pub range: Range
+}
+
 pub enum ASTTypings {
-    Var(ASTVar),
-    PairList(ASTPairList),
-    EventType(ASTEventType)
+    Var(ASTVarTyping),
+    PairList(ASTPairListTyping),
+    Function(ASTFunction),
+    Tuple(ASTListTyping)
 }

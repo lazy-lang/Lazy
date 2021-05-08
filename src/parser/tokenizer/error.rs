@@ -16,6 +16,7 @@ pub enum ErrorType {
     Semicolon,
     UnexpectedOp(String),
     UnexpectedPunc(char),
+    Unexpected(String),
     Custom(String)
 }
 
@@ -84,7 +85,8 @@ impl fmt::Display for Error {
             ErrorType::StartOfBlock =>  write!(f, "Expected start of block"),
             ErrorType::ArrowAccess =>  write!(f, "Arrow access cannot be chained"),
             ErrorType::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
-            ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string())
+            ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string()),
+            ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string())
         }
     }
 }

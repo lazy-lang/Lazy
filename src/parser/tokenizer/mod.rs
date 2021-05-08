@@ -127,6 +127,7 @@ impl<'a> Tokenizer<'a> {
         None => break
         }
         };
+
         let token_type = if dot { TokenType::Float(num.parse().unwrap()) } else {TokenType::Int(num.parse().unwrap()) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
