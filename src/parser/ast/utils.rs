@@ -66,7 +66,7 @@ pub fn list_typing_to_string(ast: &ASTListTyping, delimiter: Option<char>) -> St
     for typing in &ast.entries {
         strings.push(typing_to_string(&typing, delimiter));
     };
-    format!("{}", strings.join(" "))
+    strings.join(" ")
 }
 
 pub fn block_to_string(block: &ASTBlock, delimiter: Option<char>) -> String {

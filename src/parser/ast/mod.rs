@@ -138,11 +138,11 @@ impl<'a> Parser<'a> {
                             self.tokens.consume(); // Skip <
                             Some(self.parse_typing_list(false))
                         } else { None };
-                        return Some(ASTTypings::Var(ASTVarTyping {
+                        Some(ASTTypings::Var(ASTVarTyping {
                             value,
                             generics,
                             range: Range { start, end: self.tokens.input.loc() }
-                        }));
+                        }))
                     },
                     TokenType::Kw(kw) => {
                         match kw.as_str() {
@@ -345,7 +345,7 @@ impl<'a> Parser<'a> {
             range: Range { start, end: self.tokens.input.loc() },
             params,
             return_type,
-            body: body
+            body
         })
     }
 
