@@ -28,7 +28,6 @@ pub struct ASTBool {
 // A variable / typing name  
 pub struct ASTVar {
     pub value: String,
-    pub generics: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -36,12 +35,14 @@ pub struct ASTVar {
 pub struct ASTLet {
     pub var: ASTVar,
     pub value: Option<Box<ASTExpression>>,
+    pub typing: Option<ASTTypings>,
     pub range: Range,
 }
 
 pub struct ASTStruct {
     pub name: ASTVar,
     pub fields: ASTPairListTyping,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -101,9 +102,10 @@ pub struct ASTBlock {
     pub range: Range
 }
 
-// Typings list <..., ... ,...>
-pub struct ASTTypeList {
-    pub types: Vec<ASTTypings>,
+pub struct ASTInitializor {
+    pub target: ASTVar,
+    pub params: ASTPairList,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -122,6 +124,7 @@ pub enum ASTExpression {
     Optional(ASTOptional),
     Block(ASTBlock),
     Function(ASTFunction),
+    Init(ASTInitializor),
     Let(ASTLet)
 }
 
@@ -163,8 +166,14 @@ pub struct ASTListTyping {
     pub range: Range
 }
 
+pub struct ASTVarTyping {
+    pub value: String,
+    pub generics: Option<ASTListTyping>,
+    pub range: Range
+}
+
 pub enum ASTTypings {
-    Var(ASTVar),
+    Var(ASTVarTyping),
     PairList(ASTPairListTyping),
     Function(ASTFunction),
     Tuple(ASTListTyping)

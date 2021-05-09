@@ -14,6 +14,7 @@ pub enum ErrorType {
     StartOfBlock,
     EndOfBlock,
     Semicolon,
+    TooMuchTypes(i8),
     UnexpectedOp(String),
     UnexpectedPunc(char),
     Unexpected(String),
@@ -86,7 +87,8 @@ impl fmt::Display for Error {
             ErrorType::ArrowAccess =>  write!(f, "Arrow access cannot be chained"),
             ErrorType::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
             ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string()),
-            ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string())
+            ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string()),
+            ErrorType::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount)
         }
     }
 }

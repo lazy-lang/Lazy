@@ -12,8 +12,8 @@ fn main() {
     // Single line comment
     struct A<T> {
 
-        a?: f() {
-            let a<T> = b<M> 1 + 1 --4;
+        a?: fn() -> void {
+            let a<T> = b<A>{a: 500};
         },
 
     }
