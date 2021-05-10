@@ -384,8 +384,9 @@ impl<'a> Parser<'a> {
            Some(Box::from(exp.unwrap()))
         } else { None };
         let body = if allow_body {
-            if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::StartOfBlock), None) { return None };
-            Some(self.parse_block())
+            if let Some(e) = self.parse_expression() {
+                Some(Box::from(e))
+            } else { None }
         } else { None };
         Some(ASTFunction {
             range: Range { start, end: self.tokens.input.loc() },

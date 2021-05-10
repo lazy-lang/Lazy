@@ -85,7 +85,7 @@ pub struct ASTEnumDeclaration {
 
 pub struct ASTFunction {
     pub params: Box<ASTPairListTyping>,
-    pub body: Option<ASTBlock>,
+    pub body: Option<Box<ASTExpression>>,
     pub return_type: Option<Box<ASTTypings>>,
     pub range: Range
 }

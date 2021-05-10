@@ -21,6 +21,12 @@
 3.000_000
 ```
 
+## Characters
+
+### char
+
+```'_'```
+
 ## Boolean
 
 ### bool
@@ -32,3 +38,8 @@ false
 
 ## Strings
 
+```rs
+match exp {
+    1 -> (expression)
+}
+```

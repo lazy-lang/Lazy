@@ -12,10 +12,9 @@ fn main() {
     // Single line comment
     struct A {
 
-        A: fn() {
-            if false {
-                'a' + 1;
-            }
+        A: fn() -> a<B> {
+            2 + 5
+            1 + 1
         },
 
     }

@@ -36,7 +36,7 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
         ASTExpression::DotAccess(op) => format!("{}DotAccess (\n{} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target.value),
         ASTExpression::Block(block) => block_to_string(&block, delimiter),
-        ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")}),
+        ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) }, if func.body.is_some() { expression_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")}),
         ASTExpression::Let(st) => format!("{}Let<{}> (\n{} = {} )", unwrapped, if st.typings.is_some() { typing_to_string(st.typings.as_ref().unwrap(), delimiter)} else { String::from("none") }, st.var.value, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
         ASTExpression::Init(initializor) => format!("{}Init<{}> ( {} )", unwrapped, if let Some(typing) = &initializor.typings { list_typing_to_string(&typing, delimiter)} else { String::from("none") }, pair_list_to_string(&initializor.params, delimiter)),
         ASTExpression::Iterator(it) => format!("{}Iterator ({} .. {})", unwrapped, expression_to_string(&it.start, delimiter), expression_to_string(&it.end, delimiter)),
@@ -50,9 +50,9 @@ pub fn typing_to_string(ast: &ASTTypings, delimiter: Option<char>) -> String {
     let unwrapped = delimiter.unwrap_or(' ');
     match ast {
         ASTTypings::Tuple(tup) => list_typing_to_string(tup, delimiter),
-        ASTTypings::Var(var) => format!("{}Var ( {} )", unwrapped, var.value),
+        ASTTypings::Var(var) => format!("{}Var<{}> ( {} )", unwrapped, if var.typings.is_some() { list_typing_to_string(var.typings.as_ref().unwrap(), delimiter) } else { String::from("none") },var.value),
         ASTTypings::PairList(list) => pair_list_typing_to_string(&list, delimiter),
-        ASTTypings::Function(func) => format!("{}FunctionTyping ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_some() { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) } else { String::from("void") }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")})
+        ASTTypings::Function(func) => format!("{}FunctionTyping ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_some() { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) } else { String::from("void") }, if func.body.is_some() { expression_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")})
     }
 }
 
