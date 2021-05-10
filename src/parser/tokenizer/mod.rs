@@ -108,12 +108,18 @@ impl<'a> Tokenizer<'a> {
             match ch {
                 '0'..='9' => num.push(self.input.consume().unwrap()),
                 '.' => {
-                    self.input.consume();
                     if dot {
+                        if num.ends_with('.') {
+                            self.input.unpeek(1);
+                            num.pop();
+                            return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
+                        }
+                        self.input.consume();
                         let loc = self.input.loc();
                         self.error(ErrorType::DecimalPoint, start, loc); 
                         break;
                      };
+                    self.input.consume();
                     dot = true;
                     num.push(ch);
                 },

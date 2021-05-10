@@ -10,13 +10,11 @@ fn main() {
     comment */
 
     // Single line comment
-    struct A<T, AB> {
+    struct A {
 
-        a?: fn() -> AB {
-            let a<T> = 1 + 1 $ 4;
+        A: fn() {
+            let a = a.b.c..d.e.f;
         },
-
-        b: any,
 
     }
     ";

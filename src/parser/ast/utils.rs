@@ -7,27 +7,17 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Bool(v) => v.range,
                 ASTExpression::Float(v) => v.range,
                 ASTExpression::Int(v) => v.range,
-                ASTExpression::Binary(bin) => {
-                    let start = full_expression_range(&bin.left);
-                    let end = full_expression_range(&bin.right);
-                    Range{start: start.start, end: end.end}
-                },
-                ASTExpression::Unary(un) => {
-                    let start = un.range;
-                    let end = full_expression_range(&un.value);
-                    Range { start: start.start, end: end.end }  
-                },
-                ASTExpression::DotAccess(access) => {
-                    let start = full_expression_range(&access.value);
-                    Range { start: start.start, end: access.range.end }  
-                },
-                ASTExpression::ArrowAccess(access) => {
-                    let start = full_expression_range(&access.value);
-                    Range { start: start.start, end: access.range.end }  
-                },
+                ASTExpression::Binary(bin) => Range{start: full_expression_range(&bin.left).start, end: full_expression_range(&bin.right).end},
+                ASTExpression::Unary(un) => Range { start: un.range.start, end: full_expression_range(&un.value).end },
+                ASTExpression::DotAccess(access) => Range { start:  full_expression_range(&access.value).start, end: access.range.end },
                 ASTExpression::Block(block) => block.range,
                 ASTExpression::Let(l) => l.range,
-                _ => { Range { start: LoC { col: 0, line: 0 }, end: LoC { col: 0, line: 0 } } }
+                ASTExpression::Init(init) => Range { start: init.target.range.start, end: init.params.range.end},
+                ASTExpression::VarTyping(v) => v.range,
+                ASTExpression::Optional(op) => op.range,
+                ASTExpression::Function(fun) => fun.range,
+                ASTExpression::Iterator(init) => init.range 
+                //_ => { Range { start: LoC { col: 0, line: 0 }, end: LoC { col: 0, line: 0 } } }
         }
 }
 
@@ -43,11 +33,11 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Var(variable) => format!("{}Var ( {} )", unwrapped, variable.value),
         ASTExpression::Optional(op) => format!("{}Optional ( {} )", unwrapped, expression_to_string(&op.value, delimiter)),
         ASTExpression::DotAccess(op) => format!("{}DotAccess (\n{} . {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target.value),
-        ASTExpression::ArrowAccess(op) => format!("{}ArrowAccess (\n{} -> {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
         ASTExpression::Block(block) => block_to_string(&block, delimiter),
         ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")}),
         ASTExpression::Let(st) => format!("{}Let<{}> (\n{} = {} )", unwrapped, if st.typings.is_some() { typing_to_string(st.typings.as_ref().unwrap(), delimiter)} else { String::from("none") }, st.var.value, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
         ASTExpression::Init(initializor) => format!("{}Init<{}> ( {} )", unwrapped, if let Some(typing) = &initializor.typings { list_typing_to_string(&typing, delimiter)} else { String::from("none") }, pair_list_to_string(&initializor.params, delimiter)),
+        ASTExpression::Iterator(it) => format!("{}Iterator ({} .. {})", unwrapped, expression_to_string(&it.start, delimiter), expression_to_string(&it.end, delimiter)),
         _ => String::from("Unknown")
     }
 }

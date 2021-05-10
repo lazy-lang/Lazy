@@ -103,6 +103,22 @@ impl<'a> Parser<'a> {
                             }
                         )))
                     },
+                    ".." => {
+                        self.tokens.consume();
+                        println!("{}", self.tokens.peek()?.val);
+                        let end = self.parse_expression();
+                        if end.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("end of iterator")), start, self.tokens.input.loc());
+                            return None;
+                        }
+                        Some(ASTExpression::Iterator(
+                            ASTIterator {
+                                start: Box::from(token.unwrap()),
+                                end: Box::from(end.unwrap()),
+                                range: Range { start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    },
                     _ => token
                 }
             },

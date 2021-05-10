@@ -61,6 +61,10 @@ impl InputParser {
         Some(self.code[self.pos + am])
     }
 
+    pub fn unpeek(&mut self, am: usize) {
+        self.pos -= am;
+    }
+
     pub fn is_eof(&self) -> bool {
         self.pos >= self.code.len()
     }
