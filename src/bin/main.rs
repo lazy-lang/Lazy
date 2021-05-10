@@ -4,17 +4,22 @@ use lazy::parser::ast::utils::{statement_to_string};
 
 fn main() {
     let source = "
-    
-    /*
-    Multi-line
-    comment */
 
-    // Single line comment
-    struct A {
+    enum Types {
+        NORMAL,
+        REGULAR,
+        EPIC,
+        LEGENDARY: number
+    }
 
-        A: fn() {
-            let a = fn() 1 + 1;
-            let b = 5;
+    struct A<B> {
+
+        some_fn: fn(name: string) -> string {
+            name.reverse{};
+        },
+
+        A: fn(func: (a: a, b: b)) {
+            self.some_fn{};
         },
 
     }

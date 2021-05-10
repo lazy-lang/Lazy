@@ -107,7 +107,6 @@ impl<'a> Parser<'a> {
                     },
                     ".." => {
                         self.tokens.consume();
-                        println!("{}", self.tokens.peek()?.val);
                         let end = self.parse_expression();
                         if end.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("end of iterator")), start, self.tokens.input.loc());
@@ -123,12 +122,13 @@ impl<'a> Parser<'a> {
                     },
                     _ => token
                 }
+                // TBD: Add ( for calling functions
             },
             _ => token
         }
     }
 
-    fn parse_typing(&mut self) -> Option<ASTTypings> {
+    fn parse_typing(&mut self, allow_fn_keyword: bool) -> Option<ASTTypings> {
         let start = self.tokens.input.loc();
         let maybe_token = self.tokens.peek();
         match maybe_token {
@@ -136,14 +136,14 @@ impl<'a> Parser<'a> {
                 match &token.val {
                     TokenType::Punc('{') => {
                         self.tokens.consume();
-                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, '}')))
+                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, '}')))
                     },
                     TokenType::Punc('(') => {
                         self.tokens.consume();
-                        let params = Box::from(self.parse_typing_pair_list(false, ')'));
+                        let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, ')'));
                         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) { 
                             self.tokens.consume(); 
-                            let typing = self.parse_typing();
+                            let typing = self.parse_typing(allow_fn_keyword);
                             if typing.is_none() { 
                                 self.tokens.error(ErrorType::Expected(String::from("return type")), start, self.tokens.input.loc());
                                 return None
@@ -162,7 +162,7 @@ impl<'a> Parser<'a> {
                         self.tokens.consume();
                         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                             self.tokens.consume(); // Skip <
-                            Some(self.parse_typing_list(false))
+                            Some(self.parse_typing_list(false, allow_fn_keyword))
                         } else { None };
                         Some(ASTTypings::Var(ASTVarTyping {
                             value,
@@ -171,6 +171,10 @@ impl<'a> Parser<'a> {
                         }))
                     },
                     TokenType::Kw(kw) => {
+                        if !allow_fn_keyword {
+                            self.tokens.error(ErrorType::Unexpected(String::from("keyword fn")), start, self.tokens.input.loc());
+                            return None;
+                        }
                         match kw.as_str() {
                             "fn" => {
                                 self.tokens.consume();
@@ -233,7 +237,7 @@ impl<'a> Parser<'a> {
                 self.tokens.error(ErrorType::Unexpected(String::from("token <, generics are not allowed here.")), self.tokens.input.loc(), self.tokens.input.loc());
             }
             self.tokens.consume();
-            return (Some(var), Some(self.parse_typing_list(only_varnames_as_generics)));
+            return (Some(var), Some(self.parse_typing_list(only_varnames_as_generics, false)));
         }
         (Some(var), None)
     }
@@ -286,7 +290,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_typing_pair_list(&mut self, allow_without_val: bool, closing_punc: char) -> ASTPairListTyping {
+    fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, closing_punc: char) -> ASTPairListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTPairTypingItem> = vec![];
         let mut is_optional = false;
@@ -311,7 +315,7 @@ impl<'a> Parser<'a> {
                             is_optional = false;
                         },
                         ':' => {
-                            let exp = self.parse_typing();
+                            let exp = self.parse_typing(allow_fn_keyword);
                             if exp.is_none() { 
                                 self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
@@ -341,12 +345,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_typing_list(&mut self, only_varnames: bool) -> ASTListTyping {
+    fn parse_typing_list(&mut self, only_varnames: bool, allow_fn_keyword: bool) -> ASTListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTTypings> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Op(String::from(">"))) {
             let id_start = self.tokens.input.loc();
-            let maybe_typing = self.parse_typing();
+            let maybe_typing = self.parse_typing(allow_fn_keyword);
             if maybe_typing.is_none() { break; };
             let typing = maybe_typing.unwrap();
             if only_varnames {
@@ -373,10 +377,10 @@ impl<'a> Parser<'a> {
 
     fn parse_function(&mut self, allow_body: bool) -> Option<ASTFunction> {
         let start = self.tokens.input.loc();
-        let params = Box::from(self.parse_typing_pair_list(true, ')'));
+        let params = Box::from(self.parse_typing_pair_list(true, false, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
-            let exp = self.parse_typing();
+            let exp = self.parse_typing(false);
             if exp.is_none() { 
                 self.tokens.error(ErrorType::Expected(String::from("return type")), self.tokens.input.loc(), self.tokens.input.loc()); 
                 return None; 
@@ -408,7 +412,7 @@ impl<'a> Parser<'a> {
             TokenType::Var(value) => {
                 if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                     self.tokens.consume();
-                    let typings = Some(self.parse_typing_list(false));
+                    let typings = Some(self.parse_typing_list(false, false));
                     if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("initializor"))), None) { return None };
                     return Some(ASTExpression::Init(ASTInitializor{
                         target: ASTVar { value, range: token.range },
@@ -514,7 +518,6 @@ impl<'a> Parser<'a> {
                                     },
                                     None => {
                                         self.tokens.error(ErrorType::Expected("initializer".to_string()), equals.range.end, equals.range.end);
-                                        println!("{}", self.tokens.peek().unwrap().val);
                                         return None;
                                         }
                                     }
@@ -595,7 +598,7 @@ impl<'a> Parser<'a> {
                         Some(ASTStatement::Struct(ASTStruct {
                             name: name.0.unwrap(),
                             typings: name.1,
-                            fields: self.parse_typing_pair_list(false, '}'),
+                            fields: self.parse_typing_pair_list(false, true, '}'),
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                    }
@@ -605,7 +608,7 @@ impl<'a> Parser<'a> {
                             if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum fields"))), None) { return None; };
                             return Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                                 name,
-                                values: self.parse_typing_pair_list(true, '}'),
+                                values: self.parse_typing_pair_list(true, false, '}'),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }));
                         };

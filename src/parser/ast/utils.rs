@@ -13,7 +13,6 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Block(block) => block.range,
                 ASTExpression::Let(l) => l.range,
                 ASTExpression::Init(init) => Range { start: init.target.range.start, end: init.params.range.end},
-                ASTExpression::VarTyping(v) => v.range,
                 ASTExpression::Optional(op) => op.range,
                 ASTExpression::Function(fun) => fun.range,
                 ASTExpression::Iterator(init) => init.range,
@@ -44,7 +43,7 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::If(exp) => format!("{}If ({}) {} {}", unwrapped, expression_to_string(&exp.condition, delimiter), expression_to_string(&exp.then, delimiter), if exp.otherwise.is_some() { format!("else {}", expression_to_string(exp.otherwise.as_ref().unwrap(), delimiter)) } else { String::from("") } ),
         ASTExpression::Char(ch) => format!("{}Char ({})", unwrapped, ch.value),
         ASTExpression::EnumAccess(e) => format!("{}EnumAccess ( {}:{}({}) )", unwrapped, e.value.value, e.target.value, if e.init_value.is_some() { expression_to_string(e.init_value.as_ref().unwrap(), delimiter)} else { String::from("") }),
-        _ => String::from("Unknown")
+        //_ => String::from("Unknown")
     }
 }
 
@@ -94,7 +93,8 @@ pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> Strin
     let unwrapped = delimiter.unwrap_or(' ');
     match ast {
         ASTStatement::Struct(structure) => format!("{}Struct<{}> {} ( {} )", unwrapped, if structure.typings.is_some() { list_typing_to_string(structure.typings.as_ref().unwrap(), delimiter) } else { String::from("none") }, structure.name.value, pair_list_typing_to_string(&structure.fields, delimiter)),
-        _ => String::from("Unknown")
+        ASTStatement::EnumDeclaration(en) => format!("{}Enum {} ( {} )", unwrapped, en.name, pair_list_typing_to_string(&en.values, delimiter)),
+        //_ => String::from("Unknown")
     } 
 }
 

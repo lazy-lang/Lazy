@@ -136,7 +136,6 @@ pub enum ASTExpression {
     Bool(ASTBool),
     Var(ASTVar),
     Char(ASTChar),
-    VarTyping(ASTVar),
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
