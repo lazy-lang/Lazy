@@ -14,6 +14,7 @@ pub enum ErrorType {
     StartOfBlock,
     EndOfBlock,
     Semicolon,
+    EmptyCharLiteral,
     TooMuchTypes(i8),
     UnexpectedOp(String),
     UnexpectedPunc(char),
@@ -88,7 +89,8 @@ impl fmt::Display for Error {
             ErrorType::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
             ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string()),
             ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string()),
-            ErrorType::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount)
+            ErrorType::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount),
+            ErrorType::EmptyCharLiteral => write!(f, "Empty char literal")
         }
     }
 }

@@ -13,6 +13,7 @@ pub enum TokenType {
     Bool(bool),
     Var(String),
     Op(String),
+    Char(char),
     Punc(char)
 }
 
@@ -26,7 +27,8 @@ impl fmt::Display for TokenType {
             Self::Bool(bo) => write!(f, "boolean {}", bo),
             Self::Var(name) => write!(f, "identifier {}", name),
             Self::Op(op) => write!(f, "operator {}", op),
-            Self::Punc(punc) => write!(f, "punctuation {}", punc)
+            Self::Punc(punc) => write!(f, "punctuation {}", punc),
+            Self::Char(ch) => write!(f, "char {}", ch)
         }
     }
 }
@@ -59,7 +61,7 @@ pub struct Token {
 pub struct Tokenizer<'a> {
     keywords: Vec<&'a str>,
     operators: Vec<char>,
-    standalone_operators: Vec<char>,
+    standalone_operators: Vec<&'a str>,
     current: Option<Token>,
     pub errors: Vec<Error>,
     pub input: InputParser
@@ -71,7 +73,7 @@ impl<'a> Tokenizer<'a> {
         Tokenizer {
             keywords: vec!["main", "let", "emit", "match", "while", "if", "else", "actor", "enum", "struct", "true", "false", "on", "single", "fn"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
-            standalone_operators: vec!['?', '>'], // Operators which cannot be combined, but other separate operators can follow them
+            standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
             errors: vec![],
             input: InputParser::new(code)
@@ -96,6 +98,24 @@ impl<'a> Tokenizer<'a> {
             }
         };
         Token { val: TokenType::Str(str), range: Range {start, end: self.input.loc()} }
+    }
+
+    fn parse_char(&mut self) -> Token {
+        let start = self.input.loc();
+        self.input.consume(); // Consume the starting '
+        let maybe_ch = self.input.consume();
+        let val = match maybe_ch {
+            Some(ch) => ch,
+            None => {
+                self.error(ErrorType::EmptyCharLiteral, self.input.loc(), self.input.loc());
+                '_'
+            }
+        };
+        let next = self.input.consume();
+        if next == None || next.unwrap() != '\'' {
+            self.error(ErrorType::Expected(String::from("character literal may only contain one codepoint")), start, self.input.loc());
+        }
+        Token { val: TokenType::Char(val), range: Range { start, end: self.input.loc() }}
     }
 
     fn parse_num(&mut self) -> Token {
@@ -167,7 +187,7 @@ impl<'a> Tokenizer<'a> {
         let start = self.input.loc();
         let mut op = String::new();
         while !self.input.is_eof() {
-            if self.standalone_operators.iter().any(|&i| i.to_string() == op) { break; };
+            if self.standalone_operators.iter().any(|&i| i == op) { break; };
             let ch = self.input.peek(0).unwrap();
             if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) }
             else { break; };
@@ -195,6 +215,7 @@ impl<'a> Tokenizer<'a> {
             return self._next();
         }
         match tok {
+            '\'' => Some(self.parse_char()),
             '"' => Some(self.parse_str()),
             '0'..='9' => Some(self.parse_num()),
             ' ' | '\n' | '\t' => {

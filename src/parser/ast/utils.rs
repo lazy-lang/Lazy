@@ -17,7 +17,8 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Optional(op) => op.range,
                 ASTExpression::Function(fun) => fun.range,
                 ASTExpression::Iterator(init) => init.range,
-                ASTExpression::If(ifexp) => ifexp.range
+                ASTExpression::If(ifexp) => ifexp.range,
+                ASTExpression::Char(ch) => ch.range
                 //_ => { Range { start: LoC { col: 0, line: 0 }, end: LoC { col: 0, line: 0 } } }
         }
 }
@@ -40,6 +41,7 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Init(initializor) => format!("{}Init<{}> ( {} )", unwrapped, if let Some(typing) = &initializor.typings { list_typing_to_string(&typing, delimiter)} else { String::from("none") }, pair_list_to_string(&initializor.params, delimiter)),
         ASTExpression::Iterator(it) => format!("{}Iterator ({} .. {})", unwrapped, expression_to_string(&it.start, delimiter), expression_to_string(&it.end, delimiter)),
         ASTExpression::If(exp) => format!("{}If ({}) {} {}", unwrapped, expression_to_string(&exp.condition, delimiter), expression_to_string(&exp.then, delimiter), if exp.otherwise.is_some() { format!("else {}", expression_to_string(exp.otherwise.as_ref().unwrap(), delimiter)) } else { String::from("") } ),
+        ASTExpression::Char(ch) => format!("{}Char ({})", unwrapped, ch.value),
         _ => String::from("Unknown")
     }
 }

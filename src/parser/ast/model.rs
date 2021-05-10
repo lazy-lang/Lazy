@@ -116,6 +116,11 @@ pub struct ASTIf {
     pub range: Range
 }
 
+pub struct ASTChar {
+    pub value: char,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -123,6 +128,7 @@ pub enum ASTExpression {
     Int(ASTInt),
     Bool(ASTBool),
     Var(ASTVar),
+    Char(ASTChar),
     VarTyping(ASTVar),
     Binary(ASTBinary),
     Unary(ASTUnary),

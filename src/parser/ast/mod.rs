@@ -402,6 +402,7 @@ impl<'a> Parser<'a> {
             TokenType::Int(value) => Some(ASTExpression::Int(ASTInt { value, range: token.range } )),
             TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
+            TokenType::Char(value) => Some(ASTExpression::Char(ASTChar { value, range: token.range })),
             TokenType::Var(value) => {
                 if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                     self.tokens.consume();

@@ -13,8 +13,8 @@ fn main() {
     struct A {
 
         A: fn() {
-            else if false {
-                2 + 2;
+            if false {
+                'a' + 1;
             }
         },
 
