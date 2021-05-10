@@ -109,6 +109,13 @@ pub struct ASTIterator {
     pub range: Range
 }
 
+pub struct ASTIf {
+    pub condition: Box<ASTExpression>,
+    pub then: Box<ASTExpression>,
+    pub otherwise: Option<Box<ASTExpression>>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -125,6 +132,7 @@ pub enum ASTExpression {
     Function(ASTFunction),
     Init(ASTInitializor),
     Iterator(ASTIterator),
+    If(ASTIf),
     Let(ASTLet)
 }
 

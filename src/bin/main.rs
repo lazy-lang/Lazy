@@ -13,7 +13,9 @@ fn main() {
     struct A {
 
         A: fn() {
-            let a = a.b.c..d.e.f;
+            else if false {
+                2 + 2;
+            }
         },
 
     }

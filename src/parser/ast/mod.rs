@@ -438,6 +438,10 @@ impl<'a> Parser<'a> {
             TokenType::Punc(val) => {
                 match val {
                     '(' => {
+                        if self.tokens.is_next(TokenType::Punc(')')) {
+                            self.tokens.error(ErrorType::Unexpected(String::from("empty expression")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        };
                         let exp = self.parse_expression();
                         self.tokens.skip_or_err(TokenType::Punc(')'), Some(ErrorType::Expected(String::from("end of wrapped expression"))), None);
                         exp   
@@ -506,8 +510,37 @@ impl<'a> Parser<'a> {
                         if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };
                         Some(ASTExpression::Function(self.parse_function(true)?))
                     },
+                    "if" => {
+                        let start = self.tokens.input.loc();
+                        let condition = if let Some(cond) = self.parse_expression() {
+                             Box::from(cond)
+                        } else {
+                            self.tokens.error(ErrorType::Expected(String::from("condition in if expression")), start, self.tokens.input.loc());
+                             return None;
+                        };
+                        let then = if let Some(th) = self.parse_expression() {
+                             Box::from(th)
+                         } else {
+                            self.tokens.error(ErrorType::Expected(String::from("expression that will be executed if the condition is true")), start, self.tokens.input.loc());
+                            return None;
+                         };
+                         let otherwise = if self.tokens.is_next(TokenType::Kw(String::from("else"))) {
+                             self.tokens.consume();
+                             if let Some(exp) = self.parse_expression() {
+                                 Some(Box::from(exp))
+                             } else { None }
+                         } else { None };
+                        return Some(ASTExpression::If(
+                            ASTIf {
+                                condition,
+                                then,
+                                otherwise,
+                                range: Range { start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    },
                     _ => {
-                        self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword {}", val)), token.range.start, token.range.end);
+                        self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), token.range.start, token.range.end);
                         None
                     }
                 }
@@ -555,7 +588,7 @@ impl<'a> Parser<'a> {
                     };
                     self.tokens.error(ErrorType::Expected("enum name".to_string()), token.range.start, token.range.end);
                     None
-                   }
+                   },
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                     self.tokens.input.skip_line();
