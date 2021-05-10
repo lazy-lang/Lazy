@@ -415,6 +415,27 @@ impl<'a> Parser<'a> {
                         params: self.parse_pair_list(true, '}'),
                         range: Range { start: token.range.start, end: self.tokens.input.loc() }
                     }));
+                } else if self.tokens.is_next(TokenType::Punc(':')) {
+                    self.tokens.consume();
+                    let target = self.parse_varname(false, true).0;
+                    if target.is_none() {
+                        self.tokens.error(ErrorType::Expected(String::from("enum identifier")), self.tokens.input.loc(), self.tokens.input.loc());
+                        return None;
+                    }
+                    let init = if self.tokens.is_next(TokenType::Punc('(')) {
+                        let exp = self.parse_expression();
+                        if let Some(t) = exp {
+                            Some(Box::from(t))
+                        } else { None }
+                    } else { None };
+                    return Some(ASTExpression::EnumAccess(
+                        ASTEnumAccess {
+                            value: ASTVar { value, range: token.range },
+                            target: target.unwrap(),
+                            init_value: init,
+                            range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                        }
+                    ))
                 }
                 Some(ASTExpression::Var(ASTVar { value, range: token.range }))
             },

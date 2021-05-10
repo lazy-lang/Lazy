@@ -121,6 +121,13 @@ pub struct ASTChar {
     pub range: Range
 }
 
+pub struct ASTEnumAccess {
+    pub value: ASTVar,
+    pub target: ASTVar,
+    pub init_value: Option<Box<ASTExpression>>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -133,6 +140,7 @@ pub enum ASTExpression {
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
+    EnumAccess(ASTEnumAccess),
     Optional(ASTOptional),
     Block(ASTBlock),
     Function(ASTFunction),
