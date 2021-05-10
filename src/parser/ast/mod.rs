@@ -27,7 +27,7 @@ impl<'a> Parser<'a> {
             "<" | ">" | "<=" | ">=" | "==" | "!=" => 10,
             "+" | "-" => 15,
             "*" | "/" | "%" => 20,
-            _ => 0
+            _ => -1
         }
     }
 
@@ -35,27 +35,35 @@ impl<'a> Parser<'a> {
         let left_tok = left?;
         let start = self.tokens.input.loc();
         let next = self.tokens.peek();
-        if next.is_none() { return Some(left_tok) };
+        if next.is_none() { 
+            return Some(left_tok)
+         };
         let value = &next.unwrap();
         match &value.val {
             TokenType::Op(val) => {
                 let opval = val.to_string();
                 let other_prec = Self::get_prec(&val);
+                if other_prec == -1 {
+                    self.tokens.consume();
+                    self.tokens.error(ErrorType::UnexpectedOp(opval), start, start);
+                    return Some(left_tok)
+                }
                 if other_prec > prec {
+                    let err_start = value.range.start;
+                    let err_end = value.range.end;
                     self.tokens.consume();
                     let exp = self.parse_expression_part();
                     let right = self.parse_binary(exp, other_prec);
-                    if right.is_none() { return Some(left_tok) };
+                    if right.is_none() { 
+                        self.tokens.error(ErrorType::UnexpectedOp(opval), err_start, err_end);
+                        return Some(left_tok)
+                     };
                     return self.parse_binary(Some(ASTExpression::Binary(ASTBinary {
                         op: opval,
                         left: Box::from(left_tok),
                         right: Box::from(right.unwrap()),
                         range: Range { start, end: self.tokens.input.loc() }
                     })), prec);
-                } else {
-                    let err_start = value.range.start;
-                    let err_end = value.range.end;
-                    self.tokens.error(ErrorType::UnexpectedOp(opval), err_start, err_end);
                 }
                 Some(left_tok)
             },
@@ -134,13 +142,13 @@ impl<'a> Parser<'a> {
                     TokenType::Var(name) => {
                         let value = name.to_string();
                         self.tokens.consume();
-                        let generics = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                             self.tokens.consume(); // Skip <
                             Some(self.parse_typing_list(false))
                         } else { None };
                         Some(ASTTypings::Var(ASTVarTyping {
                             value,
-                            generics,
+                            typings,
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                     },
@@ -217,11 +225,12 @@ impl<'a> Parser<'a> {
     fn parse_pair_list(&mut self, allow_without_val: bool, closing_punc: char) -> ASTPairList {
         let start = self.tokens.input.loc();
         let mut res: Vec<(String, Option<ASTExpression>)> = vec![];
+        let mut has_consumed_bracket = false;
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
             if key.0.is_none() { continue; };
-            match self.tokens.expect_punc(&[',', ':'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':', '}'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -239,6 +248,14 @@ impl<'a> Parser<'a> {
                             }
                             res.push((key.0.unwrap().value, exp));
                         },
+                        '}' => {
+                            if !allow_without_val {
+                                self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
+                                continue;
+                            }
+                            has_consumed_bracket = true;
+                            break;
+                        },
                         _ => {}
                     }
                 },
@@ -246,7 +263,7 @@ impl<'a> Parser<'a> {
             };
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
-        self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(Range { start, end: self.tokens.input.loc()}));
+        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(Range { start, end: self.tokens.input.loc()})); };
         ASTPairList {
             range: Range { start, end: self.tokens.input.loc() },
             pairs: res
@@ -257,6 +274,7 @@ impl<'a> Parser<'a> {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTPairTypingItem> = vec![];
         let mut is_optional = false;
+        let mut has_consumed_bracket = false;
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
@@ -265,12 +283,12 @@ impl<'a> Parser<'a> {
                 self.tokens.consume();
                 is_optional = true;
             }
-            match self.tokens.expect_punc(&[',', ':', '?'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':', '?', '}'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
                             if !allow_without_val {
-                                self.tokens.error(ErrorType::Expected(String::from("value")), tok_start, self.tokens.input.loc());
+                                self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
                             res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional});
@@ -285,6 +303,14 @@ impl<'a> Parser<'a> {
                             res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional});
                             is_optional = false;
                         },
+                        '}' => {
+                            if !allow_without_val {
+                                self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
+                                continue;
+                            }
+                            has_consumed_bracket = true;
+                            break;
+                        },
                         _ => {}
                     }
                 },
@@ -292,7 +318,7 @@ impl<'a> Parser<'a> {
             };
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
-        self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(Range { start, end: self.tokens.input.loc()}));
+        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(Range { start, end: self.tokens.input.loc()})); };
         ASTPairListTyping {
             range: Range { start, end: self.tokens.input.loc() },
             pairs: res
@@ -309,7 +335,11 @@ impl<'a> Parser<'a> {
             let typing = maybe_typing.unwrap();
             if only_varnames {
             match &typing {
-                ASTTypings::Var(_) => {},
+                ASTTypings::Var(v) => {
+                    if v.typings.is_some() {
+                        self.tokens.error(ErrorType::Unexpected(String::from("token <, generics are not allowed here.")), v.range.start, self.tokens.input.loc());
+                    }
+                },
                 _ => {
                     self.tokens.error(ErrorType::Expected(String::from("generic parameter")), id_start, self.tokens.input.loc());
                 }
@@ -393,7 +423,7 @@ impl<'a> Parser<'a> {
                 match val {
                     '(' => {
                         let exp = self.parse_expression();
-                        self.tokens.consume(); // Skip )
+                        self.tokens.skip_or_err(TokenType::Punc(')'), Some(ErrorType::Expected(String::from("end of wrapped expression"))), None);
                         exp   
                     },
                     ';' => None,
@@ -412,7 +442,7 @@ impl<'a> Parser<'a> {
                             self.tokens.error(ErrorType::Expected("variable name".to_string()), token.range.start, token.range.end);
                             return None;
                         }
-                        let typing = if let Some(mut typing) = name.1 {
+                        let typings = if let Some(mut typing) = name.1 {
                             let len = typing.entries.len();
                             if len == 0 {
                                 self.tokens.error(ErrorType::Expected(String::from("at least one type")), token.range.start, self.tokens.input.loc());
@@ -432,7 +462,7 @@ impl<'a> Parser<'a> {
                                         Some(ASTExpression::Let(
                                             ASTLet {
                                                 var: name.0.unwrap(),
-                                                typing,
+                                                typings,
                                                 value: Some(Box::from(expression)),
                                                 range: Range { start: token.range.start, end: exp_end }
                                             }
@@ -450,7 +480,7 @@ impl<'a> Parser<'a> {
                                 return Some(ASTExpression::Let(
                                     ASTLet {
                                         var: varname,
-                                        typing,
+                                        typings,
                                         value: None,
                                         range: Range { start: token.range.start, end }
                                     }

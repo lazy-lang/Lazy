@@ -35,7 +35,7 @@ pub struct ASTVar {
 pub struct ASTLet {
     pub var: ASTVar,
     pub value: Option<Box<ASTExpression>>,
-    pub typing: Option<ASTTypings>,
+    pub typings: Option<ASTTypings>,
     pub range: Range,
 }
 
@@ -168,7 +168,7 @@ pub struct ASTListTyping {
 
 pub struct ASTVarTyping {
     pub value: String,
-    pub generics: Option<ASTListTyping>,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 

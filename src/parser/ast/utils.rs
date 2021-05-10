@@ -46,7 +46,8 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::ArrowAccess(op) => format!("{}ArrowAccess (\n{} -> {} )", unwrapped, expression_to_string(&op.value, delimiter), op.target),
         ASTExpression::Block(block) => block_to_string(&block, delimiter),
         ASTExpression::Function(func) => format!("{}Function ({}) -> {} {{ {} }}", unwrapped, pair_list_typing_to_string(&func.params, delimiter), if func.return_type.is_none() {String::from("void") } else { typing_to_string(func.return_type.as_ref().unwrap(), delimiter) }, if func.body.is_some() { block_to_string(func.body.as_ref().unwrap(), delimiter) } else { String::from("{}")}),
-        ASTExpression::Let(st) => format!("{}Let<{}> (\n{} = {} )", unwrapped, if st.typing.is_some() { typing_to_string(st.typing.as_ref().unwrap(), delimiter)} else { String::from("none") }, st.var.value, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
+        ASTExpression::Let(st) => format!("{}Let<{}> (\n{} = {} )", unwrapped, if st.typings.is_some() { typing_to_string(st.typings.as_ref().unwrap(), delimiter)} else { String::from("none") }, st.var.value, { if st.value.is_none() { String::from("None") } else { expression_to_string(st.value.as_ref().unwrap(), delimiter) }}),
+        ASTExpression::Init(initializor) => format!("{}Init<{}> ( {} )", unwrapped, if let Some(typing) = &initializor.typings { list_typing_to_string(&typing, delimiter)} else { String::from("none") }, pair_list_to_string(&initializor.params, delimiter)),
         _ => String::from("Unknown")
     }
 }
