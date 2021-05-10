@@ -94,13 +94,6 @@ pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> Strin
     } 
 }
 
-pub fn any_to_string(ast: &ASTAny, delimiter: Option<char>) -> String {
-    match ast {
-        ASTAny::Expression(exp) => expression_to_string(&exp, delimiter),
-        ASTAny::Statement(st) => statement_to_string(&st, delimiter)
-    }
- }
-
  pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
      match ast {
          Some(exp) => full_expression_range(&exp),

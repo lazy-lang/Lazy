@@ -373,7 +373,7 @@ impl<'a> Parser<'a> {
 
     fn parse_function(&mut self, allow_body: bool) -> Option<ASTFunction> {
         let start = self.tokens.input.loc();
-        let params = Box::from(self.parse_typing_pair_list(false, ')'));
+        let params = Box::from(self.parse_typing_pair_list(true, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
             let exp = self.parse_typing();
@@ -605,11 +605,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Vec<ASTAny> {
+    pub fn parse(&mut self) -> Vec<ASTStatement> {
         let mut res = vec![];
         while !self.tokens.input.is_eof() {
             let parsed_statement = self.parse_statement();
-            if let Some(exp) = parsed_statement { res.push(ASTAny::Statement(exp)) }
+            if let Some(stm) = parsed_statement { res.push(stm) }
         }
         res
     }

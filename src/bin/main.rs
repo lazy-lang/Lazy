@@ -1,5 +1,5 @@
 use lazy::parser::ast::{Parser};
-use lazy::parser::ast::utils::{any_to_string};
+use lazy::parser::ast::utils::{statement_to_string};
 
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
     let mut p = Parser::new(&source);
     let res = p.parse();
     for ast in res {
-        println!("{}", any_to_string(&ast, Some('\n')))
+        println!("{}", statement_to_string(&ast, Some('\n')))
     };
     for error in &p.tokens.errors {
         println!("{}", error.format(&vectored));

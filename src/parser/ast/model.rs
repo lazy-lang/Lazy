@@ -142,13 +142,6 @@ pub enum ASTStatement {
     Struct(ASTStruct)
 }
 
-// Any
-pub enum ASTAny {
-    Expression(ASTExpression),
-    Statement(ASTStatement)
-}
-
-
 // Typings
 // typing_name
 // TypingName<generics>
