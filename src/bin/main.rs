@@ -12,8 +12,9 @@ fn main() {
     // Single line comment
     struct A {
 
-        A: fn() -> (a: str) {
-            a:c (5)(60);
+        A: fn() {
+            let a = fn() 1 + 1;
+            let b = 5;
         },
 
     }

@@ -8,14 +8,16 @@ use model::*;
 
 
 pub struct Parser<'a> {
-    pub tokens: Tokenizer<'a>
+    pub tokens: Tokenizer<'a>,
+    is_last_block: bool
 }
 
 impl<'a> Parser<'a> {
 
     pub fn new(source: &'a str) -> Self {
         Parser {
-            tokens: Tokenizer::new(source)
+            tokens: Tokenizer::new(source),
+            is_last_block: false
         }
     }
 
@@ -197,17 +199,15 @@ impl<'a> Parser<'a> {
         let mut res: Vec<ASTExpression> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
             let exp = self.parse_expression();
+            let range = utils::get_range_or(&exp, self.tokens.input.loc());
             match exp {
                 Some(expression) => res.push(expression),
                 None => continue
             };
-            //Todo: Handle this better...
-            if self.tokens.is_next(TokenType::Punc(';')) {
-                self.tokens.consume();
-                continue;
-            }
+           if !self.is_last_block { self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)); };
         }
         self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(Range {start, end: self.tokens.input.loc()}));
+        self.is_last_block = true;
         ASTBlock {
             elements: res,
             range: Range { start, end: self.tokens.input.loc() }
@@ -397,6 +397,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_part(&mut self) -> Option<ASTExpression> {
+        self.is_last_block = false;
         let exp = {
         let token = self.tokens.consume()?;
         match token.val {
