@@ -608,6 +608,25 @@ impl<'a> Parser<'a> {
                             }
                         ))
                     },
+                    "while" => {
+                        let cond = self.parse_expression();
+                        if cond.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("while condition")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        }
+                        let body = self.parse_expression();
+                        if body.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("while body")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        }
+                        return Some(ASTExpression::While(
+                            ASTWhile {
+                                condition: Box::from(cond.unwrap()),
+                                body: Box::from(body.unwrap()),
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    }
                     _ => {
                         self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), token.range.start, token.range.end);
                         None

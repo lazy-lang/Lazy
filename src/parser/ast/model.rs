@@ -142,6 +142,12 @@ pub struct ASTForIn {
     pub range: Range
 }
 
+pub struct ASTWhile {
+    pub condition: Box<ASTExpression>,
+    pub body: Box<ASTExpression>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -161,6 +167,7 @@ pub enum ASTExpression {
     Iterator(ASTIterator),
     Call(ASTCall),
     ForIn(ASTForIn),
+    While(ASTWhile),
     If(ASTIf),
     Let(ASTLet)
 }

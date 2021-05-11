@@ -7,7 +7,9 @@ fn main() {
     struct A<B> {
 
         A: fn(func: (a: a, b: b)) {
-            15s..=50m;
+            while {
+                console.log(a: 10);
+            };
         },
 
     }

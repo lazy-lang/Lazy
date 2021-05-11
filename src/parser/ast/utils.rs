@@ -24,6 +24,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                     Range { start, end: call.range.end }
                 },
                 ASTExpression::ForIn(for_in) => for_in.range,
+                ASTExpression::While(while_loop) => while_loop.range,
                 ASTExpression::If(ifexp) => ifexp.range,
                 ASTExpression::Char(ch) => ch.range,
                 ASTExpression::EnumAccess(e) => e.range
@@ -52,7 +53,8 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::Char(ch) => format!("{}Char ({})", unwrapped, ch.value),
         ASTExpression::EnumAccess(e) => format!("{}EnumAccess ( {}:{}({}) )", unwrapped, e.value.value, e.target.value, if e.init_value.is_some() { expression_to_string(e.init_value.as_ref().unwrap(), delimiter)} else { String::from("") }),
         ASTExpression::Call(call) => format!("{}Call {}({})", unwrapped, expression_to_string(&call.target, delimiter), pair_list_to_string(&call.args, delimiter)),
-        ASTExpression::ForIn(for_loop) => format!("{}For {} in {} ( {} )", unwrapped, for_loop.var.value, expression_to_string(&for_loop.iterable, delimiter), expression_to_string(&for_loop.body, delimiter))
+        ASTExpression::ForIn(for_loop) => format!("{}For {} in {} ( {} )", unwrapped, for_loop.var.value, expression_to_string(&for_loop.iterable, delimiter), expression_to_string(&for_loop.body, delimiter)),
+        ASTExpression::While(while_loop) => format!("{}While {} ({})", unwrapped, expression_to_string(&while_loop.condition, delimiter), expression_to_string(&while_loop.body, delimiter))
         //_ => String::from("Unknown")
     }
 }
