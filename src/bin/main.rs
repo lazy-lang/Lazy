@@ -7,10 +7,11 @@ fn main() {
     struct A<B> {
 
         A: fn(func: (a: a, b: b)) {
-            3 + -4;
+            15s..=50m;
         },
 
     }
+
     ";
     let vectored: Vec<_> = source.split('\n').collect();
     let mut p = Parser::new(&source);

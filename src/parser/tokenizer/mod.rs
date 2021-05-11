@@ -129,16 +129,14 @@ impl<'a> Tokenizer<'a> {
                 '0'..='9' => num.push(self.input.consume().unwrap()),
                 '.' => {
                     if dot {
-                        if num.ends_with('.') {
-                            self.input.unpeek(1);
-                            num.pop();
-                            return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
-                        }
                         self.input.consume();
                         let loc = self.input.loc();
                         self.error(ErrorType::DecimalPoint, start, loc); 
                         break;
                      };
+                    if self.input.peek(1) == Some('.') {
+                        return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
+                    }
                     self.input.consume();
                     dot = true;
                     num.push(ch);
@@ -153,8 +151,15 @@ impl<'a> Tokenizer<'a> {
         None => break
         }
         };
-
-        let token_type = if dot { TokenType::Float(num.parse().unwrap()) } else {TokenType::Int(num.parse().unwrap()) };
+        let multiply_val = match self.input.peek(0) {
+            Some('s') => 1000,
+            Some('m') => 60 * 1000,
+            Some('h') => 60 * 60 * 1000,
+            Some('d') => 24 * 60 * 60 * 1000,
+            _ => 0
+        };
+        if multiply_val != 0 { self.input.consume(); };
+        let token_type = if dot { TokenType::Float(num.parse::<f32>().unwrap() * multiply_val as f32) } else { TokenType::Int(num.parse::<i32>().unwrap() * multiply_val) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 
