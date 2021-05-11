@@ -21,6 +21,7 @@ fn main() {
         A: fn(func: (a: a, b: b)) {
             let name = \"Google\";
             self.some_fn(name).b;
+            1..=5;
         },
 
     }

@@ -107,6 +107,10 @@ impl<'a> Parser<'a> {
                     },
                     ".." => {
                         self.tokens.consume();
+                        let inclusive = if self.tokens.is_next(TokenType::Op(String::from("="))) {
+                            self.tokens.consume();
+                            true
+                        } else { false };
                         let end = self.parse_expression();
                         if end.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("end of iterator")), start, self.tokens.input.loc());
@@ -116,6 +120,7 @@ impl<'a> Parser<'a> {
                             ASTIterator {
                                 start: Box::from(token.unwrap()),
                                 end: Box::from(end.unwrap()),
+                                inclusive,
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
                         ))

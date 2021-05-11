@@ -106,6 +106,7 @@ pub struct ASTInitializor {
 pub struct ASTIterator {
     pub start: Box<ASTExpression>,
     pub end: Box<ASTExpression>,
+    pub inclusive: bool,
     pub range: Range
 }
 
