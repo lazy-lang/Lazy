@@ -135,6 +135,13 @@ pub struct ASTCall {
     pub range: Range
 }
 
+pub struct ASTForIn {
+    pub var: ASTVar,
+    pub iterable: Box<ASTExpression>,
+    pub body: Box<ASTExpression>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -153,6 +160,7 @@ pub enum ASTExpression {
     Init(ASTInitializor),
     Iterator(ASTIterator),
     Call(ASTCall),
+    ForIn(ASTForIn),
     If(ASTIf),
     Let(ASTLet)
 }

@@ -4,24 +4,10 @@ use lazy::parser::ast::utils::{statement_to_string};
 
 fn main() {
     let source = "
-
-    enum Types {
-        NORMAL,
-        REGULAR,
-        EPIC,
-        LEGENDARY: number
-    }
-
     struct A<B> {
 
-        some_fn: fn(name: string) -> string {
-            name.reverse();
-        },
-
         A: fn(func: (a: a, b: b)) {
-            let name = \"Google\";
-            self.some_fn(name).b;
-            1..=5;
+            3 + -4;
         },
 
     }

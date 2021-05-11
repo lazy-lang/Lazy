@@ -71,7 +71,7 @@ impl<'a> Tokenizer<'a> {
 
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "emit", "match", "while", "if", "else", "actor", "enum", "struct", "true", "false", "on", "single", "fn"],
+            keywords: vec!["main", "let", "for", "if", "in", "else", "enum", "struct", "true", "false", "fn"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
             standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
             current: None,

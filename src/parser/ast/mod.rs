@@ -469,7 +469,7 @@ impl<'a> Parser<'a> {
                         Some(ASTExpression::Unary(
                             ASTUnary {
                                 op: value,
-                                value: Box::from(self.parse_expression()?),
+                                value: Box::from(self.parse_expression_part()?),
                                 range: token.range
                             }
                         ))
@@ -555,17 +555,16 @@ impl<'a> Parser<'a> {
                         Some(ASTExpression::Function(self.parse_function(true)?))
                     },
                     "if" => {
-                        let start = self.tokens.input.loc();
                         let condition = if let Some(cond) = self.parse_expression() {
                              Box::from(cond)
                         } else {
-                            self.tokens.error(ErrorType::Expected(String::from("condition in if expression")), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::Expected(String::from("condition in if expression")), token.range.start, self.tokens.input.loc());
                              return None;
                         };
                         let then = if let Some(th) = self.parse_expression() {
                              Box::from(th)
                          } else {
-                            self.tokens.error(ErrorType::Expected(String::from("expression that will be executed if the condition is true")), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::Expected(String::from("expression that will be executed if the condition is true")), token.range.start, self.tokens.input.loc());
                             return None;
                          };
                          let otherwise = if self.tokens.is_next(TokenType::Kw(String::from("else"))) {
@@ -579,7 +578,33 @@ impl<'a> Parser<'a> {
                                 condition,
                                 then,
                                 otherwise,
-                                range: Range { start, end: self.tokens.input.loc() }
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    },
+                    "for" => {
+                        let var = self.parse_varname(false, false).0;
+                        if var.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("identifier")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        };
+                        if self.tokens.skip_or_err(TokenType::Kw(String::from("in")), None, None) { return None; };
+                        let iterator = self.parse_expression();
+                        if iterator.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("iterator")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        }
+                        let body = self.parse_expression();
+                        if body.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("for...in loop body")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        }
+                        return Some(ASTExpression::ForIn(
+                            ASTForIn {
+                                var: var.unwrap(),
+                                iterable: Box::from(iterator.unwrap()),
+                                body: Box::from(body.unwrap()),
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
                     },
