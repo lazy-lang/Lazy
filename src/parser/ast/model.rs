@@ -148,6 +148,13 @@ pub struct ASTWhile {
     pub range: Range
 }
 
+pub struct ASTType {
+    pub name: String,
+    pub typings: Option<ASTListTyping>,
+    pub value: ASTTypings,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -175,7 +182,8 @@ pub enum ASTExpression {
 // Any statement
 pub enum ASTStatement {
     EnumDeclaration(ASTEnumDeclaration),
-    Struct(ASTStruct)
+    Struct(ASTStruct),
+    Type(ASTType)
 }
 
 // Typings

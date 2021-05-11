@@ -71,7 +71,7 @@ impl<'a> Tokenizer<'a> {
 
     pub fn new(code: &'a str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn"],
+            keywords: vec!["main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
             standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
@@ -156,9 +156,9 @@ impl<'a> Tokenizer<'a> {
             Some('m') => 60 * 1000,
             Some('h') => 60 * 60 * 1000,
             Some('d') => 24 * 60 * 60 * 1000,
-            _ => 0
+            _ => 1
         };
-        if multiply_val != 0 { self.input.consume(); };
+        if multiply_val != 1 { self.input.consume(); };
         let token_type = if dot { TokenType::Float(num.parse::<f32>().unwrap() * multiply_val as f32) } else { TokenType::Int(num.parse::<i32>().unwrap() * multiply_val) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }

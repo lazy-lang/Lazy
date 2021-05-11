@@ -4,16 +4,15 @@ use lazy::parser::ast::utils::{statement_to_string};
 
 fn main() {
     let source = "
+
+    type a<A, B> = 1;
+
     struct A<B> {
 
         A: fn(func: (a: a, b: b)) {
-            while {
-                console.log(a: 10);
-            };
         },
 
     }
-
     ";
     let vectored: Vec<_> = source.split('\n').collect();
     let mut p = Parser::new(&source);

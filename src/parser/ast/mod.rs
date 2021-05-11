@@ -652,7 +652,7 @@ impl<'a> Parser<'a> {
                    "struct" => {
                         let name = self.parse_varname(true, true);
                         if name.0.is_none() { 
-                            self.tokens.error(ErrorType::Expected("struct name".to_string()), token.range.start, token.range.end);
+                            self.tokens.error(ErrorType::Expected(String::from("struct name")), token.range.start, token.range.end);
                             return None;
                         }
                         if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of struct fields"))), None) { return None; };
@@ -674,9 +674,30 @@ impl<'a> Parser<'a> {
                             }));
                         };
                     };
-                    self.tokens.error(ErrorType::Expected("enum name".to_string()), token.range.start, token.range.end);
+                    self.tokens.error(ErrorType::Expected(String::from("enum name")), token.range.start, token.range.end);
                     None
                    },
+                   "type" => {
+                       let name = self.parse_varname(true, true);
+                       if name.0.is_none() {
+                        self.tokens.error(ErrorType::Expected(String::from("type name")), self.tokens.input.loc(), self.tokens.input.loc());
+                        return None;
+                       }
+                       if self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None) { return None; };
+                       let typing = self.parse_typing(false);
+                       if typing.is_none() {
+                        self.tokens.error(ErrorType::Expected(String::from("typing")), self.tokens.input.loc(), self.tokens.input.loc());
+                        return None;
+                       }
+                       Some(ASTStatement::Type(
+                           ASTType {
+                               name: name.0.unwrap().value,
+                               typings: name.1,
+                               value: typing.unwrap(),
+                               range: Range { start, end: self.tokens.input.loc() }
+                           }
+                       ))
+                   }
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                     self.tokens.input.skip_line();

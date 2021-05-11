@@ -106,6 +106,7 @@ pub fn statement_to_string(ast: &ASTStatement, delimiter: Option<char>) -> Strin
     match ast {
         ASTStatement::Struct(structure) => format!("{}Struct<{}> {} ( {} )", unwrapped, if structure.typings.is_some() { list_typing_to_string(structure.typings.as_ref().unwrap(), delimiter) } else { String::from("none") }, structure.name.value, pair_list_typing_to_string(&structure.fields, delimiter)),
         ASTStatement::EnumDeclaration(en) => format!("{}Enum {} ( {} )", unwrapped, en.name, pair_list_typing_to_string(&en.values, delimiter)),
+        ASTStatement::Type(typing) => format!("{}Type<{}> {} = {}", unwrapped, if typing.typings.is_some() { list_typing_to_string(typing.typings.as_ref().unwrap(), delimiter)} else {String::from("none")}, typing.name, typing_to_string(&typing.value, delimiter))
         //_ => String::from("Unknown")
     } 
 }
