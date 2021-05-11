@@ -122,7 +122,17 @@ impl<'a> Parser<'a> {
                     },
                     _ => token
                 }
-                // TBD: Add ( for calling functions
+            },
+            TokenType::Punc('(') => {
+                    self.tokens.consume();
+                    let args = self.parse_pair_list(true, ')');
+                    self.parse_suffix(Some(ASTExpression::Call(
+                        ASTCall {
+                            target: Box::from(token.unwrap()),
+                            args,
+                            range: Range { start, end: self.tokens.input.loc() }
+                        }
+                    )))
             },
             _ => token
         }
@@ -250,7 +260,7 @@ impl<'a> Parser<'a> {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
             if key.0.is_none() { continue; };
-            match self.tokens.expect_punc(&[',', ':', '}'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':', closing_punc], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -268,12 +278,13 @@ impl<'a> Parser<'a> {
                             }
                             res.push((key.0.unwrap().value, exp));
                         },
-                        '}' => {
+                        ch if ch == closing_punc => {
                             if !allow_without_val {
                                 self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
                             has_consumed_bracket = true;
+                            res.push((key.0.unwrap().value, None));
                             break;
                         },
                         _ => {}
@@ -303,7 +314,7 @@ impl<'a> Parser<'a> {
                 self.tokens.consume();
                 is_optional = true;
             }
-            match self.tokens.expect_punc(&[',', ':', '?', '}'], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':', '?', closing_punc], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -323,12 +334,13 @@ impl<'a> Parser<'a> {
                             res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional});
                             is_optional = false;
                         },
-                        '}' => {
+                        ch if ch == closing_punc => {
                             if !allow_without_val {
                                 self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
                             has_consumed_bracket = true;
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional});
                             break;
                         },
                         _ => {}

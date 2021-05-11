@@ -15,7 +15,14 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Init(init) => Range { start: init.target.range.start, end: init.params.range.end},
                 ASTExpression::Optional(op) => op.range,
                 ASTExpression::Function(fun) => fun.range,
-                ASTExpression::Iterator(init) => init.range,
+                ASTExpression::Iterator(init) => {
+                    let start = full_expression_range(&init.start).start;
+                    Range { start, end: init.range.end }
+                },
+                ASTExpression::Call(call) => {
+                    let start = full_expression_range(&call.target).start;
+                    Range { start, end: call.range.end }
+                },
                 ASTExpression::If(ifexp) => ifexp.range,
                 ASTExpression::Char(ch) => ch.range,
                 ASTExpression::EnumAccess(e) => e.range
@@ -43,6 +50,7 @@ pub fn expression_to_string(ast: &ASTExpression, delimiter: Option<char>) -> Str
         ASTExpression::If(exp) => format!("{}If ({}) {} {}", unwrapped, expression_to_string(&exp.condition, delimiter), expression_to_string(&exp.then, delimiter), if exp.otherwise.is_some() { format!("else {}", expression_to_string(exp.otherwise.as_ref().unwrap(), delimiter)) } else { String::from("") } ),
         ASTExpression::Char(ch) => format!("{}Char ({})", unwrapped, ch.value),
         ASTExpression::EnumAccess(e) => format!("{}EnumAccess ( {}:{}({}) )", unwrapped, e.value.value, e.target.value, if e.init_value.is_some() { expression_to_string(e.init_value.as_ref().unwrap(), delimiter)} else { String::from("") }),
+        ASTExpression::Call(call) => format!("{}Call {}({})", unwrapped, expression_to_string(&call.target, delimiter), pair_list_to_string(&call.args, delimiter))
         //_ => String::from("Unknown")
     }
 }

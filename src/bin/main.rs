@@ -15,11 +15,12 @@ fn main() {
     struct A<B> {
 
         some_fn: fn(name: string) -> string {
-            name.reverse{};
+            name.reverse();
         },
 
         A: fn(func: (a: a, b: b)) {
-            self.some_fn{};
+            let name = \"Google\";
+            self.some_fn(name).b;
         },
 
     }

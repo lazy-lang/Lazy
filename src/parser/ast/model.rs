@@ -128,6 +128,12 @@ pub struct ASTEnumAccess {
     pub range: Range
 }
 
+pub struct ASTCall {
+    pub target: Box<ASTExpression>,
+    pub args: ASTPairList,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -145,6 +151,7 @@ pub enum ASTExpression {
     Function(ASTFunction),
     Init(ASTInitializor),
     Iterator(ASTIterator),
+    Call(ASTCall),
     If(ASTIf),
     Let(ASTLet)
 }
