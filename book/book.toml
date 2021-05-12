@@ -1,0 +1,10 @@
+[book]
+authors = ["GoogleFeud"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Lazy By Example"
+
+[build]
+build-dir = "../docs"
+create-missing = false
