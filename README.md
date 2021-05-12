@@ -1,2 +1,5 @@
 # Lazy
-A dynamic programming language
+
+A programming language
+
+[Specification](https://googlefeud.github.io/Lazy/)
