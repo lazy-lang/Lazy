@@ -1,4 +1,5 @@
 
+use std::fmt;
 use super::Range;
 
 // A string literalz
@@ -222,4 +223,232 @@ pub enum ASTTypings {
     PairList(ASTPairListTyping),
     Function(ASTFunction),
     Tuple(ASTListTyping)
+}
+
+impl fmt::Display for ASTVarTyping {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}<{}>", self.value, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") })
+    }
+}
+
+impl fmt::Display for ASTPairListTyping {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string = String::new();
+        for pair in &self.pairs {
+            string.push_str(&format!("{}{}: {}", pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
+        };
+        write!(f, "{}", string)
+    }
+}
+
+impl fmt::Display for ASTFunction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "fn({}) {}", self.params, if self.body.is_some() { format!("{}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
+    }
+}
+
+impl fmt::Display for ASTListTyping {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string = String::new();
+        for entry in &self.entries {
+            string.push_str(&entry.to_string());
+        };
+        write!(f, "{}", string)
+    }
+}
+
+impl fmt::Display for ASTExpression {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            ASTExpression::Str(str) => str.fmt(f),
+            ASTExpression::Bool(boolean) => boolean.fmt(f),
+            ASTExpression::Int(i) => i.fmt(f),
+            ASTExpression::Float(fl) => fl.fmt(f),
+            ASTExpression::Binary(bin) => bin.fmt(f),
+            ASTExpression::Unary(un) => un.fmt(f),
+            ASTExpression::Var(variable) => variable.fmt(f),
+            ASTExpression::Optional(op) => op.fmt(f),
+            ASTExpression::DotAccess(op) => op.fmt(f),
+            ASTExpression::Block(block) => block.fmt(f),
+            ASTExpression::Function(func) => func.fmt(f),
+            ASTExpression::Let(st) => st.fmt(f),
+            ASTExpression::Init(initializor) => initializor.fmt(f),
+            ASTExpression::Iterator(it) => it.fmt(f),
+            ASTExpression::If(exp) => exp.fmt(f),
+            ASTExpression::Char(ch) => ch.fmt(f),
+            ASTExpression::EnumAccess(e) => e.fmt(f),
+            ASTExpression::Call(call) => call.fmt(f),
+            ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
+            ASTExpression::While(while_loop) => while_loop.fmt(f)
+        }
+    }
+}
+
+
+impl fmt::Display for ASTTypings {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            ASTTypings::Tuple(tup) => tup.fmt(f),
+            ASTTypings::Var(var) => var.fmt(f),
+            ASTTypings::PairList(list) => list.fmt(f),
+            ASTTypings::Function(func) => func.fmt(f)
+        }
+    }
+}
+
+impl fmt::Display for ASTStatement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            ASTStatement::Struct(structure) => structure.fmt(f),
+            ASTStatement::EnumDeclaration(en) => en.fmt(f),
+            ASTStatement::Type(typing) => typing.fmt(f)
+        } 
+    }
+}
+
+impl fmt::Display for ASTStr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTInt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTFloat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTVar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTBool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTChar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl fmt::Display for ASTBinary {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {}", self.left, self.op, self.right)
+    }
+}
+
+impl fmt::Display for ASTUnary {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.op, self.value)
+    }
+}
+
+impl fmt::Display for ASTIterator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}..{}{}", self.start, if self.inclusive {"="} else {""}, self.end)
+    }
+}
+
+
+impl fmt::Display for ASTDotAccess {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+         write!(f, "{}.{}", self.value, self.target)
+    }
+}
+
+impl fmt::Display for ASTPairList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string = String::new();
+        for pair in &self.pairs {
+            string.push_str(&format!("{}: {}", pair.0, if pair.1.is_some() { pair.1.as_ref().unwrap().to_string() } else { String::from("{}") }));
+        };
+        write!(f, "{{ {} }}", string)
+   }
+}
+
+impl fmt::Display for ASTCall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+         write!(f, "{}({}", self.target, self.args)
+    }
+}
+
+impl fmt::Display for ASTEnumAccess {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}({})", self.value, self.target, if self.init_value.is_some() { self.init_value.as_ref().unwrap().to_string() } else { String::from("none") })
+   }
+}
+
+impl fmt::Display for ASTInitializor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.target, self.params)
+   }
+}
+
+impl fmt::Display for ASTForIn {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "for {} in {} {{\n {} \n}}", self.var, self.iterable, self.body)
+   }
+}
+
+impl fmt::Display for ASTWhile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "while {} {{\n {} \n}}",self.condition, self.body)
+   }
+}
+
+impl fmt::Display for ASTBlock {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string = String::new();
+        for exp in &self.elements {
+            string.push_str(&format!("\n{}", exp));
+        }
+        write!(f, "{{{} \n}}", string)
+   }
+}
+
+impl fmt::Display for ASTLet {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "let {}<{}> = {}\n", self.var, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, if self.value.is_some() { self.typings.as_ref().unwrap().to_string()} else { String::from("none") })
+   }
+}
+
+impl fmt::Display for ASTType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "type {}<{}> = {}\n", self.name, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.value)
+   }
+}
+
+impl fmt::Display for ASTEnumDeclaration {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "enum {} {{\n {} }}\n", self.name, self.values)
+   }
+}
+
+impl fmt::Display for ASTStruct {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "struct {}<{}> {{\n {} }}\n", self.name, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.fields)
+   }
+}
+
+impl fmt::Display for ASTOptional {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}?", self.value)
+   }
+}
+
+impl fmt::Display for ASTIf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "if {} {} {}", self.condition, self.then, if self.otherwise.is_some() { format!("else {}", self.otherwise.as_ref().unwrap()) } else {String::from("")})
+   }
 }
