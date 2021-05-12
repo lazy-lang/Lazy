@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Literals - Lazy By Example</title>
+        <title>Partials - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html" class="active"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html" class="active"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,31 +165,55 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="literals"><a class="header" href="#literals">Literals</a></h1>
-<p>Almost all literals are what'd you expect them to be.</p>
-<h2 id="numbers"><a class="header" href="#numbers">Numbers</a></h2>
-<pre><code>let my_age = 18; //  inferred type: i32
-let my_height = 6.1; // inferred type: f32
+                        <h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
+<p><code>Lazy</code> does not have core OOP design patters like inheritance, or <code>traits</code> like in Rust, but it has another powerful tool: <code>Partials</code>!</p>
+<h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
+<pre><code>struct Animal {
+    name: str,
+    age: i8,
 
-let not_inferred&lt;u8&gt; = 12; // Not inferred, number is an u8
+    make_noise: fn(noise?: str) print(noise: noise || &quot;*quiet*&quot;)
+}
+
+struct Human {
+    name: str,
+    age: i8,
+    job: str
+
+    make_noise: fn() print(noise: &quot;Hello World&quot;)
+}
+
+type WithName = { name: str };
+
+main {
+    // The function will only have access to the name field
+    let get_name = fn(thing: WithName) -&gt; str {
+        thing.name;
+    }
+
+    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+
+    get_name(me); // Google
+    get_name(some_animal); // Perry
+}
 </code></pre>
-<p>Numbers can contain underscores (<code>_</code>) to improve readability:</p>
-<pre><code>let big_num = 100_00_00; 
-let same_big_num = 1000000;
-big_num == same_big_num; // returns &quot;true&quot;
-</code></pre>
-<p>To improve working with milliseconds, numbers can be prefixed with <code>s</code>, <code>m</code>, <code>h</code> and <code>d</code> to be automatically converted. This is done during compile time, so there's zero overhead!</p>
-<pre><code>let one_min_in_milliseconds = 1m; 
-one_min_in_milliseconds == 60000; // returns &quot;true&quot;
-</code></pre>
-<h2 id="iterators"><a class="header" href="#iterators">Iterators</a></h2>
-<pre><code>0..5; // Creates an iterator from 0 (inclusive) to 5 (exclusive), so 0, 1, 2, 3 and 4.
-5..=10; // Creates an iterator from 5 (inclusive) to 10 (inclusive) 
-</code></pre>
-<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
-<p>In <code>Lazy</code>, functions are <strong>first-class citizens</strong>, you can pass them as parameters, save them in variables and so on.</p>
-<pre><code>let my_fn = fn() 1 + 1;
-my_fn(); // returns 2
+<h2 id="partial-function"><a class="header" href="#partial-function">Partial function</a></h2>
+<pre><code>// Requires the type to have a &quot;make_noise&quot; method - we don't care about params or return value in this case
+type MakesNoise = { make_noise: () };
+
+main {
+    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+
+    let stuff_that_makes_noise = Vec&lt;MakesNoise&gt;{};
+    stuff_that_makes_noise.push(me);
+    stuff_that_makes_noise.push(some_animal);
+
+    stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
+    stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
+}
+
 </code></pre>
 
                     </main>
@@ -197,15 +221,11 @@ my_fn(); // returns 2
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../primitives/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../custom_types/structs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
-                        
-                            <a rel="next" href="../custom_types/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -215,35 +235,16 @@ my_fn(); // returns 2
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../primitives/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../custom_types/structs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../custom_types/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
-                
             </nav>
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

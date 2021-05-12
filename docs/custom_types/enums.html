@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Welcome - Lazy By Example</title>
+        <title>Enums - Lazy By Example</title>
         
         
 
@@ -18,28 +18,28 @@
         <meta name="theme-color" content="#ffffff" />
 
         
-        <link rel="icon" href="favicon.svg">
+        <link rel="icon" href="../favicon.svg">
         
         
-        <link rel="shortcut icon" href="favicon.png">
+        <link rel="shortcut icon" href="../favicon.png">
         
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
         
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="stylesheet" href="../css/print.css" media="print">
         
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
         
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
         
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
         
@@ -49,7 +49,7 @@
     <body>
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
-            var path_to_root = "";
+            var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html" class="active"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -131,7 +131,7 @@
 
                     <div class="right-buttons">
                         
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                         
@@ -165,47 +165,30 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="welcome"><a class="header" href="#welcome">Welcome</a></h1>
-<p>This book acts as the <strong>specification</strong> for the <strong>Lazy</strong> programming language! Every detail about the language (grammar, data types, memory management, JIT) is provided, as well as examples. </p>
-<p>Lazy is a statically typed, interpreted programming language. </p>
-<h2 id="a-taste"><a class="header" href="#a-taste">A taste</a></h2>
-<pre><code>struct Person {
-    name: str,
-    age: float,
-    hobby?: str,
-
-    age_up: fn() {
-        self.age += 1;
-    }
-
+                        <h1 id="enums"><a class="header" href="#enums">Enums</a></h1>
+<p>Enums are types which may be one or a few different variants.</p>
+<pre><code>enum Number {
+    Int: i32,
+    Float: f32
 }
 
-enum AnimalTypes {
-    Dog,
-    Cat,
-    Fish,
-    Bird
+enum TokenTypes {
+    String: str,
+    Integer: i32,
+    Number: Number,
+    Character: char,
+    Invalid
 }
-
-struct Animal {
-    name: str,
-    age: i8,
-    type: AnimalTypes
-}
-
-type ThingWithName = {name: str};
 
 main {
-    let me = Person{ name: &quot;Google&quot;, age: 19 };
-    let my_pet = Animal { name: &quot;Baby&quot;, age: 1, type: AnimalTypes:Bird };
+    let str_token = TokenTypes:String(&quot;some token type&quot;);
+    str_token == TokenTypes:String; // returns true
 
-    let things = Vec&lt;ThingWithName&gt;{};
-    things.push(me);
-    things.push(my_pet);
+    // str_token gets automatically unwrapped
+    if str_token == TokenTypes:String print(token: str_token) // prints &quot;some token type&quot;
+    else if str_token == TokenTypes:Integer print(token: str_token + 5)
 
-    for thing in things {
-        print(name: thing.name);
-    }
+    let num_token = TokenTypes:Number(Number:Int(3000));
 }
 </code></pre>
 
@@ -214,9 +197,13 @@ main {
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
+                            <a rel="prev" href="../custom_types/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
 
                         
-                            <a rel="next" href="primitives/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../custom_types/structs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -228,9 +215,13 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
+                    <a rel="prev" href="../custom_types/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
 
                 
-                    <a rel="next" href="primitives/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../custom_types/structs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
@@ -238,21 +229,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         
@@ -268,14 +244,14 @@ main {
         
 
         
-        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
         
 
-        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
         

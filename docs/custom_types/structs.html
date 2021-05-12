@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Custom Types - Lazy By Example</title>
+        <title>Structs - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html" class="active"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html" class="active"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,18 +165,52 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="custom-types"><a class="header" href="#custom-types">Custom Types</a></h1>
-<p>There are two ways to create custom types in <strong>Lazy</strong>:</p>
-<ul>
-<li><code>enum</code> - For creating enumerations with different variants, which can hold values of different types</li>
-<li><code>struct</code> - Structs are very similar to C structs, except they can contain functions</li>
-</ul>
-<h2 id="type-aliasing"><a class="header" href="#type-aliasing">Type aliasing</a></h2>
-<p>Type aliasing can be done by using the <code>type</code> keyword:</p>
-<pre><code>type i = i8;
+                        <h1 id="structs"><a class="header" href="#structs">Structs</a></h1>
+<p>Structs contain key-value pairs called <code>fields</code>. All keys and the types of the values must be known at compile-time.</p>
+<pre><code>struct Something&lt;GenericParam&gt; {
+    val: GenericParam,
 
-main {
-    let a&lt;i&gt; = 4;
+    // Empty constructor - fallbacks to the default
+    Something: fn() {},
+
+    set: fn(val: GenericParam) -&gt; bool {
+        self.val = val;
+        true;
+    }
+
+}
+</code></pre>
+<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
+<p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
+<pre><code>struct StructWithOptionalField {
+    // Can either be &quot;none&quot;, or &quot;str&quot;
+    something?: str
+}
+</code></pre>
+<h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
+<p>Fields are accessed using the dot notation (<code>.</code>).</p>
+<pre><code>main {
+    let my_smth = Something&lt;str&gt;{val: &quot;Hello&quot;};
+    my_smth.set(val: &quot;World&quot;);
+    my_smth.val.length; // returns 5
+}
+</code></pre>
+<h2 id="accessing-optional-fields"><a class="header" href="#accessing-optional-fields">Accessing optional fields</a></h2>
+<p>Optional fields can be accessed by the dot notation, but you must put a question mark (<code>?</code>) before the dot. If the optional struct is empty, then the execution context is left immediately, and the function returns <code>none</code> or the actual supposed return type.</p>
+<pre><code>main {
+    let my_fn = fn(op: StructWithOptionalField) -&gt; str {
+        op.something?;
+    }
+    let my_struct = StructWithOptionalField{};
+    my_fn(my_struct); // Returns none
+    my_struct.something = &quot;Hello World&quot;;
+    my_fn(my_struct); // Returns &quot;Hello World&quot;
+}
+</code></pre>
+<p>Keep in mind that you <strong>cannot</strong> use optional fields before you make sure they are not <code>none</code>. </p>
+<pre><code>if my_struct != none {
+    // my_struct is guaranteed to not be none here, no need for question marks!
+    print(val: my_struct.something);
 }
 </code></pre>
 
@@ -185,13 +219,13 @@ main {
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../primitives/literals.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../custom_types/enums.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="../custom_types/enums.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../custom_types/partials.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -203,13 +237,13 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../primitives/literals.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../custom_types/enums.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../custom_types/enums.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../custom_types/partials.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
@@ -217,21 +251,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

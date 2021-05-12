@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Enums - Lazy By Example</title>
+        <title>Primitives - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html" class="active"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html" class="active"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,45 +165,33 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="enums"><a class="header" href="#enums">Enums</a></h1>
-<p>Enums are types which may be one or a few different variants.</p>
-<pre><code>enum Number {
-    Int: i32,
-    Float: f32
-}
-
-enum TokenTypes {
-    String: str,
-    Integer: i32,
-    Number: Number,
-    Character: char,
-    Invalid
-}
-
-main {
-    let str_token = TokenTypes:String(&quot;some token type&quot;);
-    str_token == TokenTypes:String; // returns true
-
-    // str_token gets automatically unwrapped
-    if str_token == TokenTypes:String print(token: str_token) // prints &quot;some token type&quot;
-    else if str_token == TokenTypes:Integer print(token: str_token + 5)
-
-    let num_token = TokenTypes:Number(Number:Int(3000));
-}
-</code></pre>
+                        <h1 id="primitives"><a class="header" href="#primitives">Primitives</a></h1>
+<p>Much like the rest programming languages, Lazy provides a bunch of primitive data types.</p>
+<h2 id="scalar-types"><a class="header" href="#scalar-types">Scalar types</a></h2>
+<ul>
+<li>Signed integers: <code>i8</code>, <code>i16</code>, <code>i32</code></li>
+<li>Unsigned integers: <code>u8</code>, <code>u16</code>, <code>u32</code></li>
+<li>Floating points: <code>f32</code></li>
+<li>Characters: <code>char</code></li>
+<li>Strings: <code>str</code></li>
+<li>Booleans: <code>true</code> or <code>false</code></li>
+<li>The <code>none</code> data type</li>
+</ul>
+<h2 id="compound-types"><a class="header" href="#compound-types">Compound types</a></h2>
+<p>Lazy does not have any primitive compound types - but it does provide a <code>Vec</code> type which is a dynamically-allocated array, and the <code>HashMap</code> type.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../custom_types/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../welcome.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="../custom_types/structs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../primitives/literals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -215,13 +203,13 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../custom_types/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../welcome.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../custom_types/structs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../primitives/literals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
@@ -229,21 +217,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         
