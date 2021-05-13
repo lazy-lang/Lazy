@@ -63,6 +63,7 @@ pub struct Tokenizer<'a> {
     keywords: Vec<&'a str>,
     operators: Vec<char>,
     standalone_operators: Vec<&'a str>,
+    banned_joined_operators: Vec<&'a str>,
     current: Option<Token>,
     pub errors: Vec<Error>,
     pub input: InputParser,
@@ -76,6 +77,7 @@ impl<'a> Tokenizer<'a> {
             keywords: vec!["main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type", "const"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
             standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
+            banned_joined_operators: vec!["<>"], // Operaotrs which alone can be combined, but cannot be combined in this exact combination
             current: None,
             errors: vec![],
             is_last_num_as_str: false,
@@ -199,6 +201,10 @@ impl<'a> Tokenizer<'a> {
         let start = self.input.loc();
         let mut op = String::new();
         while !self.input.is_eof() {
+            if self.banned_joined_operators.iter().any(|&i| i == op) {
+                self.error(ErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
+                break;
+            }
             if self.standalone_operators.iter().any(|&i| i == op) { break; };
             let ch = self.input.peek(0).unwrap();
             if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) }

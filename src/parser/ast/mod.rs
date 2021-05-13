@@ -211,10 +211,7 @@ impl<'a> Parser<'a> {
                     }
                 }
             },
-            None => {
-                self.tokens.error(ErrorType::Expected(String::from("typing")), self.tokens.input.loc(), self.tokens.input.loc());
-                None
-            }
+            None => None
         }
     }
 
@@ -408,7 +405,8 @@ impl<'a> Parser<'a> {
             res.push(typing);
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
-        self.tokens.skip_or_err(closing_tok, Some(ErrorType::Expected(String::from(">"))), Some(Range { start, end: self.tokens.input.loc()}));
+        let closing_tok_str = closing_tok.to_string();
+        self.tokens.skip_or_err(closing_tok, Some(ErrorType::Expected(closing_tok_str)), Some(Range { start, end: self.tokens.input.loc()}));
         ASTListTyping {
             entries: res,
             range: Range { start, end: self.tokens.input.loc() }

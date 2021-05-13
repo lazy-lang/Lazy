@@ -7,7 +7,7 @@ fn main() {
     struct A<B> {
 
         A?: fn(func: (a: a, b: b)) {
-            let a<[i32, i32, str]> = [1, 2, \"Hello World\"];
+            let a = [1, 2, \"Hello World\"];
             a.4.5.2;
         },
 

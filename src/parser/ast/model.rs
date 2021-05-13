@@ -226,17 +226,17 @@ pub enum ASTTypings {
 
 impl fmt::Display for ASTVarTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}<{}>", self.value, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") })
+        write!(f, "{}{}", self.value, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") })
     }
 }
 
 impl fmt::Display for ASTPairListTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut string = String::new();
+        let mut string: Vec<String> = vec![];
         for pair in &self.pairs {
-            string.push_str(&format!("{}{}: {}", pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
+            string.push(format!("{}{}: {}", pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
         };
-        write!(f, "{}", string)
+        write!(f, "{}", string.join(", "))
     }
 }
 
@@ -248,11 +248,11 @@ impl fmt::Display for ASTFunction {
 
 impl fmt::Display for ASTListTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut string = String::new();
+        let mut string: Vec<String> = vec![];
         for entry in &self.entries {
-            string.push_str(&entry.to_string());
+            string.push(entry.to_string());
         };
-        write!(f, "{}", string)
+        write!(f, "{}", string.join(", "))
     }
 }
 
@@ -419,13 +419,13 @@ impl fmt::Display for ASTBlock {
 
 impl fmt::Display for ASTDeclare {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {}<{}> = {}\n", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
+        write!(f, "{} {}{} = {}\n", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
    }
 }
 
 impl fmt::Display for ASTType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "type {}<{}> = {}\n", self.name, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.value)
+        write!(f, "type {}{} = {}\n", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
    }
 }
 
@@ -437,7 +437,7 @@ impl fmt::Display for ASTEnumDeclaration {
 
 impl fmt::Display for ASTStruct {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "struct {}<{}> {{\n {} }}\n", self.name, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.fields)
+        write!(f, "struct {}{} {{\n {} }}\n", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.fields)
    }
 }
 
