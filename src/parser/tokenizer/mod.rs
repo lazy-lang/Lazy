@@ -5,6 +5,7 @@ use error::*;
 use super::input_parser::{LoC, InputParser};
 
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub enum TokenType {
     Str(String),
     Float(f32),
@@ -64,7 +65,8 @@ pub struct Tokenizer<'a> {
     standalone_operators: Vec<&'a str>,
     current: Option<Token>,
     pub errors: Vec<Error>,
-    pub input: InputParser
+    pub input: InputParser,
+    pub is_last_num_as_str: bool
 }
 
 impl<'a> Tokenizer<'a> {
@@ -76,6 +78,7 @@ impl<'a> Tokenizer<'a> {
             standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
             current: None,
             errors: vec![],
+            is_last_num_as_str: false,
             input: InputParser::new(code)
         }
     }
@@ -128,13 +131,17 @@ impl<'a> Tokenizer<'a> {
             match ch {
                 '0'..='9' => num.push(self.input.consume().unwrap()),
                 '.' => {
+                    if self.is_last_num_as_str {
+                        self.is_last_num_as_str = false;
+                        break;
+                    }
                     if dot {
                         self.input.consume();
                         let loc = self.input.loc();
                         self.error(ErrorType::DecimalPoint, start, loc); 
                         break;
                      };
-                    if self.input.peek(1) == Some('.') {
+                     if self.input.peek(1) == Some('.') {
                         return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
                     }
                     self.input.consume();
@@ -264,7 +271,7 @@ impl<'a> Tokenizer<'a> {
         let next = self.peek();
         match next {
             Some(token) => token.val == tok,
-            None => false
+            None => true
         }
     }
 

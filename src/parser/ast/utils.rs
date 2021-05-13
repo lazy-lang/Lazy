@@ -30,7 +30,8 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::While(while_loop) => while_loop.range,
                 ASTExpression::If(ifexp) => ifexp.range,
                 ASTExpression::Char(ch) => ch.range,
-                ASTExpression::EnumAccess(e) => e.range
+                ASTExpression::EnumAccess(e) => e.range,
+                ASTExpression::Tuple(tup) => tup.range
         }
 }
 

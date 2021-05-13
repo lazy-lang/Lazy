@@ -183,7 +183,8 @@ pub enum ASTExpression {
     ForIn(ASTForIn),
     While(ASTWhile),
     If(ASTIf),
-    Declare(ASTDeclare)
+    Declare(ASTDeclare),
+    Tuple(ASTExpressionList)
 }
 
 // Any statement
@@ -192,13 +193,6 @@ pub enum ASTStatement {
     Struct(ASTStruct),
     Type(ASTType)
 }
-
-// Typings
-// typing_name
-// TypingName<generics>
-// {key: typing_name},
-// (param: typing_name) -> return_type
-// [type, type] 
 
 pub struct ASTPairTypingItem {
     pub name: String,
@@ -211,7 +205,6 @@ pub struct ASTPairListTyping {
     pub pairs: Vec<ASTPairTypingItem>,
     pub range: Range
 }
-
 
 pub struct ASTListTyping {
     pub entries: Vec<ASTTypings>,
@@ -285,7 +278,8 @@ impl fmt::Display for ASTExpression {
             ASTExpression::EnumAccess(e) => e.fmt(f),
             ASTExpression::Call(call) => call.fmt(f),
             ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
-            ASTExpression::While(while_loop) => while_loop.fmt(f)
+            ASTExpression::While(while_loop) => while_loop.fmt(f),
+            ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string())
         }
     }
 }
@@ -314,7 +308,7 @@ impl fmt::Display for ASTStatement {
 
 impl fmt::Display for ASTStr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.value)
+        write!(f, "\"{}\"", self.value)
     }
 }
 
@@ -344,7 +338,7 @@ impl fmt::Display for ASTBool {
 
 impl fmt::Display for ASTChar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.value)
+        write!(f, "'{}'", self.value)
     }
 }
 
