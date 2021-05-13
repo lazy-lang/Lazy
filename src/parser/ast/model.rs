@@ -132,7 +132,7 @@ pub struct ASTEnumAccess {
 
 pub struct ASTCall {
     pub target: Box<ASTExpression>,
-    pub args: ASTPairList,
+    pub args: ASTExpressionList,
     pub range: Range
 }
 
@@ -153,6 +153,11 @@ pub struct ASTType {
     pub name: String,
     pub typings: Option<ASTListTyping>,
     pub value: ASTTypings,
+    pub range: Range
+}
+
+pub struct ASTExpressionList {
+    pub expressions: Vec<ASTExpression>,
     pub range: Range
 }
 
@@ -379,7 +384,7 @@ impl fmt::Display for ASTPairList {
 
 impl fmt::Display for ASTCall {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-         write!(f, "{}({}", self.target, self.args)
+         write!(f, "{}({})", self.target, self.args)
     }
 }
 
@@ -450,5 +455,15 @@ impl fmt::Display for ASTOptional {
 impl fmt::Display for ASTIf {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "if {} {} {}", self.condition, self.then, if self.otherwise.is_some() { format!("else {}", self.otherwise.as_ref().unwrap()) } else {String::from("")})
+   }
+}
+
+impl fmt::Display for ASTExpressionList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut string: Vec<String> = vec![];
+        for exp in &self.expressions {
+            string.push(exp.to_string());
+        }
+        write!(f, "{}", string.join(", "))
    }
 }

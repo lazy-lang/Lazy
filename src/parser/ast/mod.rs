@@ -130,7 +130,7 @@ impl<'a> Parser<'a> {
             },
             TokenType::Punc('(') => {
                     self.tokens.consume();
-                    let args = self.parse_pair_list(true, ')');
+                    let args = self.parse_expression_list(')');
                     self.parse_suffix(Some(ASTExpression::Call(
                         ASTCall {
                             target: Box::from(token.unwrap()),
@@ -261,7 +261,7 @@ impl<'a> Parser<'a> {
         let start = self.tokens.input.loc();
         let mut res: Vec<(String, Option<ASTExpression>)> = vec![];
         let mut has_consumed_bracket = false;
-        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc(closing_punc)) {
+        while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
             if key.0.is_none() { continue; };
@@ -306,12 +306,28 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_expression_list(&mut self, closing_punc: char) -> ASTExpressionList {
+        let start = self.tokens.input.loc();
+        let mut expressions: Vec<ASTExpression> = vec![];
+        while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
+            let exp = self.parse_expression();
+            if exp.is_none() { break; };
+            expressions.push(exp.unwrap());
+            if !self.tokens.is_next(TokenType::Punc(closing_punc)) { self.tokens.skip_or_err(TokenType::Punc(','), None, None); };
+        };
+        self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None);
+        return ASTExpressionList {
+            expressions,
+            range: Range { start, end: self.tokens.input.loc() }
+        }
+    }
+
     fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, closing_punc: char) -> ASTPairListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTPairTypingItem> = vec![];
         let mut is_optional = false;
         let mut has_consumed_bracket = false;
-        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc(closing_punc)) {
+        while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false);
             if key.0.is_none() { continue; };
@@ -355,7 +371,7 @@ impl<'a> Parser<'a> {
             };
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
-        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(Range { start, end: self.tokens.input.loc()})); };
+        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None); };
         ASTPairListTyping {
             range: Range { start, end: self.tokens.input.loc() },
             pairs: res
@@ -365,7 +381,7 @@ impl<'a> Parser<'a> {
     fn parse_typing_list(&mut self, only_varnames: bool, allow_fn_keyword: bool) -> ASTListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTTypings> = vec![];
-        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Op(String::from(">"))) {
+        while !self.tokens.is_next(TokenType::Op(String::from(">"))) {
             let id_start = self.tokens.input.loc();
             let maybe_typing = self.parse_typing(allow_fn_keyword);
             if maybe_typing.is_none() { break; };

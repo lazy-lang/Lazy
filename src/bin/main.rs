@@ -7,7 +7,7 @@ fn main() {
     struct A<B> {
 
         A?: fn(func: (a: a, b: b)) {
-            1 + 1;
+            call(call.me, 5);
         },
 
         b: g
