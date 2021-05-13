@@ -225,9 +225,15 @@ main {
 <h2 id="compound-types"><a class="header" href="#compound-types">Compound types</a></h2>
 <h3 id="tuples"><a class="header" href="#tuples">Tuples</a></h3>
 <p>Tuples can hold values of different types:</p>
-<pre><code>const items&lt;|str, i32, bool|&gt; = |&quot;Hello&quot;, 64, true|;
+<pre><code>const items&lt;[str, i32, bool]&gt; = [&quot;Hello&quot;, 64, true];
 
 items.1; // 64
+</code></pre>
+<h3 id="arrays"><a class="header" href="#arrays">Arrays?</a></h3>
+<p><code>Lazy</code> does not support arrays natively, but it does provide a <code>Vec</code> struct, which is an array located on the <strong>heap</strong>. Those are always more useful anyways.</p>
+<pre><code>let nums = Vec&lt;i32&gt;{ iter: 0..10 };
+nums.push(15);
+nums.filter(fn(n) n % 2);
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="literals"><a class="header" href="#literals">Literals</a></h1>
 <p>Almost all literals are what'd you expect them to be.</p>
@@ -442,21 +448,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         
