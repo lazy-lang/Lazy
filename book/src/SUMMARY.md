@@ -8,3 +8,4 @@
     - [Enums](./custom_types/enums.md)
     - [Structs](./custom_types/structs.md)
     - [Partials](./custom_types/partials.md)
+- [Variables](./variables/main.md)

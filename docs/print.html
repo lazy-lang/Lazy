@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -426,6 +426,37 @@ main {
 }
 
 </code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="variables"><a class="header" href="#variables">Variables</a></h1>
+<p>Defining variables is done with the <code>let</code>, <code>const</code> and <code>static</code> keywords.</p>
+<h2 id="let"><a class="header" href="#let">let</a></h2>
+<p><code>let</code> defines a <strong>mutable</strong> variable. The value inside the variable itself is <strong>always</strong> mutable, but the <strong>variable</strong> can be changed.</p>
+<pre><code>let a = 5;
+a = 10; // Valid
+a = 3.14; // Invalid, `a` is implicitly an i32
+</code></pre>
+<h2 id="const"><a class="header" href="#const">const</a></h2>
+<p><code>const</code> defines an <strong>immutable</strong> variable. The value is still <strong>mutable</strong>, but the <strong>variable</strong> cannot be changed.</p>
+<pre><code>const a = 5;
+a = 10; // Invalid
+</code></pre>
+<pre><code>struct Pair&lt;V&gt; {
+    key: str,
+    val: V
+}
+
+const my_pair = Pair&lt;i32&gt;{key: &quot;Hello&quot;, val: 3};
+my_pair.key = &quot;World&quot;; // Valid
+</code></pre>
+<h2 id="static"><a class="header" href="#static">static</a></h2>
+<p><code>static</code> is used for values you <strong>never</strong> want to get garbage-collected. They cannot be defined in functions or the <code>main</code> block.</p>
+<pre><code>static PI = 3.14;
+
+main {
+    PI = 4; // Invalid
+    let PI = 4; // Invalid
+    const PI = 5; // Invalid
+}
+</code></pre>
 
                     </main>
 
@@ -448,6 +479,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         
