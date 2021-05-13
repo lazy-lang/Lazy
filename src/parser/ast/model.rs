@@ -33,8 +33,9 @@ pub struct ASTVar {
 }
 
 // let statement
-pub struct ASTLet {
+pub struct ASTDeclare {
     pub var: ASTVar,
+    pub is_const: bool,
     pub value: Option<Box<ASTExpression>>,
     pub typings: Option<ASTTypings>,
     pub range: Range,
@@ -182,7 +183,7 @@ pub enum ASTExpression {
     ForIn(ASTForIn),
     While(ASTWhile),
     If(ASTIf),
-    Let(ASTLet)
+    Declare(ASTDeclare)
 }
 
 // Any statement
@@ -276,7 +277,7 @@ impl fmt::Display for ASTExpression {
             ASTExpression::DotAccess(op) => op.fmt(f),
             ASTExpression::Block(block) => block.fmt(f),
             ASTExpression::Function(func) => func.fmt(f),
-            ASTExpression::Let(st) => st.fmt(f),
+            ASTExpression::Declare(st) => st.fmt(f),
             ASTExpression::Init(initializor) => initializor.fmt(f),
             ASTExpression::Iterator(it) => it.fmt(f),
             ASTExpression::If(exp) => exp.fmt(f),
@@ -422,9 +423,9 @@ impl fmt::Display for ASTBlock {
    }
 }
 
-impl fmt::Display for ASTLet {
+impl fmt::Display for ASTDeclare {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "let {}<{}> = {}\n", self.var, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, if self.value.is_some() { self.typings.as_ref().unwrap().to_string()} else { String::from("none") })
+        write!(f, "{} {}<{}> = {}\n", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
    }
 }
 

@@ -517,12 +517,14 @@ impl<'a> Parser<'a> {
             },
             TokenType::Kw(val) => {
                 match val.as_str() {
-                    "let" => {
+                    "let" | "const" => {
                         let name = self.parse_varname(true, false);
                         if name.0.is_none() {
                             self.tokens.error(ErrorType::Expected("variable name".to_string()), token.range.start, token.range.end);
                             return None;
                         }
+                        let varname = name.0.unwrap();
+                        let mut end = varname.range.end;
                         let typings = if let Some(mut typing) = name.1 {
                             let len = typing.entries.len();
                             if len == 0 {
@@ -534,37 +536,35 @@ impl<'a> Parser<'a> {
                                 None
                             } else { Some(typing.entries.remove(0)) }
                         } else { None };
-                        if self.tokens.is_next(TokenType::Op("=".to_string())) {
+                        let is_const = val.as_str() == "const";
+                        let value = if self.tokens.is_next(TokenType::Op("=".to_string())) {
                             let equals = self.tokens.consume().unwrap(); // Skip =
                             let exp = self.parse_expression();
-                            return match exp {
-                                    Some(expression) => {
-                                        let exp_end = utils::full_expression_range(&expression).end;
-                                        Some(ASTExpression::Let(
-                                            ASTLet {
-                                                var: name.0.unwrap(),
-                                                typings,
-                                                value: Some(Box::from(expression)),
-                                                range: Range { start: token.range.start, end: exp_end }
-                                            }
-                                        ))
-                                    },
-                                    None => {
-                                        self.tokens.error(ErrorType::Expected("initializer".to_string()), equals.range.end, equals.range.end);
-                                        return None;
-                                        }
-                                    }
-                            };
-                                let varname = name.0.unwrap();
-                                let end = varname.range.end;
-                                return Some(ASTExpression::Let(
-                                    ASTLet {
-                                        var: varname,
-                                        typings,
-                                        value: None,
-                                        range: Range { start: token.range.start, end }
-                                    }
-                            ))
+                            match exp {
+                                Some(e) => {
+                                    end = utils::full_expression_range(&e).end;
+                                    Some(Box::from(e))
+                                },
+                                None => {
+                                    self.tokens.error(ErrorType::Expected(String::from("initializor")), token.range.start, equals.range.end);
+                                    None
+                                }
+                            }
+                        } else { 
+                            if is_const {
+                                self.tokens.error(ErrorType::ConstantWithoutInit, token.range.start, end);
+                            }
+                            None
+                         };
+                        return Some(ASTExpression::Declare(
+                            ASTDeclare {
+                                var: varname,
+                                is_const,
+                                typings,
+                                value,
+                                range: Range { start: token.range.start, end }
+                            }
+                        ))
                         },
                     "fn" => {
                         if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };

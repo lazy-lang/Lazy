@@ -11,7 +11,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Unary(un) => Range { start: un.range.start, end: full_expression_range(&un.value).end },
                 ASTExpression::DotAccess(access) => Range { start:  full_expression_range(&access.value).start, end: access.range.end },
                 ASTExpression::Block(block) => block.range,
-                ASTExpression::Let(l) => l.range,
+                ASTExpression::Declare(l) => l.range,
                 ASTExpression::Init(init) => Range { start: init.target.range.start, end: init.params.range.end},
                 ASTExpression::Optional(op) => {
                     let start = full_expression_range(&op.value).start;
