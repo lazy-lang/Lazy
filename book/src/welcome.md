@@ -42,7 +42,7 @@ main {
     things.push(my_pet);
 
     for thing in things {
-        print(name: thing.name);
+        print(thing.name);
     }
 }
 ```

@@ -15,5 +15,13 @@ Much like the rest programming languages, Lazy provides a bunch of primitive dat
 
 ## Compound types
 
-Lazy does not have any primitive compound types - but it does provide a `Vec` type which is a dynamically-allocated array, and the `HashMap` type.
+### Tuples
+
+Tuples can hold values of different types:
+
+```
+const items<|str, i32, bool|> = |"Hello", 64, true|;
+
+items.1; // 64
+```
 

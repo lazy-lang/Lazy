@@ -9,7 +9,7 @@ struct Animal {
     name: str,
     age: i8,
 
-    make_noise: fn(noise?: str) print(noise: noise || "*quiet*")
+    make_noise: fn(noise?: str) print(noise || "*quiet*")
 }
 
 struct Human {
@@ -17,7 +17,7 @@ struct Human {
     age: i8,
     job: str
 
-    make_noise: fn() print(noise: "Hello World")
+    make_noise: fn() print("Hello World")
 }
 
 type WithName = { name: str };
