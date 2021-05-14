@@ -4,11 +4,11 @@ use lazy::parser::ast::{Parser};
 fn main() {
     let source = "
 
-    struct A<B> {
+    struct A {
 
         A?: fn(func: (a: a, b: b)) {
-            let a = [1, 2, \"Hello World\"];
-            a.4.5.2;
+            let a = [];
+            a...b;
         },
 
         b: g

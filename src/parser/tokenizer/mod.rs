@@ -76,7 +76,7 @@ impl<'a> Tokenizer<'a> {
         Tokenizer {
             keywords: vec!["main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type", "const"],
             operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
-            standalone_operators: vec!["?", ">", ".."], // Operators which cannot be combined, but other separate operators can follow them
+            standalone_operators: vec!["?", ">"], // Operators which cannot be combined, but other separate operators can follow them
             banned_joined_operators: vec!["<>"], // Operaotrs which alone can be combined, but cannot be combined in this exact combination
             current: None,
             errors: vec![],

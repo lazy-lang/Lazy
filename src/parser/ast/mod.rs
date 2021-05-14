@@ -80,6 +80,7 @@ impl<'a> Parser<'a> {
         if next_token.is_none() { return token };
         match &next_token.unwrap().val {
             TokenType::Op(val) => {
+                let cloned = val.clone();
                 match val.as_str() {
                     "." => {
                         self.tokens.consume();
@@ -105,22 +106,18 @@ impl<'a> Parser<'a> {
                             }
                         )))
                     },
-                    ".." => {
+                    ".." | "..=" => {
                         self.tokens.consume();
-                        let inclusive = if self.tokens.is_next(TokenType::Op(String::from("="))) {
-                            self.tokens.consume();
-                            true
-                        } else { false };
                         let end = self.parse_expression();
                         if end.is_none() {
-                            self.tokens.error(ErrorType::Expected(String::from("end of iterator")), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::EndOfIterator, start, self.tokens.input.loc());
                             return None;
                         }
                         Some(ASTExpression::Iterator(
                             ASTIterator {
                                 start: Box::from(token.unwrap()),
                                 end: Box::from(end.unwrap()),
-                                inclusive,
+                                inclusive: cloned == "..=",
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
                         ))
@@ -239,21 +236,19 @@ impl<'a> Parser<'a> {
         if allow_ints { self.tokens.is_last_num_as_str = true }; 
         let next = self.tokens.consume();
         if next.is_none() { 
-            self.tokens.error(ErrorType::Expected(String::from("identifier")), self.tokens.input.loc(), self.tokens.input.loc());
             return (None, None);
         };
         let unwrapped = next.unwrap();
         let var = match unwrapped.val {
             TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range },
             TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
-            v => {
-                self.tokens.error(ErrorType::ExpectedFound(String::from("identifier"), v.to_string()), unwrapped.range.start, unwrapped.range.end);
+            _ => {
                 return (None, None);
             }
         };
         if self.tokens.is_next(TokenType::Op(String::from("<"))) {
             if !allow_generics {
-                self.tokens.error(ErrorType::Unexpected(String::from("token <, generics are not allowed here.")), self.tokens.input.loc(), self.tokens.input.loc());
+                self.tokens.error(ErrorType::NoGenerics, self.tokens.input.loc(), self.tokens.input.loc());
             }
             self.tokens.consume();
             return (Some(var), Some(self.parse_typing_list(only_varnames_as_generics, false, TokenType::Op(String::from(">")))));
@@ -289,7 +284,7 @@ impl<'a> Parser<'a> {
                         },
                         ch if ch == closing_punc => {
                             if !allow_without_val {
-                                self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
+                                self.tokens.error(ErrorType::Expected(String::from("typeing")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
                             has_consumed_bracket = true;

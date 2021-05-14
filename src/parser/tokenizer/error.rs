@@ -16,10 +16,12 @@ pub enum ErrorType {
     Semicolon,
     EmptyCharLiteral,
     ConstantWithoutInit,
+    NoGenerics,
     TooMuchTypes(i8),
     UnexpectedOp(String),
     UnexpectedPunc(char),
     Unexpected(String),
+    EndOfIterator,
     Custom(String)
 }
 
@@ -92,7 +94,9 @@ impl fmt::Display for Error {
             ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string()),
             ErrorType::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount),
             ErrorType::EmptyCharLiteral => write!(f, "Empty char literal"),
-            ErrorType::ConstantWithoutInit => write!(f, "Constant variables must have an initializor")
+            ErrorType::ConstantWithoutInit => write!(f, "Constant variables must have an initializor"),
+            ErrorType::NoGenerics => write!(f, "Generics are not allowed here"),
+            ErrorType::EndOfIterator => write!(f, "Expected end of iterator")
         }
     }
 }
