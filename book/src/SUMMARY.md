@@ -9,3 +9,4 @@
     - [Structs](./custom_types/structs.md)
     - [Partials](./custom_types/partials.md)
 - [Variables](./variables/main.md)
+- [Loops](./loops/main.md)

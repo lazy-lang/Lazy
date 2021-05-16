@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">5.</strong> Loops</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -456,6 +456,52 @@ main {
     let PI = 4; // Invalid
     const PI = 5; // Invalid
 }
+</code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="loops"><a class="header" href="#loops">Loops</a></h1>
+<p>Loops are an imperative way to execute an <strong>expression</strong> multiple times. <code>Lazy</code> provides two way to create an imperative loop: <code>for</code> and <code>while</code>.</p>
+<h2 id="for"><a class="header" href="#for">For</a></h2>
+<p>In <code>Lazy</code>, the for loop only has one variant - <code>for...in</code>:</p>
+<pre><code>for i in 0..10 {
+    print(i);
+}
+// Prints 0, then 1, then 2... up to 9
+</code></pre>
+<p>The expression after <code>in</code> can be any valid iterator - and an iterator satisfies the following type:</p>
+<pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? } // Any struct with a &quot;next&quot; function is a valid iterator!
+</code></pre>
+<pre><code>struct RangeIter {
+    min: i32,
+    max: i32,
+    progress: i32,
+
+    next: () -&gt; i32? {
+        if self.progress == self.max none 
+        else self.progress += 1
+    }
+}
+
+main {
+    let my_range = Range { min: 0, max: 15, progress: 0 };
+    for i in my_range print(i);
+}
+</code></pre>
+<h2 id="while"><a class="header" href="#while">While</a></h2>
+<p>A traditional <code>while</code> loop. The expression gets executed as long as the condition is <code>true</code>.</p>
+<pre><code>while true {
+    // A never ending loop!
+}
+</code></pre>
+<h2 id="breaking-a-loop"><a class="header" href="#breaking-a-loop">Breaking a loop</a></h2>
+<p>Both types of loops are expressions... but what do they return? By default, <code>none</code>, unless you use the <code>yield</code> keyword inside them. The <code>yield</code> keyword stops the execution of the loop and returns the provided expression.</p>
+<p>The following snippet checks if <code>20</code> is in <code>vector</code> and if it is, the <code>value</code> variable is set to <code>true</code>, otherwise it's <code>none</code>. </p>
+<pre><code>let vector = Vec&lt;i32&gt;{ iter: 0..30 };
+
+let value = for i in vector {
+    if i == 20 yield true
+}
+
+if value print(&quot;20 is in the vector!&quot;)
+else print(&quot;20 is NOT in the vector!&quot;)
 </code></pre>
 
                     </main>

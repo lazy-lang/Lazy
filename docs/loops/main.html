@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Partials - Lazy By Example</title>
+        <title>Loops - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html" class="active"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">5.</strong> Loops</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../loops/main.html" class="active"><strong aria-hidden="true">5.</strong> Loops</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,55 +165,51 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
-<p><code>Lazy</code> does not have core OOP design patters like inheritance, or <code>traits</code> like in Rust, but it has another powerful tool: <code>Partials</code>!</p>
-<h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
-<pre><code>struct Animal {
-    name: str,
-    age: i8,
-
-    make_noise: fn(noise?: str) print(noise || &quot;*quiet*&quot;)
+                        <h1 id="loops"><a class="header" href="#loops">Loops</a></h1>
+<p>Loops are an imperative way to execute an <strong>expression</strong> multiple times. <code>Lazy</code> provides two way to create an imperative loop: <code>for</code> and <code>while</code>.</p>
+<h2 id="for"><a class="header" href="#for">For</a></h2>
+<p>In <code>Lazy</code>, the for loop only has one variant - <code>for...in</code>:</p>
+<pre><code>for i in 0..10 {
+    print(i);
 }
+// Prints 0, then 1, then 2... up to 9
+</code></pre>
+<p>The expression after <code>in</code> can be any valid iterator - and an iterator satisfies the following type:</p>
+<pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? } // Any struct with a &quot;next&quot; function is a valid iterator!
+</code></pre>
+<pre><code>struct RangeIter {
+    min: i32,
+    max: i32,
+    progress: i32,
 
-struct Human {
-    name: str,
-    age: i8,
-    job: str
-
-    make_noise: fn() print(&quot;Hello World&quot;)
+    next: () -&gt; i32? {
+        if self.progress == self.max none 
+        else self.progress += 1
+    }
 }
-
-type WithName = { name: str };
 
 main {
-    // The function will only have access to the name field
-    let get_name = fn(thing: WithName) -&gt; str {
-        thing.name;
-    }
-
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
-
-    get_name(me); // Google
-    get_name(some_animal); // Perry
+    let my_range = Range { min: 0, max: 15, progress: 0 };
+    for i in my_range print(i);
 }
 </code></pre>
-<h2 id="partial-function"><a class="header" href="#partial-function">Partial function</a></h2>
-<pre><code>// Requires the type to have a &quot;make_noise&quot; method - we don't care about params or return value in this case
-type MakesNoise = { make_noise: () };
+<h2 id="while"><a class="header" href="#while">While</a></h2>
+<p>A traditional <code>while</code> loop. The expression gets executed as long as the condition is <code>true</code>.</p>
+<pre><code>while true {
+    // A never ending loop!
+}
+</code></pre>
+<h2 id="breaking-a-loop"><a class="header" href="#breaking-a-loop">Breaking a loop</a></h2>
+<p>Both types of loops are expressions... but what do they return? By default, <code>none</code>, unless you use the <code>yield</code> keyword inside them. The <code>yield</code> keyword stops the execution of the loop and returns the provided expression.</p>
+<p>The following snippet checks if <code>20</code> is in <code>vector</code> and if it is, the <code>value</code> variable is set to <code>true</code>, otherwise it's <code>none</code>. </p>
+<pre><code>let vector = Vec&lt;i32&gt;{ iter: 0..30 };
 
-main {
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
-
-    let stuff_that_makes_noise = Vec&lt;MakesNoise&gt;{};
-    stuff_that_makes_noise.push(me);
-    stuff_that_makes_noise.push(some_animal);
-
-    stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
-    stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
+let value = for i in vector {
+    if i == 20 yield true
 }
 
+if value print(&quot;20 is in the vector!&quot;)
+else print(&quot;20 is NOT in the vector!&quot;)
 </code></pre>
 
                     </main>
@@ -221,15 +217,11 @@ main {
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../custom_types/structs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../variables/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
-                        
-                            <a rel="next" href="../variables/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -239,15 +231,11 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../custom_types/structs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../variables/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
-                
-                    <a rel="next" href="../variables/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
                 
             </nav>
 
