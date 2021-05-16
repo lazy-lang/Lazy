@@ -6,12 +6,12 @@ fn main() {
 
     struct A {
 
-        A?: fn(func: (a: a, b: b)) {
+        A: fn(func: (a: a, b?: b)) -> foo? {
             let a = [1, 2, 3, 4, 5, 6, 7];
             for i in 0..100 {
                 if i > 10 {
-                    for z in 0..5 {
-                        print(yield 5);
+                    yield for z in 0..5 {
+                        yield 5;
                     }
                 }
             }

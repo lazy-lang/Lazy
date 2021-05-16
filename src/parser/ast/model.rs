@@ -220,6 +220,7 @@ pub struct ASTListTyping {
 pub struct ASTVarTyping {
     pub value: String,
     pub typings: Option<ASTListTyping>,
+    pub optional: bool,
     pub range: Range
 }
 
@@ -232,7 +233,7 @@ pub enum ASTTypings {
 
 impl fmt::Display for ASTVarTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.value, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") })
+        write!(f, "{}{}{}", self.value, if self.optional { "?" } else { "" }, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") })
     }
 }
 
@@ -248,7 +249,7 @@ impl fmt::Display for ASTPairListTyping {
 
 impl fmt::Display for ASTFunction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "fn({}) {}", self.params, if self.body.is_some() { format!("{}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
+        write!(f, "fn({}) -> {} {}", self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() { format!("{}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
     }
 }
 

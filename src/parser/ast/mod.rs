@@ -142,7 +142,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_typing(&mut self, allow_fn_keyword: bool) -> Option<ASTTypings> {
+    fn parse_typing(&mut self, allow_fn_keyword: bool, allow_optional_after_var: bool) -> Option<ASTTypings> {
         let start = self.tokens.input.loc();
         let maybe_token = self.tokens.peek();
         match maybe_token {
@@ -157,7 +157,7 @@ impl<'a> Parser<'a> {
                         let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, ')'));
                         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) { 
                             self.tokens.consume(); 
-                            let typing = self.parse_typing(allow_fn_keyword);
+                            let typing = self.parse_typing(allow_fn_keyword, true);
                             if typing.is_none() { 
                                 self.tokens.error(ErrorType::Expected(String::from("return type")), start, self.tokens.input.loc());
                                 return None
@@ -179,6 +179,13 @@ impl<'a> Parser<'a> {
                     TokenType::Var(name) => {
                         let value = name.to_string();
                         self.tokens.consume();
+                        let optional = if self.tokens.is_next(TokenType::Op(String::from('?'))) {
+                            if !allow_optional_after_var {
+                                self.tokens.error(ErrorType::UnexpectedOp(String::from("?")), self.tokens.input.loc(), self.tokens.input.loc());
+                            }
+                            self.tokens.consume();
+                            true
+                        } else { false };
                         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                             self.tokens.consume(); // Skip <
                             Some(self.parse_typing_list(false, allow_fn_keyword, TokenType::Op(String::from(">"))))
@@ -186,6 +193,7 @@ impl<'a> Parser<'a> {
                         Some(ASTTypings::Var(ASTVarTyping {
                             value,
                             typings,
+                            optional,
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                     },
@@ -348,7 +356,7 @@ impl<'a> Parser<'a> {
                             is_optional = false;
                         },
                         ':' => {
-                            let exp = self.parse_typing(allow_fn_keyword);
+                            let exp = self.parse_typing(allow_fn_keyword, false);
                             if exp.is_none() { 
                                 self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
@@ -384,7 +392,7 @@ impl<'a> Parser<'a> {
         let mut res: Vec<ASTTypings> = vec![];
         while !self.tokens.is_next(closing_tok.clone()) {
             let id_start = self.tokens.input.loc();
-            let maybe_typing = self.parse_typing(allow_fn_keyword);
+            let maybe_typing = self.parse_typing(allow_fn_keyword, false);
             if maybe_typing.is_none() { break; };
             let typing = maybe_typing.unwrap();
             if only_varnames {
@@ -415,7 +423,7 @@ impl<'a> Parser<'a> {
         let params = Box::from(self.parse_typing_pair_list(true, false, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
-            let exp = self.parse_typing(false);
+            let exp = self.parse_typing(false, true);
             if exp.is_none() { 
                 self.tokens.error(ErrorType::Expected(String::from("return type")), self.tokens.input.loc(), self.tokens.input.loc()); 
                 return None; 
@@ -743,7 +751,7 @@ impl<'a> Parser<'a> {
                         return None;
                        }
                        if self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None) { return None; };
-                       let typing = self.parse_typing(false);
+                       let typing = self.parse_typing(false, false);
                        if typing.is_none() {
                         self.tokens.error(ErrorType::Expected(String::from("typing")), self.tokens.input.loc(), self.tokens.input.loc());
                         return None;
