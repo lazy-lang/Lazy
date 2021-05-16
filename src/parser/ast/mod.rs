@@ -9,7 +9,8 @@ use model::*;
 
 pub struct Parser<'a> {
     pub tokens: Tokenizer<'a>,
-    is_last_block: bool
+    is_last_block: bool,
+    allow_exp_statements: bool
 }
 
 impl<'a> Parser<'a> {
@@ -17,7 +18,8 @@ impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {
         Parser {
             tokens: Tokenizer::new(source),
-            is_last_block: false
+            is_last_block: false,
+            allow_exp_statements: false
         }
     }
 
@@ -212,11 +214,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_block(&mut self) -> ASTBlock {
+    fn parse_block(&mut self, allow_statement_as_exp: bool) -> ASTBlock {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTExpression> = vec![];
         while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
-            let exp = self.parse_expression();
+            let exp = if allow_statement_as_exp { self.parse_expression_or_expression_statement() } else { self.parse_expression() };
             let range = utils::get_range_or(&exp, self.tokens.input.loc());
             match exp {
                 Some(expression) => res.push(expression),
@@ -508,7 +510,7 @@ impl<'a> Parser<'a> {
                         exp   
                     },
                     ';' => None,
-                    '{' => Some(ASTExpression::Block(self.parse_block())),
+                    '{' => Some(ASTExpression::Block(self.parse_block(true))),
                     '[' => {
                         if self.tokens.is_next(TokenType::Punc(']')) {
                             self.tokens.error(ErrorType::Unexpected(String::from("empty tuple")), self.tokens.input.loc(), self.tokens.input.loc());
@@ -585,7 +587,7 @@ impl<'a> Parser<'a> {
                             self.tokens.error(ErrorType::Expected(String::from("condition in if expression")), token.range.start, self.tokens.input.loc());
                              return None;
                         };
-                        let then = if let Some(th) = self.parse_expression() {
+                        let then = if let Some(th) = self.parse_expression_or_expression_statement() {
                              Box::from(th)
                          } else {
                             self.tokens.error(ErrorType::Expected(String::from("expression that will be executed if the condition is true")), token.range.start, self.tokens.input.loc());
@@ -593,7 +595,7 @@ impl<'a> Parser<'a> {
                          };
                          let otherwise = if self.tokens.is_next(TokenType::Kw(String::from("else"))) {
                              self.tokens.consume();
-                             if let Some(exp) = self.parse_expression() {
+                             if let Some(exp) = self.parse_expression_or_expression_statement() {
                                  Some(Box::from(exp))
                              } else { None }
                          } else { None };
@@ -618,11 +620,14 @@ impl<'a> Parser<'a> {
                             self.tokens.error(ErrorType::Expected(String::from("iterator")), self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
                         }
-                        let body = self.parse_expression();
+                        let turn_off_exp_statements = !self.allow_exp_statements;
+                        self.allow_exp_statements = true;
+                        let body = self.parse_expression_or_expression_statement();
                         if body.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("for...in loop body")), self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
                         }
+                        if turn_off_exp_statements { self.allow_exp_statements = false; }
                         return Some(ASTExpression::ForIn(
                             ASTForIn {
                                 var: var.unwrap(),
@@ -638,11 +643,14 @@ impl<'a> Parser<'a> {
                             self.tokens.error(ErrorType::Expected(String::from("while condition")), self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
                         }
-                        let body = self.parse_expression();
+                        let turn_off_exp_statements = !self.allow_exp_statements;
+                        self.allow_exp_statements = true;
+                        let body = self.parse_expression_or_expression_statement();
                         if body.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("while body")), self.tokens.input.loc(), self.tokens.input.loc());
                             return None;
                         }
+                        if turn_off_exp_statements { self.allow_exp_statements = false; }
                         return Some(ASTExpression::While(
                             ASTWhile {
                                 condition: Box::from(cond.unwrap()),
@@ -665,6 +673,33 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self) -> Option<ASTExpression> {
         let exp = self.parse_expression_part();
         self.parse_binary(exp, 0)
+    }
+
+    fn parse_expression_or_expression_statement(&mut self) -> Option<ASTExpression> {
+        let start = self.tokens.input.loc();
+        let thing = self.tokens.peek()?;
+        match &thing.val {
+            TokenType::Kw(kw) => {
+                match kw.as_str() {
+                    "yield" => { 
+                        self.tokens.consume();
+                        if !self.allow_exp_statements {
+                            self.tokens.error(ErrorType::Unexpected(String::from("yield expression")), start, self.tokens.input.loc());
+                            return None;
+                        }
+                        let value = if let Some(exp) = self.parse_expression() {
+                            Some(Box::from(exp))
+                        } else { None };
+                        Some(ASTExpression::Yield(ASTYield {
+                            value,
+                            range: Range { start, end: self.tokens.input.loc() }
+                        }))
+                     },
+                    _ => self.parse_expression()
+                }
+            },
+            _ => self.parse_expression()
+        }
     }
 
     fn parse_statement(&mut self) -> Option<ASTStatement> {

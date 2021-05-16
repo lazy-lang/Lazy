@@ -31,7 +31,8 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::If(ifexp) => ifexp.range,
                 ASTExpression::Char(ch) => ch.range,
                 ASTExpression::EnumAccess(e) => e.range,
-                ASTExpression::Tuple(tup) => tup.range
+                ASTExpression::Tuple(tup) => tup.range,
+                ASTExpression::Yield(y) => y.range
         }
 }
 

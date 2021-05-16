@@ -162,6 +162,11 @@ pub struct ASTExpressionList {
     pub range: Range
 }
 
+pub struct ASTYield {
+    pub value: Option<Box<ASTExpression>>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -184,7 +189,8 @@ pub enum ASTExpression {
     While(ASTWhile),
     If(ASTIf),
     Declare(ASTDeclare),
-    Tuple(ASTExpressionList)
+    Tuple(ASTExpressionList),
+    Yield(ASTYield)
 }
 
 // Any statement
@@ -279,7 +285,8 @@ impl fmt::Display for ASTExpression {
             ASTExpression::Call(call) => call.fmt(f),
             ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
             ASTExpression::While(while_loop) => while_loop.fmt(f),
-            ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string())
+            ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string()),
+            ASTExpression::Yield(y) => y.fmt(f)
         }
     }
 }
@@ -460,5 +467,11 @@ impl fmt::Display for ASTExpressionList {
             string.push(exp.to_string());
         }
         write!(f, "{}", string.join(", "))
+   }
+}
+
+impl fmt::Display for ASTYield {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "yield {}", if self.value.is_some() { self.value.as_ref().unwrap().to_string() } else { String::from(";") })
    }
 }
