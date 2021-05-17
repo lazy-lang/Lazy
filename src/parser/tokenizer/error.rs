@@ -22,6 +22,7 @@ pub enum ErrorType {
     UnexpectedPunc(char),
     Unexpected(String),
     EndOfIterator,
+    ManyEntryPoints,
     Disallowed(String),
     Custom(String)
 }
@@ -98,7 +99,8 @@ impl fmt::Display for Error {
             ErrorType::ConstantWithoutInit => write!(f, "Constant variables must have an initializor"),
             ErrorType::NoGenerics => write!(f, "Generics are not allowed here"),
             ErrorType::EndOfIterator => write!(f, "Expected end of iterator"),
-            ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string)
+            ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string),
+            ErrorType::ManyEntryPoints => write!(f, "Too many entry points")
         }
     }
 }

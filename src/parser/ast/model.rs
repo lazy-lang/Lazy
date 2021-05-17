@@ -172,6 +172,11 @@ pub struct ASTSpread {
     pub range: Range
 }
 
+pub struct ASTMain {
+    pub expression: ASTBlock,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -203,7 +208,8 @@ pub enum ASTExpression {
 pub enum ASTStatement {
     EnumDeclaration(ASTEnumDeclaration),
     Struct(ASTStruct),
-    Type(ASTType)
+    Type(ASTType),
+    Main(ASTMain)
 }
 
 pub struct ASTPairTypingItem {
@@ -317,8 +323,15 @@ impl fmt::Display for ASTStatement {
         match &self {
             ASTStatement::Struct(structure) => structure.fmt(f),
             ASTStatement::EnumDeclaration(en) => en.fmt(f),
-            ASTStatement::Type(typing) => typing.fmt(f)
+            ASTStatement::Type(typing) => typing.fmt(f),
+            ASTStatement::Main(m) => m.fmt(f)
         } 
+    }
+}
+
+impl fmt::Display for ASTMain {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "main {}", self.expression)
     }
 }
 

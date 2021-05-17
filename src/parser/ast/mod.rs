@@ -10,7 +10,8 @@ use model::*;
 pub struct Parser {
     pub tokens: Tokenizer,
     is_last_block: bool,
-    allow_exp_statements: bool
+    allow_exp_statements: bool,
+    parsed_main: bool
 }
 
 impl Parser {
@@ -18,6 +19,7 @@ impl Parser {
     pub fn new(source: &str) -> Self {
         Parser {
             tokens: Tokenizer::new(source),
+            parsed_main: false,
             is_last_block: false,
             allow_exp_statements: false
         }
@@ -776,7 +778,21 @@ impl Parser {
                                range: Range { start, end: self.tokens.input.loc() }
                            }
                        ))
-                   }
+                   },
+                   "main" => {
+                       if self.parsed_main {
+                           self.tokens.error(ErrorType::ManyEntryPoints, start, self.tokens.input.loc());
+                       };
+                       self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
+                       let exp = self.parse_block(false);
+                       self.parsed_main = true;
+                       Some(ASTStatement::Main(
+                           ASTMain {
+                               expression: exp,
+                               range: Range { start, end: self.tokens.input.loc() }
+                           }
+                       ))
+                   },
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                     self.tokens.input.skip_line();
