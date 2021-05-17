@@ -170,6 +170,7 @@ impl Parser {
                             params,
                             return_type,
                             range: Range { start, end: self.tokens.input.loc() },
+                            typings: None,
                             body: None
                         }))
                     },
@@ -207,7 +208,6 @@ impl Parser {
                         match kw.as_str() {
                             "fn" => {
                                 self.tokens.consume();
-                                self.tokens.consume(); // Skip (
                                 Some(ASTTypings::Function(self.parse_function(true)?))
                             },
                             _ => None
@@ -424,8 +424,14 @@ impl Parser {
         }
     }
 
+
     fn parse_function(&mut self, allow_body: bool) -> Option<ASTFunction> {
         let start = self.tokens.input.loc();
+        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+            self.tokens.consume();
+            Some(self.parse_typing_list(true, false, TokenType::Op(String::from(">"))))
+        } else { None };
+        if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };
         let params = Box::from(self.parse_typing_pair_list(true, false, true, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
@@ -444,6 +450,7 @@ impl Parser {
         Some(ASTFunction {
             range: Range { start, end: self.tokens.input.loc() },
             params,
+            typings,
             return_type,
             body
         })
@@ -599,7 +606,6 @@ impl Parser {
                         ))
                         },
                     "fn" => {
-                        if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };
                         Some(ASTExpression::Function(self.parse_function(true)?))
                     },
                     "if" => {

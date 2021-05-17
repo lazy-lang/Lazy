@@ -89,6 +89,7 @@ pub struct ASTFunction {
     pub params: Box<ASTPairListTyping>,
     pub body: Option<Box<ASTExpression>>,
     pub return_type: Option<Box<ASTTypings>>,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -262,7 +263,7 @@ impl fmt::Display for ASTPairListTyping {
 
 impl fmt::Display for ASTFunction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "fn({}) -> {} {}", self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() { format!("{{ {} \n}}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
+        write!(f, "fn<{}>({}) -> {} {}", if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() {  self.body.as_ref().unwrap().to_string() } else { String::from("") })
     }
 }
 

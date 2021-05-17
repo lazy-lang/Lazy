@@ -5,6 +5,11 @@ fn main() {
     let source = "
 
     main {
+
+        const func = fn<A>(arg: (a: A)) -> A {
+            console.log(1);
+        }
+
         let a = [1, 2, 3, 4, 5, 6, 7];
         for i in 0..100 {
             if i > 10 {
