@@ -22,6 +22,7 @@ pub enum ErrorType {
     UnexpectedPunc(char),
     Unexpected(String),
     EndOfIterator,
+    Disallowed(String),
     Custom(String)
 }
 
@@ -96,7 +97,8 @@ impl fmt::Display for Error {
             ErrorType::EmptyCharLiteral => write!(f, "Empty char literal"),
             ErrorType::ConstantWithoutInit => write!(f, "Constant variables must have an initializor"),
             ErrorType::NoGenerics => write!(f, "Generics are not allowed here"),
-            ErrorType::EndOfIterator => write!(f, "Expected end of iterator")
+            ErrorType::EndOfIterator => write!(f, "Expected end of iterator"),
+            ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string)
         }
     }
 }

@@ -167,6 +167,11 @@ pub struct ASTYield {
     pub range: Range
 }
 
+pub struct ASTSpread {
+    pub value: Box<ASTExpression>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -190,7 +195,8 @@ pub enum ASTExpression {
     If(ASTIf),
     Declare(ASTDeclare),
     Tuple(ASTExpressionList),
-    Yield(ASTYield)
+    Yield(ASTYield),
+    Spread(ASTSpread)
 }
 
 // Any statement
@@ -203,6 +209,7 @@ pub enum ASTStatement {
 pub struct ASTPairTypingItem {
     pub name: String,
     pub value: Option<ASTTypings>,
+    pub spread: bool,
     pub optional: bool
 }
 
@@ -241,7 +248,7 @@ impl fmt::Display for ASTPairListTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut string: Vec<String> = vec![];
         for pair in &self.pairs {
-            string.push(format!("{}{}: {}", pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
+            string.push(format!("{}{}{}: {}", if pair.spread { "..." } else {""}, pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
         };
         write!(f, "{}", string.join(", "))
     }
@@ -287,7 +294,8 @@ impl fmt::Display for ASTExpression {
             ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
             ASTExpression::While(while_loop) => while_loop.fmt(f),
             ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string()),
-            ASTExpression::Yield(y) => y.fmt(f)
+            ASTExpression::Yield(y) => y.fmt(f),
+            ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string())
         }
     }
 }

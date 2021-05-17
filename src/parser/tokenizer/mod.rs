@@ -52,6 +52,14 @@ impl fmt::Display for Range {
     }
 }
 
+macro_rules! match_str {
+    ($s: expr, $($strs: expr),*) => {
+        match $s {
+            $($strs)|+ => true,
+            _ => false
+        }
+    };
+}
 
 pub struct Token {
     pub range: Range,
@@ -59,25 +67,17 @@ pub struct Token {
 }
 
 
-pub struct Tokenizer<'a> {
-    keywords: Vec<&'a str>,
-    operators: Vec<char>,
-    standalone_operators: Vec<&'a str>,
-    banned_joined_operators: Vec<&'a str>,
+pub struct Tokenizer {
     current: Option<Token>,
     pub errors: Vec<Error>,
     pub input: InputParser,
     pub is_last_num_as_str: bool
 }
 
-impl<'a> Tokenizer<'a> {
+impl Tokenizer {
 
-    pub fn new(code: &'a str) -> Self {
+    pub fn new(code: &str) -> Self {
         Tokenizer {
-            keywords: vec!["main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type", "const", "yield"],
-            operators: vec!['+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?'],
-            standalone_operators: vec!["?", ">"], // Operators which cannot be combined, but other separate operators can follow them
-            banned_joined_operators: vec!["<>"], // Operaotrs which alone can be combined, but cannot be combined in this exact combination
             current: None,
             errors: vec![],
             is_last_num_as_str: false,
@@ -188,7 +188,8 @@ impl<'a> Tokenizer<'a> {
         };
         if ident == "true" { return Token { val: TokenType::Bool(true), range: Range {start, end: self.input.loc()} } }
         else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
-        let token_type = if self.keywords.iter().any(|&i| i == ident) { TokenType::Kw(ident) } else { TokenType::Var(ident) };
+
+        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type", "const", "yield") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 
@@ -201,13 +202,13 @@ impl<'a> Tokenizer<'a> {
         let start = self.input.loc();
         let mut op = String::new();
         while !self.input.is_eof() {
-            if self.banned_joined_operators.iter().any(|&i| i == op) {
+            if match_str!(op.as_str(), "<>") {
                 self.error(ErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
                 break;
             }
-            if self.standalone_operators.iter().any(|&i| i == op) { break; };
+            if match_str!(op.as_str(), "?", ">") { break; };
             let ch = self.input.peek(0).unwrap();
-            if self.operators.iter().any(|&i| i == ch) { op.push(self.input.consume().unwrap()) }
+            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?') { op.push(self.input.consume().unwrap()) }
             else { break; };
         };
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}

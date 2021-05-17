@@ -8,6 +8,7 @@ pub struct InputParser {
 }
 
 #[derive(Copy)]
+#[derive(Default)]
 pub struct LoC {
     pub line: i32,
     pub col: i32

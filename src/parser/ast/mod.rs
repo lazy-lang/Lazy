@@ -7,15 +7,15 @@ pub mod utils;
 use model::*;
 
 
-pub struct Parser<'a> {
-    pub tokens: Tokenizer<'a>,
+pub struct Parser {
+    pub tokens: Tokenizer,
     is_last_block: bool,
     allow_exp_statements: bool
 }
 
-impl<'a> Parser<'a> {
+impl Parser {
 
-    pub fn new(source: &'a str) -> Self {
+    pub fn new(source: &str) -> Self {
         Parser {
             tokens: Tokenizer::new(source),
             is_last_block: false,
@@ -150,11 +150,11 @@ impl<'a> Parser<'a> {
                 match &token.val {
                     TokenType::Punc('{') => {
                         self.tokens.consume();
-                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, '}')))
+                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, false, '}')))
                     },
                     TokenType::Punc('(') => {
                         self.tokens.consume();
-                        let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, ')'));
+                        let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, true, ')'));
                         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) { 
                             self.tokens.consume(); 
                             let typing = self.parse_typing(allow_fn_keyword, true);
@@ -331,19 +331,25 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, closing_punc: char) -> ASTPairListTyping {
+    fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, allow_spread: bool, closing_punc: char) -> ASTPairListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTPairTypingItem> = vec![];
-        let mut is_optional = false;
         let mut has_consumed_bracket = false;
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
+            let is_spread = if self.tokens.is_next(TokenType::Op(String::from("..."))) {
+                if !allow_spread {
+                    self.tokens.error(ErrorType::Disallowed(String::from("spread operator")), self.tokens.input.loc_inc(-3, 0), self.tokens.input.loc())
+                }
+                self.tokens.consume();
+                true
+            } else { false };
             let key = self.parse_varname(false, false, false);
             if key.0.is_none() { continue; };
-            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
+            let is_optional = if self.tokens.is_next(TokenType::Op(String::from("?"))) {
                 self.tokens.consume();
-                is_optional = true;
-            }
+                true
+            } else { false };
             match self.tokens.expect_punc(&[',', ':', '?', closing_punc], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
@@ -352,8 +358,7 @@ impl<'a> Parser<'a> {
                                 self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional});
-                            is_optional = false;
+                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional, spread: is_spread});
                         },
                         ':' => {
                             let exp = self.parse_typing(allow_fn_keyword, false);
@@ -361,8 +366,7 @@ impl<'a> Parser<'a> {
                                 self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional});
-                            is_optional = false;
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional, spread: is_spread});
                         },
                         ch if ch == closing_punc => {
                             if !allow_without_val {
@@ -370,7 +374,7 @@ impl<'a> Parser<'a> {
                                 continue;
                             }
                             has_consumed_bracket = true;
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional});
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional, spread: is_spread});
                             break;
                         },
                         _ => {}
@@ -420,7 +424,7 @@ impl<'a> Parser<'a> {
 
     fn parse_function(&mut self, allow_body: bool) -> Option<ASTFunction> {
         let start = self.tokens.input.loc();
-        let params = Box::from(self.parse_typing_pair_list(true, false, ')'));
+        let params = Box::from(self.parse_typing_pair_list(true, false, true, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
             let exp = self.parse_typing(false, true);
@@ -500,6 +504,14 @@ impl<'a> Parser<'a> {
                             }
                         ))
                     },
+                    "..." => {
+                        Some(ASTExpression::Spread(
+                            ASTSpread {
+                                value: Box::from(self.parse_expression()?),
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    }
                     _ => {
                         self.tokens.error(ErrorType::UnexpectedOp(value), token.range.start, token.range.end);
                         None
@@ -726,7 +738,7 @@ impl<'a> Parser<'a> {
                         Some(ASTStatement::Struct(ASTStruct {
                             name: name.0.unwrap(),
                             typings: name.1,
-                            fields: self.parse_typing_pair_list(false, true, '}'),
+                            fields: self.parse_typing_pair_list(false, true, false, '}'),
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                    }
@@ -736,7 +748,7 @@ impl<'a> Parser<'a> {
                             if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum fields"))), None) { return None; };
                             return Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                                 name,
-                                values: self.parse_typing_pair_list(true, false, '}'),
+                                values: self.parse_typing_pair_list(true, false, false, '}'),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }));
                         };
