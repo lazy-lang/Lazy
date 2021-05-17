@@ -327,7 +327,7 @@ impl Parser {
             if !self.tokens.is_next(TokenType::Punc(closing_punc)) { self.tokens.skip_or_err(TokenType::Punc(','), None, None); };
         };
         self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None);
-        return ASTExpressionList {
+        ASTExpressionList {
             expressions,
             range: Range { start, end: self.tokens.input.loc() }
         }

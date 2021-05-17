@@ -262,7 +262,7 @@ impl fmt::Display for ASTPairListTyping {
 
 impl fmt::Display for ASTFunction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "fn({}) -> {} {}", self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() { format!("{}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
+        write!(f, "fn({}) -> {} {}", self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() { format!("{{ {} \n}}", self.body.as_ref().unwrap().to_string()) } else { String::from("") })
     }
 }
 
@@ -448,19 +448,19 @@ impl fmt::Display for ASTBlock {
 
 impl fmt::Display for ASTDeclare {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {}{} = {}\n", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
+        writeln!(f, "{} {}{} = {}", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
    }
 }
 
 impl fmt::Display for ASTType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "type {}{} = {}\n", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
+        writeln!(f, "type {}{} = {}", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
    }
 }
 
 impl fmt::Display for ASTEnumDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "enum {} {{\n {} }}\n", self.name, self.values)
+        writeln!(f, "enum {} {{\n {} }}", self.name, self.values)
    }
 }
 
