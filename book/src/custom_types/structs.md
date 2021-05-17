@@ -43,17 +43,14 @@ main {
 
 ## Accessing optional fields
 
-Optional fields can be accessed by the dot notation, but you must put a question mark (`?`) before the dot. If the optional struct is empty, then the execution context is left immediately, and the function returns `none` or the actual supposed return type.
+Optional fields can be accessed by the dot notation, but you must put a question mark (`?`) before the dot. If the optional struct is empty, then the expression returns `none`.
 
 ```
 main {
-    let my_fn = fn(op: StructWithOptionalField) -> str {
-        op.something?;
-    }
-    let my_struct = StructWithOptionalField{};
-    my_fn(my_struct); // Returns none
-    my_struct.something = "Hello World";
-    my_fn(my_struct); // Returns "Hello World"
+    let my_struct = StructWithOptionalField{}; // the optional field is `none`
+    my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
+    my_struct.something = "Hello";
+    my_fn(my_struct.something?); // Runs fine!
 }
 ```
 
@@ -62,6 +59,6 @@ Keep in mind that you **cannot** use optional fields before you make sure they a
 ```
 if my_struct != none {
     // my_struct is guaranteed to not be none here, no need for question marks!
-    print(val: my_struct.something);
+    print(my_struct.something);
 }
 ```

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Partials - Lazy By Example</title>
+        <title>Iterators - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html" class="active"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">5.</strong> Loops</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html" class="active"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">5.</strong> Loops</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,55 +165,45 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
-<p><code>Lazy</code> does not have core OOP design patters like inheritance, or <code>traits</code> like in Rust, but it has another powerful tool: <code>Partials</code>!</p>
-<h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
-<pre><code>struct Animal {
-    name: str,
-    age: i8,
+                        <h1 id="iterators"><a class="header" href="#iterators">Iterators</a></h1>
+<p><code>Iterator</code> is a type which allows you to loop over a struct. <code>for...in</code> loops are powered by iterators. An <code>Iterator</code> is any struct which satisfies the following type:</p>
+<pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? }
+</code></pre>
+<p>Any struct with a &quot;next&quot; function is a valid iterator!</p>
+<h2 id="literals"><a class="header" href="#literals">Literals</a></h2>
+<p>Iterator literals are called <code>range</code> iterators, because they create an iterator that iterates through a range of numbers.</p>
+<pre><code>0..5 // Exclusive
+0..=5 // Inclusive
+</code></pre>
+<h2 id="spreading-iterators"><a class="header" href="#spreading-iterators">Spreading iterators</a></h2>
+<p>The <code>spread</code> syntax can be used to turn iterators into vectors!</p>
+<pre><code>let iterator = 0..10;
+let vec = ...iterator;
+print(vec.to_string()); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+</code></pre>
+<h3 id="spread-syntax-in-functions"><a class="header" href="#spread-syntax-in-functions">Spread syntax in functions</a></h3>
+<p>The <code>spread</code> syntax has a special meaning in function parameters:</p>
+<pre><code>type Stringable = { to_string: () -&gt; str };
 
-    make_noise: fn(noise?: str) print(noise || &quot;*quiet*&quot;)
-}
-
-struct Human {
-    name: str,
-    age: i8,
-    job: str
-
-    make_noise: fn() print(&quot;Hello World&quot;)
-}
-
-type WithName = { name: str };
-
-main {
-    // The function will only have access to the name field
-    let get_name = fn(thing: WithName) -&gt; str {
-        thing.name;
-    }
-
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
-
-    get_name(me); // Google
-    get_name(some_animal); // Perry
+const print = fn(...strs?: Stringable) {
+    // code
 }
 </code></pre>
-<h2 id="partial-function"><a class="header" href="#partial-function">Partial function</a></h2>
-<pre><code>// Requires the type to have a &quot;make_noise&quot; method - we don't care about params or return value in this case
-type MakesNoise = { make_noise: () };
-
-main {
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
-
-    let stuff_that_makes_noise = Vec&lt;MakesNoise&gt;{};
-    stuff_that_makes_noise.push(me);
-    stuff_that_makes_noise.push(some_animal);
-
-    stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
-    stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
+<p>The <code>...strs:</code> syntax means that the function can receive an unlimited amount of values with the <code>Stringable</code> type. The <code>strs</code> value itself is either a <code>Vector</code> which contains <code>Stringable</code>, or <code>none</code> (Because of the <code>?</code> after the param name).</p>
+<pre><code>const println = fn(...strs?: Stringable) {
+    for string in strs? {
+        print(string.to_string() + &quot;\n&quot;);
+    }
 }
 
+print_many(&quot;Hello&quot;, Vec{}, 4, true); 
+// Prints:
+/*
+Hello
+[]
+4,
+true
+*/
 </code></pre>
 
                     </main>
@@ -221,13 +211,13 @@ main {
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../custom_types/structs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../primitives/functions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="../variables/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../custom_types/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -239,13 +229,13 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../custom_types/structs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../primitives/functions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../variables/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../custom_types/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 

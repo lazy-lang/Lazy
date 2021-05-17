@@ -4,6 +4,7 @@
 - [Primitives](./primitives/main.md)
     - [Literals](./primitives/literals.md)
     - [Functions](./primitives/functions.md)
+    - [Iterators](./primitives/iterators.md)
 - [Custom Types](./custom_types/main.md)
     - [Enums](./custom_types/enums.md)
     - [Structs](./custom_types/structs.md)
