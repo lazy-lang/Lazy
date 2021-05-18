@@ -40,15 +40,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
 }
 
 pub fn is_natural_iter(ast: &ASTIterator) -> bool {
-    let left = match *ast.start {
-        ASTExpression::Char(_) | ASTExpression::Int(_) => true,
-        _ => false
-    };
-    let right = match *ast.end {
-        ASTExpression::Char(_) | ASTExpression::Int(_) => true,
-        _ => false
-    };
-    left && right
+    matches!(*ast.start, ASTExpression::Char(_) | ASTExpression::Int(_)) && matches!(*ast.end, ASTExpression::Char(_) | ASTExpression::Int(_))
 }
 
 pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
@@ -58,7 +50,7 @@ pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
             _ => return false
         }
     }
-    return true;
+    true
 }
 
  pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
