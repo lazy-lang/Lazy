@@ -45,6 +45,9 @@ match my_num {
     // Guards
     Number:Int when my_num > 10 => print("Found integer bigger than 10),
 
+    // Execute the same body for different expressions
+    Number:Int(3) | Number:Float(3.1) => print("Number is ", my_num),
+
     // Acts as an "else" - only executed when nothing above gets matched
     _ => print("Weird...")
 }
@@ -57,6 +60,8 @@ A condition can be:
 - Enum variants (`Enum:variant`)
 - Literals (`"hello"`, `'c'`, `3`, `45.3`, `[1, 2, 3]`, `true`, `false`, `none`)
 - Range iterators (`0..10`, `5..=1000`, `'a'..='z'`)
-- OR binary operator (`1 || 5 || 7`) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.
+- A list of expressions separated by `|` (`1 | 5 | 7`) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.
+
+Guards can be any expression.
 
 A body can be any expression. 

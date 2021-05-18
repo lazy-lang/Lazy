@@ -261,6 +261,15 @@ one_min_in_milliseconds == 60000; // returns &quot;true&quot;
 <pre><code>let my_fn = fn() 1 + 1;
 my_fn(); // returns 2
 </code></pre>
+<h2 id="natural-literals"><a class="header" href="#natural-literals">Natural literals</a></h2>
+<p><code>natural</code> literals are <code>tuples</code> or <code>iterators</code> which can only contain literals. For example:</p>
+<pre><code>person.age..=18; // This is NOT a natural iterator
+0..=18; // This IS, because both the start and the end are literals
+
+[1, 2, none, true] // This IS a natural tuple
+[1, 2, func(1 + 1)] // This is NOT a natural tuple
+</code></pre>
+<p>Only natural <code>tuples</code> or <code>iterators</code> are allowed in <code>match</code> arms.</p>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="functions-1"><a class="header" href="#functions-1">Functions</a></h1>
 <p>In Lazy, functions are first-class citizens, this means they can be passed as function arguments, stored easily in data structures, and be saved in variables. </p>
 <pre><code>main {
@@ -559,6 +568,9 @@ match my_num {
     // Guards
     Number:Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
 
+    // Execute the same body for different expressions
+    Number:Int(3) | Number:Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
+
     // Acts as an &quot;else&quot; - only executed when nothing above gets matched
     _ =&gt; print(&quot;Weird...&quot;)
 }
@@ -569,8 +581,9 @@ match my_num {
 <li>Enum variants (<code>Enum:variant</code>)</li>
 <li>Literals (<code>&quot;hello&quot;</code>, <code>'c'</code>, <code>3</code>, <code>45.3</code>, <code>[1, 2, 3]</code>, <code>true</code>, <code>false</code>, <code>none</code>)</li>
 <li>Range iterators (<code>0..10</code>, <code>5..=1000</code>, <code>'a'..='z'</code>)</li>
-<li>OR binary operator (<code>1 || 5 || 7</code>) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.</li>
+<li>A list of expressions separated by <code>|</code> (<code>1 | 5 | 7</code>) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.</li>
 </ul>
+<p>Guards can be any expression.</p>
 <p>A body can be any expression. </p>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="loops"><a class="header" href="#loops">Loops</a></h1>
 <p>Loops are an imperative way to execute an <strong>expression</strong> multiple times. <code>Lazy</code> provides two way to create an imperative loop: <code>for</code> and <code>while</code>.</p>
@@ -640,21 +653,6 @@ else print(&quot;20 is NOT in the vector!&quot;)
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

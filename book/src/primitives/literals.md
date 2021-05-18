@@ -43,3 +43,16 @@ let my_fn = fn() 1 + 1;
 my_fn(); // returns 2
 ```
 
+## Natural literals
+
+`natural` literals are `tuples` or `iterators` which can only contain literals. For example:
+
+```
+person.age..=18; // This is NOT a natural iterator
+0..=18; // This IS, because both the start and the end are literals
+
+[1, 2, none, true] // This IS a natural tuple
+[1, 2, func(1 + 1)] // This is NOT a natural tuple
+```
+
+Only natural `tuples` or `iterators` are allowed in `match` arms.

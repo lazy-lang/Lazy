@@ -191,6 +191,15 @@ one_min_in_milliseconds == 60000; // returns &quot;true&quot;
 <pre><code>let my_fn = fn() 1 + 1;
 my_fn(); // returns 2
 </code></pre>
+<h2 id="natural-literals"><a class="header" href="#natural-literals">Natural literals</a></h2>
+<p><code>natural</code> literals are <code>tuples</code> or <code>iterators</code> which can only contain literals. For example:</p>
+<pre><code>person.age..=18; // This is NOT a natural iterator
+0..=18; // This IS, because both the start and the end are literals
+
+[1, 2, none, true] // This IS a natural tuple
+[1, 2, func(1 + 1)] // This is NOT a natural tuple
+</code></pre>
+<p>Only natural <code>tuples</code> or <code>iterators</code> are allowed in <code>match</code> arms.</p>
 
                     </main>
 
@@ -229,21 +238,6 @@ my_fn(); // returns 2
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         
