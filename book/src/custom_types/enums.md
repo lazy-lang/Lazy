@@ -28,3 +28,41 @@ main {
     let num_token = TokenTypes:Number(Number:Int(3000));
 }
 ```
+
+## "Unwrapping" enums
+
+By default all items are "wrapped" - their values and unknown and can be anything.
+
+```
+let char_token = TokenTypes:Char('a'); 
+// Even if it's clear that char_token is of type `char`, Lazy doesn't allow you to use it. 
+```
+
+To use the value inside the variant you'll have to "unwrap" it.
+
+### if unwrapping
+
+```
+if char_token == TokenTypes:Char {
+    // You can use `char_token` as a character now.
+    char_token.to_string(); // "a"
+}
+// char_token is wrapped here.
+
+if char_token == TokenTypes:Char('a') {
+    // Also works!
+}
+```
+
+### match unwrapping
+
+```
+match char_token {
+    TokenTypes:Char => {
+        // char_token is unwrapped here
+    },
+    _ => {
+        // char_token is wrapped, this portion only executes when nothing else got matched
+    }
+}
+```

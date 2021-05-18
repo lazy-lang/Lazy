@@ -18,6 +18,10 @@ struct Something<GenericParam> {
 }
 ```
 
+## Constructors
+
+The method with the same name as the struct acts as the **constructor**.
+
 ## Optional fields
 
 Fields which have a question mark (`?`) after the key are **optional**.
