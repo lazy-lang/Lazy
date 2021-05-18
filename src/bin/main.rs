@@ -5,18 +5,26 @@ fn main() {
     let source = "
 
     main {
+        let a = [1, 2, 3, 4, 5, 6, none];
+        ...3..=5;
 
-        const func = fn<A>(arg: (a: A)) -> A {
-            console.log(1);
-        }
-
-        let a = [1, 2, 3, 4, 5, 6, 7];
-        for i in 0..100 {
-            if i > 10 {
-                yield for z in 0..5 {
-                    yield ...4;
-                }
-            }
+        let res = match a {
+            1 => {},
+            2 | 3 | 4 | 5 | \"str\" => {},
+            1..4 => {
+                print(\"a is in range 1 - 3\");
+            },
+            none => 1 + 1,
+            true | false => print(1 + 5),
+            Option:None => {},
+            Option:Some(true) => print(\"Got Some!!!\"),
+            Number:Int when 1 > 5 => {},
+            3..5 => {},
+            [1, 2, 3] => print('c'),
+            [a, b, 10] => print('d'),
+            c => {},
+            10..=15 when a == \"hello\" => {},
+            _ => {}
         }
     }
 

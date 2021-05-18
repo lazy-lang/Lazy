@@ -178,6 +178,32 @@ pub struct ASTMain {
     pub range: Range
 }
 
+pub enum ASTMatchArmExpressions {
+    String(ASTStr),
+    Int(ASTInt),
+    Float(ASTFloat),
+    Iterator(ASTIterator),
+    Char(ASTChar),
+    Bool(ASTBool),
+    Tuple(ASTExpressionList),
+    None(Range),
+    Rest,
+    Enum(ASTEnumAccess)
+}
+
+pub struct ASTMatchArm {
+    pub possibilities: Vec<ASTMatchArmExpressions>,
+    pub guard: Option<ASTExpression>,
+    pub body: ASTExpression,
+    pub range: Range
+}
+
+pub struct ASTMatch {
+    pub arms: Vec<ASTMatchArm>,
+    pub expression: Box<ASTExpression>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -202,7 +228,9 @@ pub enum ASTExpression {
     Declare(ASTDeclare),
     Tuple(ASTExpressionList),
     Yield(ASTYield),
-    Spread(ASTSpread)
+    Spread(ASTSpread),
+    None(Range),
+    Match(ASTMatch)
 }
 
 // Any statement
@@ -302,7 +330,9 @@ impl fmt::Display for ASTExpression {
             ASTExpression::While(while_loop) => while_loop.fmt(f),
             ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string()),
             ASTExpression::Yield(y) => y.fmt(f),
-            ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string())
+            ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
+            ASTExpression::Match(mtch) => mtch.fmt(f),
+            ASTExpression::None(_) => write!(f, "none")
         }
     }
 }
@@ -496,5 +526,38 @@ impl fmt::Display for ASTExpressionList {
 impl fmt::Display for ASTYield {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "yield {}", if self.value.is_some() { self.value.as_ref().unwrap().to_string() } else { String::from(";") })
+   }
+}
+
+impl fmt::Display for ASTMatch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut str = String::new();
+        for arm in &self.arms {
+            str.push_str(&format!("{}\n", arm));
+        };
+        write!(f, "match {} {{\n{}}}", self.expression, str)
+   }
+}
+
+impl fmt::Display for ASTMatchArm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} => {}", self.possibilities.iter().map(|i| i.to_string()).collect::<Vec<String>>().join(" | "), if self.guard.is_some() { format!("when {}", self.guard.as_ref().unwrap()) } else { String::from("")}, self.body)
+   }
+}
+
+impl fmt::Display for ASTMatchArmExpressions {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Char(ch) => ch.fmt(f),
+            Self::String(st) => st.fmt(f),
+            Self::Int(int) => int.fmt(f),
+            Self::Float(fl) => fl.fmt(f),
+            Self::Iterator(iter) => iter.fmt(f),
+            Self::Enum(en) => en.fmt(f),
+            Self::Tuple(t) => t.fmt(f),
+            Self::Bool(b) => b.fmt(f),
+            Self::None(_) => write!(f, "none"),
+            Self::Rest => write!(f, "_")
+        }
    }
 }

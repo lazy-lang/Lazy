@@ -23,6 +23,7 @@ pub enum ErrorType {
     Unexpected(String),
     EndOfIterator,
     ManyEntryPoints,
+    WrongMatchArmExp,
     Disallowed(String),
     Custom(String)
 }
@@ -100,7 +101,8 @@ impl fmt::Display for Error {
             ErrorType::NoGenerics => write!(f, "Generics are not allowed here"),
             ErrorType::EndOfIterator => write!(f, "Expected end of iterator"),
             ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string),
-            ErrorType::ManyEntryPoints => write!(f, "Too many entry points")
+            ErrorType::ManyEntryPoints => write!(f, "Too many entry points"),
+            ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals.")
         }
     }
 }

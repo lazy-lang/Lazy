@@ -33,8 +33,32 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::EnumAccess(e) => e.range,
                 ASTExpression::Tuple(tup) => tup.range,
                 ASTExpression::Yield(y) => y.range,
-                ASTExpression::Spread(sp) => sp.range
+                ASTExpression::Spread(sp) => sp.range,
+                ASTExpression::Match(mtch) => mtch.range,
+                ASTExpression::None(range) => *range
         }
+}
+
+pub fn is_natural_iter(ast: &ASTIterator) -> bool {
+    let left = match *ast.start {
+        ASTExpression::Char(_) | ASTExpression::Int(_) => true,
+        _ => false
+    };
+    let right = match *ast.end {
+        ASTExpression::Char(_) | ASTExpression::Int(_) => true,
+        _ => false
+    };
+    left && right
+}
+
+pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
+    for value in &ast.expressions {
+        match value {
+            ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => {},
+            _ => return false
+        }
+    }
+    return true;
 }
 
  pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {

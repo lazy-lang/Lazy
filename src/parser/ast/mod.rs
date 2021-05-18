@@ -50,8 +50,6 @@ impl Parser {
                 let opval = val.to_string();
                 let other_prec = Self::get_prec(&val);
                 if other_prec == -1 {
-                    self.tokens.consume();
-                    self.tokens.error(ErrorType::UnexpectedOp(opval), start, start);
                     return Some(left_tok)
                 }
                 if other_prec > prec {
@@ -112,7 +110,7 @@ impl Parser {
                     },
                     ".." | "..=" => {
                         self.tokens.consume();
-                        let end = self.parse_expression();
+                        let end = self.parse_expression_part();
                         if end.is_none() {
                             self.tokens.error(ErrorType::EndOfIterator, start, self.tokens.input.loc());
                             return None;
@@ -456,6 +454,45 @@ impl Parser {
         })
     }
 
+    fn parse_match_arm_exp(&mut self) -> Option<ASTMatchArmExpressions> {
+        let start = self.tokens.input.loc();
+        if let Some(exp) = self.parse_expression_part() {
+            match exp {
+                ASTExpression::Str(str_obj) => Some(ASTMatchArmExpressions::String(str_obj)),
+                ASTExpression::Int(int_obj) => Some(ASTMatchArmExpressions::Int(int_obj)),
+                ASTExpression::Float(f_obj) => Some(ASTMatchArmExpressions::Float(f_obj)),
+                ASTExpression::Bool(b_obj) => Some(ASTMatchArmExpressions::Bool(b_obj)),
+                ASTExpression::Tuple(t_obj) => {
+                    if !utils::is_natural_tuple(&t_obj) {
+                        self.tokens.error(ErrorType::Expected(String::from("natural tuple literal")), start, self.tokens.input.loc());
+                    }
+                    Some(ASTMatchArmExpressions::Tuple(t_obj))
+                },
+                ASTExpression::Iterator(i_obj) => {
+                    if !utils::is_natural_iter(&i_obj) {
+                        self.tokens.error(ErrorType::Expected(String::from("natural iterator literal")), start, self.tokens.input.loc());
+                    }
+                    Some(ASTMatchArmExpressions::Iterator(i_obj))
+                },
+                ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
+                ASTExpression::Var(v) => {
+                    if v.value != "_" {
+                        self.tokens.error(ErrorType::Unexpected(String::from("variable name")), start, self.tokens.input.loc());
+                    };
+                    Some(ASTMatchArmExpressions::Rest)
+                },
+                ASTExpression::EnumAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
+                _ => {
+                    self.tokens.error(ErrorType::WrongMatchArmExp, start, self.tokens.input.loc());
+                    None
+                }
+            }
+        } else {
+            self.tokens.error(ErrorType::Expected(String::from("match arm expression")), start, self.tokens.input.loc());
+            None
+        }
+    }
+
     fn parse_expression_part(&mut self) -> Option<ASTExpression> {
         self.is_last_block = false;
         let exp = {
@@ -465,6 +502,7 @@ impl Parser {
             TokenType::Float(value) => Some(ASTExpression::Float(ASTFloat { value, range: token.range })),
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
             TokenType::Char(value) => Some(ASTExpression::Char(ASTChar { value, range: token.range })),
+            TokenType::None => Some(ASTExpression::None(token.range)),
             TokenType::Var(value) => {
                 if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                     self.tokens.consume();
@@ -484,7 +522,9 @@ impl Parser {
                         return None;
                     }
                     let init = if self.tokens.is_next(TokenType::Punc('(')) {
+                        self.tokens.consume();
                         let exp = self.parse_expression();
+                        self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
                         if let Some(t) = exp {
                             Some(Box::from(t))
                         } else { None }
@@ -686,7 +726,54 @@ impl Parser {
                                 range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
-                    }
+                    },
+                    "match" => {
+                        let to_get_matched = self.parse_expression();
+                        if to_get_matched.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("expression to get matched")), self.tokens.input.loc(), self.tokens.input.loc());
+                            return None;
+                        };
+                        self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
+                        let mut arms: Vec<ASTMatchArm> = vec![];
+                        while !self.tokens.is_next(TokenType::Punc('}')) {
+                            let match_arm_start = self.tokens.input.loc();
+                            let mut possibilities: Vec<ASTMatchArmExpressions> = vec![];
+                            possibilities.push(self.parse_match_arm_exp()?);
+                            if self.tokens.is_next(TokenType::Op(String::from("|"))) {
+                                self.tokens.consume();
+                                while !self.tokens.is_next(TokenType::Op(String::from("=>"))) && !self.tokens.is_next(TokenType::Kw(String::from("when")))  {
+                                    possibilities.push(self.parse_match_arm_exp()?);
+                                    if self.tokens.is_next(TokenType::Op(String::from("|"))) { self.tokens.consume(); };
+                                }
+                            }
+                            let guard = if self.tokens.is_next(TokenType::Kw(String::from("when"))) {
+                                self.tokens.consume();
+                                self.parse_expression()
+                            } else { None };
+
+                            self.tokens.skip_or_err(TokenType::Op(String::from("=>")), None, None);
+
+                            let body = self.parse_expression();
+                            if body.is_none() {
+                                self.tokens.error(ErrorType::Expected(String::from("match arm body")), match_arm_start, self.tokens.input.loc());
+                                return None;
+                            }
+                            if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
+                            arms.push(ASTMatchArm {
+                                guard,
+                                possibilities,
+                                body: body.unwrap(),
+                                range: Range { start: match_arm_start, end: self.tokens.input.loc() }
+                            });
+                        }
+                        self.tokens.skip_or_err(TokenType::Punc('}'), None, None);
+                        self.is_last_block = true;
+                        Some(ASTExpression::Match(ASTMatch {
+                            arms,
+                            range: Range { start: token.range.start, end: self.tokens.input.loc() },
+                            expression: Box::from(to_get_matched.unwrap())
+                        }))
+                    },
                     _ => {
                         self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), token.range.start, token.range.end);
                         None

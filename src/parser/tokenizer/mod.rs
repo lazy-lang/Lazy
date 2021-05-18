@@ -15,7 +15,8 @@ pub enum TokenType {
     Var(String),
     Op(String),
     Char(char),
-    Punc(char)
+    Punc(char),
+    None
 }
 
 impl fmt::Display for TokenType {
@@ -29,7 +30,8 @@ impl fmt::Display for TokenType {
             Self::Var(name) => write!(f, "identifier {}", name),
             Self::Op(op) => write!(f, "operator {}", op),
             Self::Punc(punc) => write!(f, "punctuation {}", punc),
-            Self::Char(ch) => write!(f, "char {}", ch)
+            Self::Char(ch) => write!(f, "char {}", ch),
+            Self::None => write!(f, "none")
         }
     }
 }
@@ -188,8 +190,9 @@ impl Tokenizer {
         };
         if ident == "true" { return Token { val: TokenType::Bool(true), range: Range {start, end: self.input.loc()} } }
         else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
+        else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
 
-        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "in", "else", "enum", "struct", "true", "false", "fn", "type", "const", "yield") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
+        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "in", "else", "enum", "struct", "fn", "type", "const", "yield", "when", "match") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 
