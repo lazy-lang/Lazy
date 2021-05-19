@@ -52,10 +52,10 @@ pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
 
 pub fn is_natural_val(ast: &ASTExpression) -> bool {
     match ast {
-        ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => return true,
+        ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => true,
         ASTExpression::Iterator(iter) => is_natural_iter(iter),
         ASTExpression::Tuple(tup) => is_natural_tuple(tup),
-        _ => return false
+        _ => false
     }
 }
 

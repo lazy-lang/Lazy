@@ -880,12 +880,12 @@ impl Parser {
                         return None;
                     }
                     if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum variants"))), None) { return None; };
-                    return Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
+                    Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                     name: name.0.unwrap(),
                     values: self.parse_typing_pair_list(true, false, false, '}'),
                     typings: name.1,
                     range: Range { start, end: self.tokens.input.loc() }
-                    }));
+                    }))
                    },
                    "type" => {
                        let name = self.parse_varname(true, true, false);
@@ -947,7 +947,7 @@ impl Parser {
                        }
                        Some(ASTStatement::Static(
                            ASTStatic {
-                               typings: typings,
+                               typings,
                                var: varname.0.unwrap(),
                                value: exp.unwrap(),
                                range: Range { start, end: self.tokens.input.loc() } 
