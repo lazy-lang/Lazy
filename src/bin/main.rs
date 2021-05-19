@@ -4,6 +4,8 @@ use std::time::{Instant};
 fn main() {
     let source = "
 
+    static a<B> = [1, 2, 3];
+
     main {
         let a = [1, 2, 3, 4, 5, 6, none];
 

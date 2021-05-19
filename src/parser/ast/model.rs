@@ -41,6 +41,13 @@ pub struct ASTDeclare {
     pub range: Range,
 }
 
+pub struct ASTStatic {
+    pub var: ASTVar,
+    pub typings: Option<ASTTypings>,
+    pub value: ASTExpression,
+    pub range: Range
+}
+
 pub struct ASTStruct {
     pub name: ASTVar,
     pub fields: ASTPairListTyping,
@@ -237,6 +244,7 @@ pub enum ASTExpression {
 pub enum ASTStatement {
     EnumDeclaration(ASTEnumDeclaration),
     Struct(ASTStruct),
+    Static(ASTStatic),
     Type(ASTType),
     Main(ASTMain)
 }
@@ -355,6 +363,7 @@ impl fmt::Display for ASTStatement {
             ASTStatement::Struct(structure) => structure.fmt(f),
             ASTStatement::EnumDeclaration(en) => en.fmt(f),
             ASTStatement::Type(typing) => typing.fmt(f),
+            ASTStatement::Static(st) => st.fmt(f),
             ASTStatement::Main(m) => m.fmt(f)
         } 
     }
@@ -559,5 +568,12 @@ impl fmt::Display for ASTMatchArmExpressions {
             Self::None(_) => write!(f, "none"),
             Self::Rest => write!(f, "_")
         }
+   }
+}
+
+
+impl fmt::Display for ASTStatic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "static {}{} = {}", self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
    }
 }

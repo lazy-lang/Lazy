@@ -886,6 +886,38 @@ impl Parser {
                            }
                        ))
                    },
+                   "static" => {
+                       let varname = self.parse_varname(true, false, false);
+                       self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None);
+                       if varname.0.is_none() {
+                           self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
+                           return None;
+                       }
+                       let typings = if let Some(mut typing) = varname.1 {
+                        let len = typing.entries.len();
+                        if len == 0 {
+                            self.tokens.error(ErrorType::Expected(String::from("at least one type")), token.range.start, self.tokens.input.loc());
+                            None
+                        }
+                        else if len > 1 {
+                            self.tokens.error(ErrorType::TooMuchTypes(1), token.range.start, self.tokens.input.loc());
+                            None
+                        } else { Some(typing.entries.remove(0)) }
+                    } else { None };
+                       let exp = self.parse_expression();
+                       if exp.is_none() {
+                        self.tokens.error(ErrorType::Expected(String::from("initializor")), start, self.tokens.input.loc());
+                        return None;
+                       }
+                       Some(ASTStatement::Static(
+                           ASTStatic {
+                               typings: typings,
+                               var: varname.0.unwrap(),
+                               value: exp.unwrap(),
+                               range: Range { start, end: self.tokens.input.loc() } 
+                           }
+                       ))
+                   }
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                     self.tokens.input.skip_line();
