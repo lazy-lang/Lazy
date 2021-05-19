@@ -7,9 +7,6 @@ Structs contain key-value pairs called `fields`. All keys and the types of the v
 struct Something<GenericParam> {
     val: GenericParam,
 
-    // Empty constructor - fallbacks to the default
-    Something: fn() {},
-
     set: fn(val: GenericParam) -> bool {
         self.val = val;
         true;
@@ -18,11 +15,64 @@ struct Something<GenericParam> {
 }
 ```
 
-## Constructors
+## Field modifiers
 
-The method with the same name as the struct acts as the **constructor**.
+### Static fields
 
-## Optional fields
+Sometimes you want a field to be attached to the struct itself and not an instance of the struct.
+
+```
+struct Person {
+    name: str,
+
+    static new: fn(name: str) -> Person {
+        new Person { name };
+    }
+
+}
+
+let me = Person.new("Google");
+```
+
+### Hidden/Private fields
+
+Fields that can only be accessed in the execution context of the functions inside the sctruct.
+
+```
+struct Person {
+    name: str,
+    private id: i32
+
+    static new: fn(name: str) -> Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new("Google");
+me.id; // Error!
+```
+
+### Immutable fields
+
+Fields that cannot be mutated.
+
+```
+struct Person {
+    const name: str,
+    private id: i32
+
+    static new: fn(name: str) -> Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new("Google");
+me.name = "Pedro"; // Error!
+```
+
+### Optional fields
 
 Fields which have a question mark (`?`) after the key are **optional**.
 
@@ -39,7 +89,7 @@ Fields are accessed using the dot notation (`.`).
 
 ```
 main {
-    let my_smth = Something<str>{val: "Hello"};
+    let my_smth = new Something<str>{val: "Hello"};
     my_smth.set(val: "World");
     my_smth.val.length; // returns 5
 }
@@ -51,7 +101,7 @@ Optional fields can be accessed by the dot notation, but you must put a question
 
 ```
 main {
-    let my_struct = StructWithOptionalField{}; // the optional field is `none`
+    let my_struct = new StructWithOptionalField{}; // the optional field is `none`
     my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
     my_struct.something = "Hello";
     my_fn(my_struct.something?); // Runs fine!

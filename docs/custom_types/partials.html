@@ -191,8 +191,8 @@ main {
         thing.name;
     }
 
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+    let me = new Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = new Animal{name: &quot;Perry&quot;, age: 2};
 
     get_name(me); // Google
     get_name(some_animal); // Perry
@@ -203,10 +203,10 @@ main {
 type MakesNoise = { make_noise: () };
 
 main {
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+    let me = new Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = new Animal{name: &quot;Perry&quot;, age: 2};
 
-    let stuff_that_makes_noise = Vec&lt;MakesNoise&gt;{};
+    let stuff_that_makes_noise = new Vec&lt;MakesNoise&gt;{};
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 
@@ -253,6 +253,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

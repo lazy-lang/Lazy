@@ -189,7 +189,7 @@
 }
 
 main {
-    let my_range = Range { min: 0, max: 15, progress: 0 };
+    let my_range = new Range { min: 0, max: 15, progress: 0 };
     for i in my_range print(i);
 }
 </code></pre>
@@ -202,7 +202,7 @@ main {
 <h2 id="breaking-a-loop"><a class="header" href="#breaking-a-loop">Breaking a loop</a></h2>
 <p>Both types of loops are expressions... but what do they return? By default, <code>none</code>, unless you use the <code>yield</code> keyword inside them. The <code>yield</code> keyword stops the execution of the loop and returns the provided expression.</p>
 <p>The following snippet checks if <code>20</code> is in <code>vector</code> and if it is, the <code>value</code> variable is set to <code>true</code>, otherwise it's <code>none</code>. </p>
-<pre><code>let vector = Vec&lt;i32&gt;{ iter: 0..30 };
+<pre><code>let vector = new Vec&lt;i32&gt;{ iter: 0..30 };
 
 let value = for i in vector {
     if i == 20 yield true
@@ -241,6 +241,21 @@ else print(&quot;20 is NOT in the vector!&quot;)
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

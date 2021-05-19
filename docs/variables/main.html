@@ -183,7 +183,7 @@ a = 10; // Invalid
     val: V
 }
 
-const my_pair = Pair&lt;i32&gt;{key: &quot;Hello&quot;, val: 3};
+const my_pair = new Pair&lt;i32&gt;{key: &quot;Hello&quot;, val: 3};
 my_pair.key = &quot;World&quot;; // Valid
 </code></pre>
 <h2 id="static"><a class="header" href="#static">static</a></h2>
@@ -234,6 +234,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

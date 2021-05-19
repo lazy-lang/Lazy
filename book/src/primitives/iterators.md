@@ -49,7 +49,7 @@ const println = fn(...strs?: Stringable) {
     }
 }
 
-print_many("Hello", Vec{}, 4, true); 
+print_many("Hello", new Vec{}, 4, true); 
 // Prints:
 /*
 Hello

@@ -30,7 +30,7 @@ items.1; // 64
 `Lazy` does not support arrays natively, but it does provide a `Vec` struct, which is an array located on the **heap**. Those are always more useful anyways.
 
 ```
-let nums = Vec<i32>{ iter: 0..10 };
+let nums = new Vec<i32>{ iter: 0..10 };
 nums.push(15);
 nums.filter(fn(n) n % 2);
 ```

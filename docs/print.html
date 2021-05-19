@@ -198,10 +198,10 @@ struct Animal {
 type ThingWithName = {name: str};
 
 main {
-    let me = Person{ name: &quot;Google&quot;, age: 19 };
-    let my_pet = Animal { name: &quot;Baby&quot;, age: 1, type: AnimalTypes:Bird };
+    let me = new Person{ name: &quot;Google&quot;, age: 19 };
+    let my_pet = new Animal { name: &quot;Baby&quot;, age: 1, type: AnimalTypes:Bird };
 
-    let things = Vec&lt;ThingWithName&gt;{};
+    let things = new Vec&lt;ThingWithName&gt;{};
     things.push(me);
     things.push(my_pet);
 
@@ -231,7 +231,7 @@ items.1; // 64
 </code></pre>
 <h3 id="arrays"><a class="header" href="#arrays">Arrays?</a></h3>
 <p><code>Lazy</code> does not support arrays natively, but it does provide a <code>Vec</code> struct, which is an array located on the <strong>heap</strong>. Those are always more useful anyways.</p>
-<pre><code>let nums = Vec&lt;i32&gt;{ iter: 0..10 };
+<pre><code>let nums = new Vec&lt;i32&gt;{ iter: 0..10 };
 nums.push(15);
 nums.filter(fn(n) n % 2);
 </code></pre>
@@ -328,7 +328,7 @@ const print = fn(...strs?: Stringable) {
     }
 }
 
-print_many(&quot;Hello&quot;, Vec{}, 4, true); 
+print_many(&quot;Hello&quot;, new Vec{}, 4, true); 
 // Prints:
 /*
 Hello
@@ -409,9 +409,6 @@ if char_token == TokenTypes:Char('a') {
 <pre><code>struct Something&lt;GenericParam&gt; {
     val: GenericParam,
 
-    // Empty constructor - fallbacks to the default
-    Something: fn() {},
-
     set: fn(val: GenericParam) -&gt; bool {
         self.val = val;
         true;
@@ -419,9 +416,51 @@ if char_token == TokenTypes:Char('a') {
 
 }
 </code></pre>
-<h2 id="constructors"><a class="header" href="#constructors">Constructors</a></h2>
-<p>The method with the same name as the struct acts as the <strong>constructor</strong>.</p>
-<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
+<h2 id="field-modifiers"><a class="header" href="#field-modifiers">Field modifiers</a></h2>
+<h3 id="static-fields"><a class="header" href="#static-fields">Static fields</a></h3>
+<p>Sometimes you want a field to be attached to the struct itself and not an instance of the struct.</p>
+<pre><code>struct Person {
+    name: str,
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+</code></pre>
+<h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
+<p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
+<pre><code>struct Person {
+    name: str,
+    private id: i32
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+me.id; // Error!
+</code></pre>
+<h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
+<p>Fields that cannot be mutated.</p>
+<pre><code>struct Person {
+    const name: str,
+    private id: i32
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+me.name = &quot;Pedro&quot;; // Error!
+</code></pre>
+<h3 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h3>
 <p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
 <pre><code>struct StructWithOptionalField {
     // Can either be &quot;none&quot;, or &quot;str&quot;
@@ -431,7 +470,7 @@ if char_token == TokenTypes:Char('a') {
 <h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
 <p>Fields are accessed using the dot notation (<code>.</code>).</p>
 <pre><code>main {
-    let my_smth = Something&lt;str&gt;{val: &quot;Hello&quot;};
+    let my_smth = new Something&lt;str&gt;{val: &quot;Hello&quot;};
     my_smth.set(val: &quot;World&quot;);
     my_smth.val.length; // returns 5
 }
@@ -439,7 +478,7 @@ if char_token == TokenTypes:Char('a') {
 <h2 id="accessing-optional-fields"><a class="header" href="#accessing-optional-fields">Accessing optional fields</a></h2>
 <p>Optional fields can be accessed by the dot notation, but you must put a question mark (<code>?</code>) before the dot. If the optional struct is empty, then the expression returns <code>none</code>.</p>
 <pre><code>main {
-    let my_struct = StructWithOptionalField{}; // the optional field is `none`
+    let my_struct = new StructWithOptionalField{}; // the optional field is `none`
     my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
     my_struct.something = &quot;Hello&quot;;
     my_fn(my_struct.something?); // Runs fine!
@@ -477,8 +516,8 @@ main {
         thing.name;
     }
 
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+    let me = new Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = new Animal{name: &quot;Perry&quot;, age: 2};
 
     get_name(me); // Google
     get_name(some_animal); // Perry
@@ -489,10 +528,10 @@ main {
 type MakesNoise = { make_noise: () };
 
 main {
-    let me = Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
-    let some_animal = Animal{name: &quot;Perry&quot;, age: 2};
+    let me = new Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
+    let some_animal = new Animal{name: &quot;Perry&quot;, age: 2};
 
-    let stuff_that_makes_noise = Vec&lt;MakesNoise&gt;{};
+    let stuff_that_makes_noise = new Vec&lt;MakesNoise&gt;{};
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 
@@ -519,7 +558,7 @@ a = 10; // Invalid
     val: V
 }
 
-const my_pair = Pair&lt;i32&gt;{key: &quot;Hello&quot;, val: 3};
+const my_pair = new Pair&lt;i32&gt;{key: &quot;Hello&quot;, val: 3};
 my_pair.key = &quot;World&quot;; // Valid
 </code></pre>
 <h2 id="static"><a class="header" href="#static">static</a></h2>
@@ -609,7 +648,7 @@ match my_num {
 }
 
 main {
-    let my_range = Range { min: 0, max: 15, progress: 0 };
+    let my_range = new Range { min: 0, max: 15, progress: 0 };
     for i in my_range print(i);
 }
 </code></pre>
@@ -622,7 +661,7 @@ main {
 <h2 id="breaking-a-loop"><a class="header" href="#breaking-a-loop">Breaking a loop</a></h2>
 <p>Both types of loops are expressions... but what do they return? By default, <code>none</code>, unless you use the <code>yield</code> keyword inside them. The <code>yield</code> keyword stops the execution of the loop and returns the provided expression.</p>
 <p>The following snippet checks if <code>20</code> is in <code>vector</code> and if it is, the <code>value</code> variable is set to <code>true</code>, otherwise it's <code>none</code>. </p>
-<pre><code>let vector = Vec&lt;i32&gt;{ iter: 0..30 };
+<pre><code>let vector = new Vec&lt;i32&gt;{ iter: 0..30 };
 
 let value = for i in vector {
     if i == 20 yield true
@@ -653,6 +692,21 @@ else print(&quot;20 is NOT in the vector!&quot;)
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

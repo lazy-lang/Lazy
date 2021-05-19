@@ -28,7 +28,7 @@ struct Pair<V> {
     val: V
 }
 
-const my_pair = Pair<i32>{key: "Hello", val: 3};
+const my_pair = new Pair<i32>{key: "Hello", val: 3};
 my_pair.key = "World"; // Valid
 ```
 

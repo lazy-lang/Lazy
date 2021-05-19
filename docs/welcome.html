@@ -196,10 +196,10 @@ struct Animal {
 type ThingWithName = {name: str};
 
 main {
-    let me = Person{ name: &quot;Google&quot;, age: 19 };
-    let my_pet = Animal { name: &quot;Baby&quot;, age: 1, type: AnimalTypes:Bird };
+    let me = new Person{ name: &quot;Google&quot;, age: 19 };
+    let my_pet = new Animal { name: &quot;Baby&quot;, age: 1, type: AnimalTypes:Bird };
 
-    let things = Vec&lt;ThingWithName&gt;{};
+    let things = new Vec&lt;ThingWithName&gt;{};
     things.push(me);
     things.push(my_pet);
 
@@ -238,6 +238,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

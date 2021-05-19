@@ -170,9 +170,6 @@
 <pre><code>struct Something&lt;GenericParam&gt; {
     val: GenericParam,
 
-    // Empty constructor - fallbacks to the default
-    Something: fn() {},
-
     set: fn(val: GenericParam) -&gt; bool {
         self.val = val;
         true;
@@ -180,9 +177,51 @@
 
 }
 </code></pre>
-<h2 id="constructors"><a class="header" href="#constructors">Constructors</a></h2>
-<p>The method with the same name as the struct acts as the <strong>constructor</strong>.</p>
-<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
+<h2 id="field-modifiers"><a class="header" href="#field-modifiers">Field modifiers</a></h2>
+<h3 id="static-fields"><a class="header" href="#static-fields">Static fields</a></h3>
+<p>Sometimes you want a field to be attached to the struct itself and not an instance of the struct.</p>
+<pre><code>struct Person {
+    name: str,
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+</code></pre>
+<h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
+<p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
+<pre><code>struct Person {
+    name: str,
+    private id: i32
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+me.id; // Error!
+</code></pre>
+<h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
+<p>Fields that cannot be mutated.</p>
+<pre><code>struct Person {
+    const name: str,
+    private id: i32
+
+    static new: fn(name: str) -&gt; Person {
+        new Person { name, id: rng() };
+    }
+
+}
+
+let me = Person.new(&quot;Google&quot;);
+me.name = &quot;Pedro&quot;; // Error!
+</code></pre>
+<h3 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h3>
 <p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
 <pre><code>struct StructWithOptionalField {
     // Can either be &quot;none&quot;, or &quot;str&quot;
@@ -192,7 +231,7 @@
 <h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
 <p>Fields are accessed using the dot notation (<code>.</code>).</p>
 <pre><code>main {
-    let my_smth = Something&lt;str&gt;{val: &quot;Hello&quot;};
+    let my_smth = new Something&lt;str&gt;{val: &quot;Hello&quot;};
     my_smth.set(val: &quot;World&quot;);
     my_smth.val.length; // returns 5
 }
@@ -200,7 +239,7 @@
 <h2 id="accessing-optional-fields"><a class="header" href="#accessing-optional-fields">Accessing optional fields</a></h2>
 <p>Optional fields can be accessed by the dot notation, but you must put a question mark (<code>?</code>) before the dot. If the optional struct is empty, then the expression returns <code>none</code>.</p>
 <pre><code>main {
-    let my_struct = StructWithOptionalField{}; // the optional field is `none`
+    let my_struct = new StructWithOptionalField{}; // the optional field is `none`
     my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
     my_struct.something = &quot;Hello&quot;;
     my_fn(my_struct.something?); // Runs fine!
@@ -250,6 +289,21 @@
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

@@ -28,8 +28,8 @@ main {
         thing.name;
     }
 
-    let me = Human{name: "Google", job: "Programmer", age: 19};
-    let some_animal = Animal{name: "Perry", age: 2};
+    let me = new Human{name: "Google", job: "Programmer", age: 19};
+    let some_animal = new Animal{name: "Perry", age: 2};
 
     get_name(me); // Google
     get_name(some_animal); // Perry
@@ -43,10 +43,10 @@ main {
 type MakesNoise = { make_noise: () };
 
 main {
-    let me = Human{name: "Google", job: "Programmer", age: 19};
-    let some_animal = Animal{name: "Perry", age: 2};
+    let me = new Human{name: "Google", job: "Programmer", age: 19};
+    let some_animal = new Animal{name: "Perry", age: 2};
 
-    let stuff_that_makes_noise = Vec<MakesNoise>{};
+    let stuff_that_makes_noise = new Vec<MakesNoise>{};
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 

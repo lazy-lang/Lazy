@@ -34,7 +34,7 @@ struct RangeIter {
 }
 
 main {
-    let my_range = Range { min: 0, max: 15, progress: 0 };
+    let my_range = new Range { min: 0, max: 15, progress: 0 };
     for i in my_range print(i);
 }
 ```
@@ -56,7 +56,7 @@ Both types of loops are expressions... but what do they return? By default, `non
 The following snippet checks if `20` is in `vector` and if it is, the `value` variable is set to `true`, otherwise it's `none`. 
 
 ```
-let vector = Vec<i32>{ iter: 0..30 };
+let vector = new Vec<i32>{ iter: 0..30 };
 
 let value = for i in vector {
     if i == 20 yield true

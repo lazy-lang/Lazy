@@ -196,7 +196,7 @@ const print = fn(...strs?: Stringable) {
     }
 }
 
-print_many(&quot;Hello&quot;, Vec{}, 4, true); 
+print_many(&quot;Hello&quot;, new Vec{}, 4, true); 
 // Prints:
 /*
 Hello
@@ -243,6 +243,21 @@ true
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         
