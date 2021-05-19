@@ -45,12 +45,18 @@ pub fn is_natural_iter(ast: &ASTIterator) -> bool {
 
 pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
     for value in &ast.expressions {
-        match value {
-            ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => {},
-            _ => return false
-        }
+        if !is_natural_val(value) { return false };
     }
     true
+}
+
+pub fn is_natural_val(ast: &ASTExpression) -> bool {
+    match ast {
+        ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => return true,
+        ASTExpression::Iterator(iter) => is_natural_iter(iter),
+        ASTExpression::Tuple(tup) => is_natural_tuple(tup),
+        _ => return false
+    }
 }
 
  pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
