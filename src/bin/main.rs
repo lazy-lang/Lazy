@@ -4,11 +4,27 @@ use std::time::{Instant};
 fn main() {
     let source = "
 
+    enum A<A, B> {
+        a,
+        b,
+        c
+    }
+
+    struct Smth {
+        a: fn<A, B>() -> A {
+            console?.log(1);
+        }
+    }
+
     static a<B> = [1, 2, 3];
 
     main {
-        let a = [1, 2, 3, 4, 5, 6, none];
 
+        some_fn<A, B>();
+        let myType = new A<A>{};
+        A:a<A, B>;
+
+        let a = [1, 2, 3, 4, 5, 6, none];
         let res = match a {
             1 => {},
             2 | 3 | 4 | 5 | \"str\" => {},
@@ -22,13 +38,10 @@ fn main() {
             Number:Int when 1 > 5 => {},
             3..5 => {},
             [1, 2, 3] => print('c'),
-            [a, b, 10] => print('d'),
-            c => {},
             10..=15 when a == \"hello\" => {},
             _ => {}
         }
     }
-
     ";
     let vectored: Vec<_> = source.split('\n').collect();
     let mut p = Parser::new(&source);

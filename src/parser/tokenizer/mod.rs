@@ -192,7 +192,7 @@ impl Tokenizer {
         else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
         else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
 
-        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "in", "else", "enum", "struct", "fn", "type", "const", "yield", "when", "match", "static") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
+        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "in", "else", "enum", "struct", "fn", "type", "const", "yield", "when", "match", "static", "new") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 

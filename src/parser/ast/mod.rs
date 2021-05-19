@@ -124,20 +124,76 @@ impl Parser {
                             }
                         ))
                     },
+                    "<" => {
+                        self.tokens.consume();
+                        let type_list = self.parse_typing_list(false, false, TokenType::Op(String::from(">")));
+                        if self.tokens.is_next(TokenType::Punc('(')) {
+                            self.tokens.consume();
+                            let args = self.parse_expression_list(')');
+                            self.parse_suffix(Some(ASTExpression::Call(
+                                ASTCall {
+                                    target: Box::from(token.unwrap()),
+                                    typings: Some(type_list),
+                                    args,
+                                    range: Range { start, end: self.tokens.input.loc() }
+                                }
+                            )))
+                        } else {
+                            self.tokens.error(ErrorType::Unexpected(String::from("typing list")), start, self.tokens.input.loc());
+                            None
+                        }
+                    },
                     _ => token
                 }
             },
-            TokenType::Punc('(') => {
-                    self.tokens.consume();
-                    let args = self.parse_expression_list(')');
-                    self.parse_suffix(Some(ASTExpression::Call(
-                        ASTCall {
-                            target: Box::from(token.unwrap()),
-                            args,
-                            range: Range { start, end: self.tokens.input.loc() }
+            TokenType::Punc(punc) => {
+                match punc {
+                    '(' => {
+                        self.tokens.consume();
+                        let args = self.parse_expression_list(')');
+                        self.parse_suffix(Some(ASTExpression::Call(
+                            ASTCall {
+                                target: Box::from(token.unwrap()),
+                                typings: None,
+                                args,
+                                range: Range { start, end: self.tokens.input.loc() }
+                            }
+                        )))
+                    },
+                    ':' => {
+                        self.tokens.consume();
+                        let val = if let ASTExpression::Var(v) = token.unwrap() {
+                            v
+                        } else {
+                            self.tokens.error(ErrorType::Expected(String::from("enum identifier")), start, self.tokens.input.loc());
+                            return None;
+                        };
+                        let variant_name = self.parse_varname(true, true, false);
+                        if variant_name.0.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("enum variant")), start, self.tokens.input.loc());
+                            return None;
                         }
-                    )))
-            },
+                        let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
+                            self.tokens.consume();
+                            let exp = self.parse_expression();
+                            self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
+                            if let Some(t) = exp {
+                                Some(Box::from(t))
+                            } else { None }
+                        } else { None };
+                        Some(ASTExpression::EnumAccess(
+                            ASTEnumAccess {
+                                value: val,
+                                target: variant_name.0.unwrap(),
+                                typings: variant_name.1,
+                                init_value,
+                                range: Range { start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    }
+                    _ => token
+                }
+            }
             _ => token
         }
     }
@@ -503,43 +559,7 @@ impl Parser {
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
             TokenType::Char(value) => Some(ASTExpression::Char(ASTChar { value, range: token.range })),
             TokenType::None => Some(ASTExpression::None(token.range)),
-            TokenType::Var(value) => {
-                if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-                    self.tokens.consume();
-                    let typings = Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))));
-                    if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("initializor"))), None) { return None };
-                    return Some(ASTExpression::Init(ASTInitializor{
-                        target: ASTVar { value, range: token.range },
-                        typings,
-                        params: self.parse_pair_list(true, '}'),
-                        range: Range { start: token.range.start, end: self.tokens.input.loc() }
-                    }));
-                } else if self.tokens.is_next(TokenType::Punc(':')) {
-                    self.tokens.consume();
-                    let target = self.parse_varname(false, true, false).0;
-                    if target.is_none() {
-                        self.tokens.error(ErrorType::Expected(String::from("enum identifier")), self.tokens.input.loc(), self.tokens.input.loc());
-                        return None;
-                    }
-                    let init = if self.tokens.is_next(TokenType::Punc('(')) {
-                        self.tokens.consume();
-                        let exp = self.parse_expression();
-                        self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
-                        if let Some(t) = exp {
-                            Some(Box::from(t))
-                        } else { None }
-                    } else { None };
-                    return Some(ASTExpression::EnumAccess(
-                        ASTEnumAccess {
-                            value: ASTVar { value, range: token.range },
-                            target: target.unwrap(),
-                            init_value: init,
-                            range: Range { start: token.range.start, end: self.tokens.input.loc() }
-                        }
-                    ))
-                }
-                Some(ASTExpression::Var(ASTVar { value, range: token.range }))
-            },
+            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range })),
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
             TokenType::Op(value) => {
                 // Prefixes
@@ -774,6 +794,22 @@ impl Parser {
                             expression: Box::from(to_get_matched.unwrap())
                         }))
                     },
+                    "new" => {
+                        let varname = self.parse_varname(true, false, false);
+                        if varname.0.is_none() {
+                            self.tokens.error(ErrorType::Expected(String::from("struct identifier")), token.range.start, self.tokens.input.loc());
+                            return None;
+                        }
+                        self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("struct initializor"))), None);
+                        Some(ASTExpression::Init(
+                            ASTInitializor {
+                                target: varname.0.unwrap(),
+                                params: self.parse_pair_list(true, '}'),
+                                typings: varname.1,
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                            }
+                        ))
+                    }
                     _ => {
                         self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), token.range.start, token.range.end);
                         None
@@ -838,18 +874,18 @@ impl Parser {
                         }))
                    }
                    "enum" => {
-                    if let Some(tok) = self.tokens.consume() {
-                        if let TokenType::Var(name) = tok.val {
-                            if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum fields"))), None) { return None; };
-                            return Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
-                                name,
-                                values: self.parse_typing_pair_list(true, false, false, '}'),
-                                range: Range { start, end: self.tokens.input.loc() }
-                            }));
-                        };
-                    };
-                    self.tokens.error(ErrorType::Expected(String::from("enum name")), token.range.start, token.range.end);
-                    None
+                    let name = self.parse_varname(true, true, false);
+                    if name.0.is_none() { 
+                        self.tokens.error(ErrorType::Expected(String::from("struct name")), token.range.start, token.range.end);
+                        return None;
+                    }
+                    if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum variants"))), None) { return None; };
+                    return Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
+                    name: name.0.unwrap(),
+                    values: self.parse_typing_pair_list(true, false, false, '}'),
+                    typings: name.1,
+                    range: Range { start, end: self.tokens.input.loc() }
+                    }));
                    },
                    "type" => {
                        let name = self.parse_varname(true, true, false);

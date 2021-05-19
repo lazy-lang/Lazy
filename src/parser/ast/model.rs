@@ -87,8 +87,9 @@ pub struct ASTOptional {
 }
 
 pub struct ASTEnumDeclaration {
-    pub name: String,
+    pub name: ASTVar,
     pub values: ASTPairListTyping,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -136,12 +137,14 @@ pub struct ASTEnumAccess {
     pub value: ASTVar,
     pub target: ASTVar,
     pub init_value: Option<Box<ASTExpression>>,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
 pub struct ASTCall {
     pub target: Box<ASTExpression>,
     pub args: ASTExpressionList,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -448,19 +451,19 @@ impl fmt::Display for ASTPairList {
 
 impl fmt::Display for ASTCall {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-         write!(f, "{}({})", self.target, self.args)
+         write!(f, "{}{}({})", self.target, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap()) } else { String::from("") }, self.args)
     }
 }
 
 impl fmt::Display for ASTEnumAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}({})", self.value, self.target, if self.init_value.is_some() { self.init_value.as_ref().unwrap().to_string() } else { String::from("none") })
+        write!(f, "{}:{}{}({})", self.value, self.target, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap()) } else { String::from("") }, if self.init_value.is_some() { self.init_value.as_ref().unwrap().to_string() } else { String::from("none") })
    }
 }
 
 impl fmt::Display for ASTInitializor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.target, self.params)
+        write!(f, "new {}{}{}", self.target, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap()) } else { String::from("") }, self.params)
    }
 }
 
@@ -500,7 +503,7 @@ impl fmt::Display for ASTType {
 
 impl fmt::Display for ASTEnumDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "enum {} {{\n {} }}", self.name, self.values)
+        writeln!(f, "enum {}{} {{\n {} }}", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap() )} else { String::from("") }, self.values)
    }
 }
 
