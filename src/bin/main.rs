@@ -3,6 +3,7 @@ use std::time::{Instant};
 
 fn main() {
     let source = "
+    import \"Hello\"
 
     enum A<A, B> {
         a,

@@ -224,6 +224,12 @@ pub struct ASTExport {
     pub range: Range
 }
 
+pub struct ASTImport {
+    pub path: ASTStr,
+    pub _as: Option<ASTVar>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -260,7 +266,8 @@ pub enum ASTStatement {
     Static(ASTStatic),
     Type(ASTType),
     Main(ASTMain),
-    Export(ASTExport)
+    Export(ASTExport),
+    Import(ASTImport)
 }
 
 bitflags! {
@@ -401,7 +408,8 @@ impl fmt::Display for ASTStatement {
             ASTStatement::Type(typing) => typing.fmt(f),
             ASTStatement::Static(st) => st.fmt(f),
             ASTStatement::Main(m) => m.fmt(f),
-            ASTStatement::Export(ex) => ex.fmt(f)
+            ASTStatement::Export(ex) => ex.fmt(f),
+            ASTStatement::Import(imp) => imp.fmt(f)
         } 
     }
 }
@@ -627,5 +635,11 @@ impl fmt::Display for ASTStatic {
 impl fmt::Display for ASTExport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "export {}", self.value)
+   }
+}
+
+impl fmt::Display for ASTImport {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "import {}{}", self.path, if self._as.is_some() { format!(" as {}", self._as.as_ref().unwrap() )} else { String::from("") })
    }
 }

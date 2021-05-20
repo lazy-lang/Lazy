@@ -1026,7 +1026,34 @@ impl Parser {
                                range: Range { start, end: self.tokens.input.loc() }
                            }
                        ))
-                   }
+                   },
+                   "import" => {
+                       let path_start = self.tokens.input.loc();
+                       let path = if let Some(t) = self.parse_expression_part() {
+                           if let ASTExpression::Str(string) = t {
+                               string
+                           } else {
+                                self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
+                                return None;
+                           }
+                       } else {
+                        self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
+                        return None;
+                       };
+                       let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
+                           self.tokens.consume();
+                           let varname = self.parse_varname(false, false, false).0;
+                           if varname.is_none() { return None; };
+                           varname
+                       } else { None };
+                       Some(ASTStatement::Import(
+                           ASTImport {
+                               path,
+                               _as: as_binding,
+                               range: Range { start, end: self.tokens.input.loc() }
+                           }
+                       ))
+                   },
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                     self.tokens.input.skip_line();
