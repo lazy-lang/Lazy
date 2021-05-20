@@ -56,7 +56,7 @@ impl Parser {
                     let err_start = value.range.start;
                     let err_end = value.range.end;
                     self.tokens.consume();
-                    let exp = self.parse_expression_part(false);
+                    let exp = self.parse_expression_part();
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { 
                         self.tokens.error(ErrorType::UnexpectedOp(opval), err_start, err_end);
@@ -75,7 +75,7 @@ impl Parser {
         }
     }
 
-    fn parse_suffix(&mut self, token: Option<ASTExpression>, parse_generics: bool) -> Option<ASTExpression> {
+    fn parse_suffix(&mut self, token: Option<ASTExpression>) -> Option<ASTExpression> {
         if token.is_none() { return token };
         let start = self.tokens.input.loc();
         let next_token = self.tokens.peek();
@@ -97,7 +97,7 @@ impl Parser {
                                 value: Box::from(token.unwrap()),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )), parse_generics)
+                        )))
                     },
                     "?" => {
                         self.tokens.consume();
@@ -106,11 +106,11 @@ impl Parser {
                                 value: Box::from(token.unwrap()),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )), parse_generics)
+                        )))
                     },
                     ".." | "..=" => {
                         self.tokens.consume();
-                        let end = self.parse_expression_part(true);
+                        let end = self.parse_expression_part();
                         if end.is_none() {
                             self.tokens.error(ErrorType::EndOfIterator, start, self.tokens.input.loc());
                             return None;
@@ -124,7 +124,7 @@ impl Parser {
                             }
                         ))
                     },
-                    "<" if parse_generics => {
+                    "<" => {
                         self.tokens.consume();
                         let type_list = self.parse_typing_list(false, false, TokenType::Op(String::from(">")));
                         if self.tokens.is_next(TokenType::Punc('(')) {
@@ -137,8 +137,9 @@ impl Parser {
                                     args,
                                     range: Range { start, end: self.tokens.input.loc() }
                                 }
-                            )), parse_generics)
+                            )))
                         } else {
+                            self.tokens.error(ErrorType::Unexpected(String::from("typing list")), start, self.tokens.input.loc());
                             None
                         }
                     },
@@ -157,7 +158,7 @@ impl Parser {
                                 args,
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )), parse_generics)
+                        )))
                     },
                     ':' => {
                         self.tokens.consume();
@@ -184,7 +185,7 @@ impl Parser {
                                     init_value: None,
                                     range: Range { start, end: self.tokens.input.loc() }
                                 }
-                            )), parse_generics)
+                            )))
                         } else {
                             let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
                                 self.tokens.consume();
@@ -420,34 +421,37 @@ impl Parser {
             if allow_modifiers {
                 if let Some(t) = self.tokens.peek() {
                     let range_start = t.range.start;
-                    if let TokenType::Kw(kw) = &t.val {
-                        match kw.as_str() {
-                            "const" => {
-                                self.tokens.consume();
-                                if modifiers.contains(ASTModifiers::CONST) {
-                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("const")), range_start, self.tokens.input.loc());
-                                };
-                                modifiers.insert(ASTModifiers::CONST);
-                                continue;
-                            },
-                            "static" => {
-                                self.tokens.consume();
-                                if modifiers.contains(ASTModifiers::STATIC) {
-                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("static")), range_start, self.tokens.input.loc());
-                                };
-                                modifiers.insert(ASTModifiers::STATIC);
-                                continue;
-                            },
-                            "private" => {
-                                self.tokens.consume();
-                                if modifiers.contains(ASTModifiers::PRIVATE) {
-                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("private")), range_start, self.tokens.input.loc());
-                                };
-                                modifiers.insert(ASTModifiers::PRIVATE);
-                                continue;
-                            },
-                            _ => {}
-                        }
+                    match &t.val {
+                        TokenType::Kw(kw) => {
+                            match kw.as_str() {
+                                "const" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::CONST) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("const")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::CONST);
+                                    continue;
+                                },
+                                "static" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::STATIC) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("static")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::STATIC);
+                                    continue;
+                                },
+                                "private" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::PRIVATE) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("private")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::PRIVATE);
+                                    continue;
+                                },
+                                _ => {}
+                            }
+                        },
+                        _ => {}
                     }
                 }
             };
@@ -566,7 +570,7 @@ impl Parser {
 
     fn parse_match_arm_exp(&mut self) -> Option<ASTMatchArmExpressions> {
         let start = self.tokens.input.loc();
-        if let Some(exp) = self.parse_expression_part(false) {
+        if let Some(exp) = self.parse_expression_part() {
             match exp {
                 ASTExpression::Str(str_obj) => Some(ASTMatchArmExpressions::String(str_obj)),
                 ASTExpression::Int(int_obj) => Some(ASTMatchArmExpressions::Int(int_obj)),
@@ -603,7 +607,7 @@ impl Parser {
         }
     }
 
-    fn parse_expression_part(&mut self, parse_generics_in_suffix: bool) -> Option<ASTExpression> {
+    fn parse_expression_part(&mut self) -> Option<ASTExpression> {
         self.is_last_block = false;
         let exp = {
         let token = self.tokens.consume()?;
@@ -622,7 +626,7 @@ impl Parser {
                         Some(ASTExpression::Unary(
                             ASTUnary {
                                 op: value,
-                                value: Box::from(self.parse_expression_part(parse_generics_in_suffix)?),
+                                value: Box::from(self.parse_expression_part()?),
                                 range: token.range
                             }
                         ))
@@ -849,29 +853,17 @@ impl Parser {
                         }))
                     },
                     "new" => {
-                        let target = if let Some(t) = self.parse_expression_part(false) {
-                            match t {
-                                ASTExpression::Var(v) => ASTModAccessValues::Var(Box::from(v)),
-                                ASTExpression::ModAccess(v) => ASTModAccessValues::ModAccess(Box::from(v)),
-                                _ => {
-                                    self.tokens.error(ErrorType::ExpectedFound(String::from("struct identifier"), t.to_string()), token.range.start, self.tokens.input.loc());
-                                    return None;
-                                }
-                            }
-                        } else {
+                        let varname = self.parse_varname(true, false, false);
+                        if varname.0.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("struct identifier")), token.range.start, self.tokens.input.loc());
                             return None;
-                        };
-                        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-                            self.tokens.consume();
-                            Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
-                        } else { None };
+                        }
                         self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("struct initializor"))), None);
                         Some(ASTExpression::Init(
                             ASTInitializor {
-                                target,
+                                target: varname.0.unwrap(),
                                 params: self.parse_pair_list(true, '}'),
-                                typings,
+                                typings: varname.1,
                                 range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
@@ -884,11 +876,11 @@ impl Parser {
             }
         }
         };
-        self.parse_suffix(exp, parse_generics_in_suffix)
+        self.parse_suffix(exp)
     }
 
     fn parse_expression(&mut self) -> Option<ASTExpression> {
-        let exp = self.parse_expression_part(true);
+        let exp = self.parse_expression_part();
         self.parse_binary(exp, 0)
     }
 
@@ -1037,15 +1029,22 @@ impl Parser {
                    },
                    "import" => {
                        let path_start = self.tokens.input.loc();
-                       let path = if let Some(ASTExpression::Str(string)) = self.parse_expression_part(false) {
-                           string
+                       let path = if let Some(t) = self.parse_expression_part() {
+                           if let ASTExpression::Str(string) = t {
+                               string
+                           } else {
+                                self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
+                                return None;
+                           }
                        } else {
                         self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
                         return None;
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
                            self.tokens.consume();
-                           self.parse_varname(false, false, false).0
+                           let varname = self.parse_varname(false, false, false).0;
+                           if varname.is_none() { return None; };
+                           varname
                        } else { None };
                        Some(ASTStatement::Import(
                            ASTImport {
