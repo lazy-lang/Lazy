@@ -17,6 +17,8 @@ struct Something<GenericParam> {
 
 ## Field modifiers
 
+All of the following field modifiers can be used together on a single field, and the order of the modifiers does **not** matter.
+
 ### Static fields
 
 Sometimes you want a field to be attached to the struct itself and not an instance of the struct.
@@ -72,7 +74,7 @@ let me = Person.new("Google");
 me.name = "Pedro"; // Error!
 ```
 
-### Optional fields
+## Optional fields
 
 Fields which have a question mark (`?`) after the key are **optional**.
 
@@ -94,6 +96,7 @@ main {
     my_smth.val.length; // returns 5
 }
 ```
+
 
 ## Accessing optional fields
 

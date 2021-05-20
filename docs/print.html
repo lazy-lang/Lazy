@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">7.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -302,6 +302,22 @@ my_fn(); // returns 2
 <pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? }
 </code></pre>
 <p>Any struct with a &quot;next&quot; function is a valid iterator!</p>
+<pre><code>struct RangeIter {
+    min: i32,
+    max: i32,
+    progress: i32,
+
+    next: () -&gt; i32? {
+        if self.progress == self.max none 
+        else self.progress += 1
+    }
+}
+
+main {
+    let my_range = new Range { min: 0, max: 15, progress: 0 };
+    for i in my_range print(i);
+}
+</code></pre>
 <h2 id="literals-1"><a class="header" href="#literals-1">Literals</a></h2>
 <p>Iterator literals are called <code>range</code> iterators, because they create an iterator that iterates through a range of numbers.</p>
 <pre><code>0..5 // Exclusive
@@ -367,36 +383,36 @@ enum TokenTypes {
 }
 
 main {
-    let str_token = TokenTypes:String(&quot;some token type&quot;);
-    str_token == TokenTypes:String; // returns true
+    let str_token = TokenTypes::String(&quot;some token type&quot;);
+    str_token == TokenTypes::String; // returns true
 
     // str_token gets automatically unwrapped
-    if str_token == TokenTypes:String print(str_token) // prints &quot;some token type&quot;
-    else if str_token == TokenTypes:Integer print(str_token + 5)
+    if str_token == TokenTypes::String print(str_token) // prints &quot;some token type&quot;
+    else if str_token == TokenTypes::Integer print(str_token + 5)
 
-    let num_token = TokenTypes:Number(Number:Int(3000));
+    let num_token = TokenTypess::Number(Numbers::Int(3000));
 }
 </code></pre>
 <h2 id="unwrapping-enums"><a class="header" href="#unwrapping-enums">&quot;Unwrapping&quot; enums</a></h2>
 <p>By default all items are &quot;wrapped&quot; - their values and unknown and can be anything.</p>
-<pre><code>let char_token = TokenTypes:Char('a'); 
+<pre><code>let char_token = TokenTypes::Char('a'); 
 // Even if it's clear that char_token is of type `char`, Lazy doesn't allow you to use it. 
 </code></pre>
 <p>To use the value inside the variant you'll have to &quot;unwrap&quot; it.</p>
 <h3 id="if-unwrapping"><a class="header" href="#if-unwrapping">if unwrapping</a></h3>
-<pre><code>if char_token == TokenTypes:Char {
+<pre><code>if char_token == TokenTypes::Char {
     // You can use `char_token` as a character now.
     char_token.to_string(); // &quot;a&quot;
 }
 // char_token is wrapped here.
 
-if char_token == TokenTypes:Char('a') {
+if char_token == TokenTypes::Char('a') {
     // Also works!
 }
 </code></pre>
 <h3 id="match-unwrapping"><a class="header" href="#match-unwrapping">match unwrapping</a></h3>
 <pre><code>match char_token {
-    TokenTypes:Char =&gt; {
+    TokenTypes::Char =&gt; {
         // char_token is unwrapped here
     },
     _ =&gt; {
@@ -417,6 +433,7 @@ if char_token == TokenTypes:Char('a') {
 }
 </code></pre>
 <h2 id="field-modifiers"><a class="header" href="#field-modifiers">Field modifiers</a></h2>
+<p>All of the following field modifiers can be used together on a single field, and the order of the modifiers does <strong>not</strong> matter.</p>
 <h3 id="static-fields"><a class="header" href="#static-fields">Static fields</a></h3>
 <p>Sometimes you want a field to be attached to the struct itself and not an instance of the struct.</p>
 <pre><code>struct Person {
@@ -460,7 +477,7 @@ me.id; // Error!
 let me = Person.new(&quot;Google&quot;);
 me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
-<h3 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h3>
+<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
 <p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
 <pre><code>struct StructWithOptionalField {
     // Can either be &quot;none&quot;, or &quot;str&quot;
@@ -586,9 +603,9 @@ enum Number {
     Float: f32
 }
 
-let enum_field = Number:Int(15);
+let enum_field = Number::Int(15);
 
-// if &quot;enum_field&quot; is of type `Number:Float`, return the unwrapped float inside it, otherwise return 0.
+// if &quot;enum_field&quot; is of type `Number::Float`, return the unwrapped float inside it, otherwise return 0.
 let my_num = if enum_field == Number:Float enum_field else 0;
 
 print(my_num == 0) // true
@@ -598,17 +615,17 @@ print(my_num == 0) // true
 <pre><code>let my_num = Number:Float(3.14);
 
 match my_num {
-    Number:Float =&gt; print(&quot;Found float &quot;, my_num),
-    Number:Int =&gt; print(&quot;Found integer &quot;, my_num),
+    Number::Float =&gt; print(&quot;Found float &quot;, my_num),
+    Number::Int =&gt; print(&quot;Found integer &quot;, my_num),
 
     // Specific cases
-    Number:Float(3.14) =&gt; print(&quot;Found pi!&quot;),
+    Number::Float(3.14) =&gt; print(&quot;Found pi!&quot;),
 
     // Guards
-    Number:Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
+    Number::Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
 
     // Execute the same body for different expressions
-    Number:Int(3) | Number:Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
+    Number::Int(3) | Number::Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
 
     // Acts as an &quot;else&quot; - only executed when nothing above gets matched
     _ =&gt; print(&quot;Weird...&quot;)
@@ -617,7 +634,7 @@ match my_num {
 <p>The contents of the <code>match</code> expression are called <code>arms</code> - each arm has a condition (which can be followed by a guard) and a body. </p>
 <p>A condition can be:</p>
 <ul>
-<li>Enum variants (<code>Enum:variant</code>)</li>
+<li>Enum variants (<code>Enum::variant</code>)</li>
 <li>Literals (<code>&quot;hello&quot;</code>, <code>'c'</code>, <code>3</code>, <code>45.3</code>, <code>[1, 2, 3]</code>, <code>true</code>, <code>false</code>, <code>none</code>)</li>
 <li>Range iterators (<code>0..10</code>, <code>5..=1000</code>, <code>'a'..='z'</code>)</li>
 <li>A list of expressions separated by <code>|</code> (<code>1 | 5 | 7</code>) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.</li>
@@ -636,22 +653,6 @@ match my_num {
 <p>The expression after <code>in</code> can be any valid iterator - and an iterator satisfies the following type:</p>
 <pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? } // Any struct with a &quot;next&quot; function is a valid iterator!
 </code></pre>
-<pre><code>struct RangeIter {
-    min: i32,
-    max: i32,
-    progress: i32,
-
-    next: () -&gt; i32? {
-        if self.progress == self.max none 
-        else self.progress += 1
-    }
-}
-
-main {
-    let my_range = new Range { min: 0, max: 15, progress: 0 };
-    for i in my_range print(i);
-}
-</code></pre>
 <h2 id="while"><a class="header" href="#while">While</a></h2>
 <p>A traditional <code>while</code> loop. The expression gets executed as long as the condition is <code>true</code>.</p>
 <pre><code>while true {
@@ -669,6 +670,48 @@ let value = for i in vector {
 
 if value print(&quot;20 is in the vector!&quot;)
 else print(&quot;20 is NOT in the vector!&quot;)
+</code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="modules"><a class="header" href="#modules">Modules</a></h1>
+<p>Sometimes you want to split your code to multiple files - modules are just the thing you need!</p>
+<h2 id="exporting"><a class="header" href="#exporting">Exporting</a></h2>
+<p>You can export the following things:</p>
+<ul>
+<li>struct declarations</li>
+<li>enum declarations</li>
+<li>static variables</li>
+<li>type aliases</li>
+</ul>
+<pre><code>export enum SongGenre {
+    Rock,
+    Pop,
+    Metal,
+    Jazz,
+    Rap,
+    HipHop
+}
+
+export struct Song {
+    const lyrics: str,
+    const genre: SongGenre
+}
+
+export static create_song = fn(lyrics: str, genre: SongGenre) -&gt; Song {
+    new Song { lyrics, genre } 
+}
+</code></pre>
+<h2 id="importing"><a class="header" href="#importing">Importing</a></h2>
+<pre><code>import &quot;./path/to/songs&quot;
+
+main {
+    let bloodmoney = create_song(&quot;what do you believe in?&quot;, SongGenre::Metal);
+}
+</code></pre>
+<h3 id="as-binding"><a class="header" href="#as-binding"><code>as</code> binding</a></h3>
+<pre><code>import &quot;./path/to/songs&quot; as Songs;
+
+main {
+    let bloodmoney = Songs::create_song(&quot;what do you believe in?&quot;, Songs::SongGenre::Metal);
+}
 </code></pre>
 
                     </main>

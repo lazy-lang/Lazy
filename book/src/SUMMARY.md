@@ -12,3 +12,4 @@
 - [Variables](./variables/main.md)
 - [Logic](./logic/main.md)
 - [Loops](./loops/main.md)
+- [Modules](./modules/main.md)

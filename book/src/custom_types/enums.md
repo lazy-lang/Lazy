@@ -18,14 +18,14 @@ enum TokenTypes {
 }
 
 main {
-    let str_token = TokenTypes:String("some token type");
-    str_token == TokenTypes:String; // returns true
+    let str_token = TokenTypes::String("some token type");
+    str_token == TokenTypes::String; // returns true
 
     // str_token gets automatically unwrapped
-    if str_token == TokenTypes:String print(str_token) // prints "some token type"
-    else if str_token == TokenTypes:Integer print(str_token + 5)
+    if str_token == TokenTypes::String print(str_token) // prints "some token type"
+    else if str_token == TokenTypes::Integer print(str_token + 5)
 
-    let num_token = TokenTypes:Number(Number:Int(3000));
+    let num_token = TokenTypess::Number(Numbers::Int(3000));
 }
 ```
 
@@ -34,7 +34,7 @@ main {
 By default all items are "wrapped" - their values and unknown and can be anything.
 
 ```
-let char_token = TokenTypes:Char('a'); 
+let char_token = TokenTypes::Char('a'); 
 // Even if it's clear that char_token is of type `char`, Lazy doesn't allow you to use it. 
 ```
 
@@ -43,13 +43,13 @@ To use the value inside the variant you'll have to "unwrap" it.
 ### if unwrapping
 
 ```
-if char_token == TokenTypes:Char {
+if char_token == TokenTypes::Char {
     // You can use `char_token` as a character now.
     char_token.to_string(); // "a"
 }
 // char_token is wrapped here.
 
-if char_token == TokenTypes:Char('a') {
+if char_token == TokenTypes::Char('a') {
     // Also works!
 }
 ```
@@ -58,7 +58,7 @@ if char_token == TokenTypes:Char('a') {
 
 ```
 match char_token {
-    TokenTypes:Char => {
+    TokenTypes::Char => {
         // char_token is unwrapped here
     },
     _ => {

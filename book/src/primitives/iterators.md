@@ -9,6 +9,26 @@ type Iterator<T> = { next: () -> T? }
 
 Any struct with a "next" function is a valid iterator!
 
+
+```
+struct RangeIter {
+    min: i32,
+    max: i32,
+    progress: i32,
+
+    next: () -> i32? {
+        if self.progress == self.max none 
+        else self.progress += 1
+    }
+}
+
+main {
+    let my_range = new Range { min: 0, max: 15, progress: 0 };
+    for i in my_range print(i);
+}
+```
+
+
 ## Literals
 
 Iterator literals are called `range` iterators, because they create an iterator that iterates through a range of numbers.

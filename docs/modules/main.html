@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Structs - Lazy By Example</title>
+        <title>Modules - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html" class="active"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">7.</strong> Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../modules/main.html" class="active"><strong aria-hidden="true">7.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,91 +165,46 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="structs"><a class="header" href="#structs">Structs</a></h1>
-<p>Structs contain key-value pairs called <code>fields</code>. All keys and the types of the values must be known at compile-time.</p>
-<pre><code>struct Something&lt;GenericParam&gt; {
-    val: GenericParam,
-
-    set: fn(val: GenericParam) -&gt; bool {
-        self.val = val;
-        true;
-    }
-
-}
-</code></pre>
-<h2 id="field-modifiers"><a class="header" href="#field-modifiers">Field modifiers</a></h2>
-<p>All of the following field modifiers can be used together on a single field, and the order of the modifiers does <strong>not</strong> matter.</p>
-<h3 id="static-fields"><a class="header" href="#static-fields">Static fields</a></h3>
-<p>Sometimes you want a field to be attached to the struct itself and not an instance of the struct.</p>
-<pre><code>struct Person {
-    name: str,
-
-    static new: fn(name: str) -&gt; Person {
-        new Person { name };
-    }
-
+                        <h1 id="modules"><a class="header" href="#modules">Modules</a></h1>
+<p>Sometimes you want to split your code to multiple files - modules are just the thing you need!</p>
+<h2 id="exporting"><a class="header" href="#exporting">Exporting</a></h2>
+<p>You can export the following things:</p>
+<ul>
+<li>struct declarations</li>
+<li>enum declarations</li>
+<li>static variables</li>
+<li>type aliases</li>
+</ul>
+<pre><code>export enum SongGenre {
+    Rock,
+    Pop,
+    Metal,
+    Jazz,
+    Rap,
+    HipHop
 }
 
-let me = Person.new(&quot;Google&quot;);
-</code></pre>
-<h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
-<p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
-<pre><code>struct Person {
-    name: str,
-    private id: i32
-
-    static new: fn(name: str) -&gt; Person {
-        new Person { name, id: rng() };
-    }
-
+export struct Song {
+    const lyrics: str,
+    const genre: SongGenre
 }
 
-let me = Person.new(&quot;Google&quot;);
-me.id; // Error!
+export static create_song = fn(lyrics: str, genre: SongGenre) -&gt; Song {
+    new Song { lyrics, genre } 
+}
 </code></pre>
-<h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
-<p>Fields that cannot be mutated.</p>
-<pre><code>struct Person {
-    const name: str,
-    private id: i32
+<h2 id="importing"><a class="header" href="#importing">Importing</a></h2>
+<pre><code>import &quot;./path/to/songs&quot;
 
-    static new: fn(name: str) -&gt; Person {
-        new Person { name, id: rng() };
-    }
+main {
+    let bloodmoney = create_song(&quot;what do you believe in?&quot;, SongGenre::Metal);
+}
+</code></pre>
+<h3 id="as-binding"><a class="header" href="#as-binding"><code>as</code> binding</a></h3>
+<pre><code>import &quot;./path/to/songs&quot; as Songs;
 
-}
-
-let me = Person.new(&quot;Google&quot;);
-me.name = &quot;Pedro&quot;; // Error!
-</code></pre>
-<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
-<p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
-<pre><code>struct StructWithOptionalField {
-    // Can either be &quot;none&quot;, or &quot;str&quot;
-    something?: str
-}
-</code></pre>
-<h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
-<p>Fields are accessed using the dot notation (<code>.</code>).</p>
-<pre><code>main {
-    let my_smth = new Something&lt;str&gt;{val: &quot;Hello&quot;};
-    my_smth.set(val: &quot;World&quot;);
-    my_smth.val.length; // returns 5
-}
-</code></pre>
-<h2 id="accessing-optional-fields"><a class="header" href="#accessing-optional-fields">Accessing optional fields</a></h2>
-<p>Optional fields can be accessed by the dot notation, but you must put a question mark (<code>?</code>) before the dot. If the optional struct is empty, then the expression returns <code>none</code>.</p>
-<pre><code>main {
-    let my_struct = new StructWithOptionalField{}; // the optional field is `none`
-    my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
-    my_struct.something = &quot;Hello&quot;;
-    my_fn(my_struct.something?); // Runs fine!
-}
-</code></pre>
-<p>Keep in mind that you <strong>cannot</strong> use optional fields before you make sure they are not <code>none</code>. </p>
-<pre><code>if my_struct != none {
-    // my_struct is guaranteed to not be none here, no need for question marks!
-    print(my_struct.something);
+main {
+    let bloodmoney = Songs::create_song(&quot;what do you believe in?&quot;, Songs::SongGenre::Metal);
 }
 </code></pre>
 
@@ -258,15 +213,11 @@ me.name = &quot;Pedro&quot;; // Error!
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../custom_types/enums.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../loops/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
-                        
-                            <a rel="next" href="../custom_types/partials.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -276,15 +227,11 @@ me.name = &quot;Pedro&quot;; // Error!
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../custom_types/enums.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../loops/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
-                
-                    <a rel="next" href="../custom_types/partials.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
                 
             </nav>
 

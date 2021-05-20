@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html" class="active"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html" class="active"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">7.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -180,9 +180,9 @@ enum Number {
     Float: f32
 }
 
-let enum_field = Number:Int(15);
+let enum_field = Number::Int(15);
 
-// if &quot;enum_field&quot; is of type `Number:Float`, return the unwrapped float inside it, otherwise return 0.
+// if &quot;enum_field&quot; is of type `Number::Float`, return the unwrapped float inside it, otherwise return 0.
 let my_num = if enum_field == Number:Float enum_field else 0;
 
 print(my_num == 0) // true
@@ -192,17 +192,17 @@ print(my_num == 0) // true
 <pre><code>let my_num = Number:Float(3.14);
 
 match my_num {
-    Number:Float =&gt; print(&quot;Found float &quot;, my_num),
-    Number:Int =&gt; print(&quot;Found integer &quot;, my_num),
+    Number::Float =&gt; print(&quot;Found float &quot;, my_num),
+    Number::Int =&gt; print(&quot;Found integer &quot;, my_num),
 
     // Specific cases
-    Number:Float(3.14) =&gt; print(&quot;Found pi!&quot;),
+    Number::Float(3.14) =&gt; print(&quot;Found pi!&quot;),
 
     // Guards
-    Number:Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
+    Number::Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
 
     // Execute the same body for different expressions
-    Number:Int(3) | Number:Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
+    Number::Int(3) | Number::Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
 
     // Acts as an &quot;else&quot; - only executed when nothing above gets matched
     _ =&gt; print(&quot;Weird...&quot;)
@@ -211,7 +211,7 @@ match my_num {
 <p>The contents of the <code>match</code> expression are called <code>arms</code> - each arm has a condition (which can be followed by a guard) and a body. </p>
 <p>A condition can be:</p>
 <ul>
-<li>Enum variants (<code>Enum:variant</code>)</li>
+<li>Enum variants (<code>Enum::variant</code>)</li>
 <li>Literals (<code>&quot;hello&quot;</code>, <code>'c'</code>, <code>3</code>, <code>45.3</code>, <code>[1, 2, 3]</code>, <code>true</code>, <code>false</code>, <code>none</code>)</li>
 <li>Range iterators (<code>0..10</code>, <code>5..=1000</code>, <code>'a'..='z'</code>)</li>
 <li>A list of expressions separated by <code>|</code> (<code>1 | 5 | 7</code>) - if not all expressions return the same type, the value doesn't get unwrapped, but the body still gets executed.</li>
