@@ -420,37 +420,34 @@ impl Parser {
             if allow_modifiers {
                 if let Some(t) = self.tokens.peek() {
                     let range_start = t.range.start;
-                    match &t.val {
-                        TokenType::Kw(kw) => {
-                            match kw.as_str() {
-                                "const" => {
-                                    self.tokens.consume();
-                                    if modifiers.contains(ASTModifiers::CONST) {
-                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("const")), range_start, self.tokens.input.loc());
-                                    };
-                                    modifiers.insert(ASTModifiers::CONST);
-                                    continue;
-                                },
-                                "static" => {
-                                    self.tokens.consume();
-                                    if modifiers.contains(ASTModifiers::STATIC) {
-                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("static")), range_start, self.tokens.input.loc());
-                                    };
-                                    modifiers.insert(ASTModifiers::STATIC);
-                                    continue;
-                                },
-                                "private" => {
-                                    self.tokens.consume();
-                                    if modifiers.contains(ASTModifiers::PRIVATE) {
-                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("private")), range_start, self.tokens.input.loc());
-                                    };
-                                    modifiers.insert(ASTModifiers::PRIVATE);
-                                    continue;
-                                },
-                                _ => {}
-                            }
-                        },
-                        _ => {}
+                    if let TokenType::Kw(kw) = &t.val {
+                        match kw.as_str() {
+                            "const" => {
+                                self.tokens.consume();
+                                if modifiers.contains(ASTModifiers::CONST) {
+                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("const")), range_start, self.tokens.input.loc());
+                                };
+                                modifiers.insert(ASTModifiers::CONST);
+                                continue;
+                            },
+                            "static" => {
+                                self.tokens.consume();
+                                if modifiers.contains(ASTModifiers::STATIC) {
+                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("static")), range_start, self.tokens.input.loc());
+                                };
+                                modifiers.insert(ASTModifiers::STATIC);
+                                continue;
+                            },
+                            "private" => {
+                                self.tokens.consume();
+                                if modifiers.contains(ASTModifiers::PRIVATE) {
+                                    self.tokens.error(ErrorType::AlreadyHasModifier(String::from("private")), range_start, self.tokens.input.loc());
+                                };
+                                modifiers.insert(ASTModifiers::PRIVATE);
+                                continue;
+                            },
+                            _ => {}
+                        }
                     }
                 }
             };
@@ -1040,22 +1037,15 @@ impl Parser {
                    },
                    "import" => {
                        let path_start = self.tokens.input.loc();
-                       let path = if let Some(t) = self.parse_expression_part(false) {
-                           if let ASTExpression::Str(string) = t {
-                               string
-                           } else {
-                                self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
-                                return None;
-                           }
+                       let path = if let Some(ASTExpression::Str(string)) = self.parse_expression_part(false) {
+                           string
                        } else {
                         self.tokens.error(ErrorType::Expected(String::from("path string")), start, path_start);
                         return None;
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
                            self.tokens.consume();
-                           let varname = self.parse_varname(false, false, false).0;
-                           if varname.is_none() { return None; };
-                           varname
+                           self.parse_varname(false, false, false).0
                        } else { None };
                        Some(ASTStatement::Import(
                            ASTImport {
