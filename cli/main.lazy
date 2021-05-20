@@ -1,0 +1,11 @@
+
+struct Car {
+    model: str,
+    beep_noise: str,
+
+    beep: fn() {
+        print(self.beep_noise);
+        print("Hello!"); 
+    }
+    
+}
