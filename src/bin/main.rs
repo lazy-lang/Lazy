@@ -17,7 +17,7 @@ fn main() {
         static const private b?: bool
     }
 
-    static a<B> = [1, 2, 3];
+    static a<B> = [1, 2, 3]
 
     main {
 
@@ -42,6 +42,8 @@ fn main() {
             _ => {}
         }
     }
+
+    export static test = fn() {}
     ";
     let vectored: Vec<_> = source.split('\n').collect();
     let mut p = Parser::new(&source);

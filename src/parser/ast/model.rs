@@ -219,6 +219,11 @@ pub struct ASTMatch {
     pub range: Range
 }
 
+pub struct ASTExport {
+    pub value: Box<ASTStatement>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -254,7 +259,8 @@ pub enum ASTStatement {
     Struct(ASTStruct),
     Static(ASTStatic),
     Type(ASTType),
-    Main(ASTMain)
+    Main(ASTMain),
+    Export(ASTExport)
 }
 
 bitflags! {
@@ -394,7 +400,8 @@ impl fmt::Display for ASTStatement {
             ASTStatement::EnumDeclaration(en) => en.fmt(f),
             ASTStatement::Type(typing) => typing.fmt(f),
             ASTStatement::Static(st) => st.fmt(f),
-            ASTStatement::Main(m) => m.fmt(f)
+            ASTStatement::Main(m) => m.fmt(f),
+            ASTStatement::Export(ex) => ex.fmt(f)
         } 
     }
 }
@@ -614,5 +621,11 @@ impl fmt::Display for ASTMatchArmExpressions {
 impl fmt::Display for ASTStatic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "static {}{} = {}", self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
+   }
+}
+
+impl fmt::Display for ASTExport {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "export {}", self.value)
    }
 }

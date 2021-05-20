@@ -1011,6 +1011,21 @@ impl Parser {
                                range: Range { start, end: self.tokens.input.loc() } 
                            }
                        ))
+                   },
+                   "export" => {
+                       let value = if let Some(stm) = self.parse_statement() {
+                           if matches!(stm, ASTStatement::Main(_)) {
+                               self.tokens.error(ErrorType::Unexpected(String::from("main entry")), start, self.tokens.input.loc());
+                               return None;
+                           }
+                           Box::from(stm)
+                       } else { return None };
+                       Some(ASTStatement::Export(
+                           ASTExport {
+                               value,
+                               range: Range { start, end: self.tokens.input.loc() }
+                           }
+                       ))
                    }
                    _ => {
                     self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
@@ -1019,7 +1034,10 @@ impl Parser {
                 },
                 }
             },
-            TokenType::Punc(';') => None,
+            TokenType::Punc(';') => {
+                self.tokens.error(ErrorType::UnexpectedPunc(';'), token.range.start, self.tokens.input.loc());
+                None
+            },
             _ => {
                 self.tokens.error(ErrorType::Expected(String::from("statement")), token.range.start, self.tokens.input.loc());
                 self.tokens.input.skip_line();
