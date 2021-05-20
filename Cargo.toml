@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 colored = "2.0.0"
+bitflags = "1.2"

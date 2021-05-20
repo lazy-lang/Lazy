@@ -206,11 +206,11 @@ impl Parser {
                 match &token.val {
                     TokenType::Punc('{') => {
                         self.tokens.consume();
-                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, false, '}')))
+                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, false, false, '}')))
                     },
                     TokenType::Punc('(') => {
                         self.tokens.consume();
-                        let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, true, ')'));
+                        let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, true, false, ')'));
                         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) { 
                             self.tokens.consume(); 
                             let typing = self.parse_typing(allow_fn_keyword, true);
@@ -302,6 +302,7 @@ impl Parser {
         if allow_ints { self.tokens.is_last_num_as_str = true }; 
         let next = self.tokens.consume();
         if next.is_none() { 
+            self.tokens.error(ErrorType::Expected(String::from("itentifier")), self.tokens.input.loc(), self.tokens.input.loc());
             return (None, None);
         };
         let unwrapped = next.unwrap();
@@ -309,6 +310,7 @@ impl Parser {
             TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range },
             TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
             _ => {
+                self.tokens.error(ErrorType::ExpectedFound(String::from("identifier"), unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
                 return (None, None);
             }
         };
@@ -387,10 +389,11 @@ impl Parser {
         }
     }
 
-    fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, allow_spread: bool, closing_punc: char) -> ASTPairListTyping {
+    fn parse_typing_pair_list(&mut self, allow_without_val: bool, allow_fn_keyword: bool, allow_spread: bool, allow_modifiers: bool, closing_punc: char) -> ASTPairListTyping {
         let start = self.tokens.input.loc();
         let mut res: Vec<ASTPairTypingItem> = vec![];
         let mut has_consumed_bracket = false;
+        let mut modifiers = ASTModifiers::empty();
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
             let is_spread = if self.tokens.is_next(TokenType::Op(String::from("..."))) {
@@ -400,8 +403,45 @@ impl Parser {
                 self.tokens.consume();
                 true
             } else { false };
+            if allow_modifiers {
+                if let Some(t) = self.tokens.peek() {
+                    let range_start = t.range.start;
+                    match &t.val {
+                        TokenType::Kw(kw) => {
+                            match kw.as_str() {
+                                "const" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::CONST) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("const")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::CONST);
+                                    continue;
+                                },
+                                "static" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::STATIC) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("static")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::STATIC);
+                                    continue;
+                                },
+                                "private" => {
+                                    self.tokens.consume();
+                                    if modifiers.contains(ASTModifiers::PRIVATE) {
+                                        self.tokens.error(ErrorType::AlreadyHasModifier(String::from("private")), range_start, self.tokens.input.loc());
+                                    };
+                                    modifiers.insert(ASTModifiers::PRIVATE);
+                                    continue;
+                                },
+                                _ => {}
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            };
             let key = self.parse_varname(false, false, false);
-            if key.0.is_none() { continue; };
+            if key.0.is_none() { continue };
             let is_optional = if self.tokens.is_next(TokenType::Op(String::from("?"))) {
                 self.tokens.consume();
                 true
@@ -414,7 +454,8 @@ impl Parser {
                                 self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional, spread: is_spread});
+                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional, modifiers, spread: is_spread});
+                            modifiers.clear();
                         },
                         ':' => {
                             let exp = self.parse_typing(allow_fn_keyword, false);
@@ -422,7 +463,8 @@ impl Parser {
                                 self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional, spread: is_spread});
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional, modifiers, spread: is_spread});
+                            modifiers.clear();
                         },
                         ch if ch == closing_punc => {
                             if !allow_without_val {
@@ -430,7 +472,8 @@ impl Parser {
                                 continue;
                             }
                             has_consumed_bracket = true;
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional, spread: is_spread});
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional, modifiers, spread: is_spread});
+                            modifiers.clear();
                             break;
                         },
                         _ => {}
@@ -486,7 +529,7 @@ impl Parser {
             Some(self.parse_typing_list(true, false, TokenType::Op(String::from(">"))))
         } else { None };
         if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };
-        let params = Box::from(self.parse_typing_pair_list(true, false, true, ')'));
+        let params = Box::from(self.parse_typing_pair_list(true, false, true, false, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
             let exp = self.parse_typing(false, true);
@@ -869,7 +912,7 @@ impl Parser {
                         Some(ASTStatement::Struct(ASTStruct {
                             name: name.0.unwrap(),
                             typings: name.1,
-                            fields: self.parse_typing_pair_list(false, true, false, '}'),
+                            fields: self.parse_typing_pair_list(false, true, false, true, '}'),
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                    }
@@ -882,7 +925,7 @@ impl Parser {
                     if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum variants"))), None) { return None; };
                     Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                     name: name.0.unwrap(),
-                    values: self.parse_typing_pair_list(true, false, false, '}'),
+                    values: self.parse_typing_pair_list(true, false, false, false, '}'),
                     typings: name.1,
                     range: Range { start, end: self.tokens.input.loc() }
                     }))

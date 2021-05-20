@@ -11,9 +11,10 @@ fn main() {
     }
 
     struct Smth {
-        a: fn<A, B>() -> A {
+        a: fn<A, B>(a: bool) -> A {
             console?.log(1);
-        }
+        },
+        static const private b?: bool
     }
 
     static a<B> = [1, 2, 3];

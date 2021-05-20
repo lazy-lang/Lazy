@@ -24,6 +24,7 @@ pub enum ErrorType {
     EndOfIterator,
     ManyEntryPoints,
     WrongMatchArmExp,
+    AlreadyHasModifier(String),
     Disallowed(String),
     Custom(String)
 }
@@ -102,7 +103,8 @@ impl fmt::Display for Error {
             ErrorType::EndOfIterator => write!(f, "Expected end of iterator"),
             ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string),
             ErrorType::ManyEntryPoints => write!(f, "Too many entry points"),
-            ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals.")
+            ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals."),
+            ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string)
         }
     }
 }
