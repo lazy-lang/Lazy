@@ -56,7 +56,7 @@ impl Parser {
                     let err_start = value.range.start;
                     let err_end = value.range.end;
                     self.tokens.consume();
-                    let exp = self.parse_expression_part();
+                    let exp = self.parse_expression_part(false);
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { 
                         self.tokens.error(ErrorType::UnexpectedOp(opval), err_start, err_end);
@@ -75,7 +75,7 @@ impl Parser {
         }
     }
 
-    fn parse_suffix(&mut self, token: Option<ASTExpression>) -> Option<ASTExpression> {
+    fn parse_suffix(&mut self, token: Option<ASTExpression>, parse_generics: bool) -> Option<ASTExpression> {
         if token.is_none() { return token };
         let start = self.tokens.input.loc();
         let next_token = self.tokens.peek();
@@ -97,7 +97,7 @@ impl Parser {
                                 value: Box::from(token.unwrap()),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )))
+                        )), parse_generics)
                     },
                     "?" => {
                         self.tokens.consume();
@@ -106,11 +106,11 @@ impl Parser {
                                 value: Box::from(token.unwrap()),
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )))
+                        )), parse_generics)
                     },
                     ".." | "..=" => {
                         self.tokens.consume();
-                        let end = self.parse_expression_part();
+                        let end = self.parse_expression_part(true);
                         if end.is_none() {
                             self.tokens.error(ErrorType::EndOfIterator, start, self.tokens.input.loc());
                             return None;
@@ -124,7 +124,7 @@ impl Parser {
                             }
                         ))
                     },
-                    "<" => {
+                    "<" if parse_generics => {
                         self.tokens.consume();
                         let type_list = self.parse_typing_list(false, false, TokenType::Op(String::from(">")));
                         if self.tokens.is_next(TokenType::Punc('(')) {
@@ -137,9 +137,8 @@ impl Parser {
                                     args,
                                     range: Range { start, end: self.tokens.input.loc() }
                                 }
-                            )))
+                            )), parse_generics)
                         } else {
-                            self.tokens.error(ErrorType::Unexpected(String::from("typing list")), start, self.tokens.input.loc());
                             None
                         }
                     },
@@ -158,7 +157,7 @@ impl Parser {
                                 args,
                                 range: Range { start, end: self.tokens.input.loc() }
                             }
-                        )))
+                        )), parse_generics)
                     },
                     ':' => {
                         self.tokens.consume();
@@ -185,7 +184,7 @@ impl Parser {
                                     init_value: None,
                                     range: Range { start, end: self.tokens.input.loc() }
                                 }
-                            )))
+                            )), parse_generics)
                         } else {
                             let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
                                 self.tokens.consume();
@@ -570,7 +569,7 @@ impl Parser {
 
     fn parse_match_arm_exp(&mut self) -> Option<ASTMatchArmExpressions> {
         let start = self.tokens.input.loc();
-        if let Some(exp) = self.parse_expression_part() {
+        if let Some(exp) = self.parse_expression_part(false) {
             match exp {
                 ASTExpression::Str(str_obj) => Some(ASTMatchArmExpressions::String(str_obj)),
                 ASTExpression::Int(int_obj) => Some(ASTMatchArmExpressions::Int(int_obj)),
@@ -607,7 +606,7 @@ impl Parser {
         }
     }
 
-    fn parse_expression_part(&mut self) -> Option<ASTExpression> {
+    fn parse_expression_part(&mut self, parse_generics_in_suffix: bool) -> Option<ASTExpression> {
         self.is_last_block = false;
         let exp = {
         let token = self.tokens.consume()?;
@@ -626,7 +625,7 @@ impl Parser {
                         Some(ASTExpression::Unary(
                             ASTUnary {
                                 op: value,
-                                value: Box::from(self.parse_expression_part()?),
+                                value: Box::from(self.parse_expression_part(parse_generics_in_suffix)?),
                                 range: token.range
                             }
                         ))
@@ -853,17 +852,29 @@ impl Parser {
                         }))
                     },
                     "new" => {
-                        let varname = self.parse_varname(true, false, false);
-                        if varname.0.is_none() {
+                        let target = if let Some(t) = self.parse_expression_part(false) {
+                            match t {
+                                ASTExpression::Var(v) => ASTModAccessValues::Var(Box::from(v)),
+                                ASTExpression::ModAccess(v) => ASTModAccessValues::ModAccess(Box::from(v)),
+                                _ => {
+                                    self.tokens.error(ErrorType::ExpectedFound(String::from("struct identifier"), t.to_string()), token.range.start, self.tokens.input.loc());
+                                    return None;
+                                }
+                            }
+                        } else {
                             self.tokens.error(ErrorType::Expected(String::from("struct identifier")), token.range.start, self.tokens.input.loc());
                             return None;
-                        }
+                        };
+                        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                            self.tokens.consume();
+                            Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
+                        } else { None };
                         self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("struct initializor"))), None);
                         Some(ASTExpression::Init(
                             ASTInitializor {
-                                target: varname.0.unwrap(),
+                                target,
                                 params: self.parse_pair_list(true, '}'),
-                                typings: varname.1,
+                                typings,
                                 range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
@@ -876,11 +887,11 @@ impl Parser {
             }
         }
         };
-        self.parse_suffix(exp)
+        self.parse_suffix(exp, parse_generics_in_suffix)
     }
 
     fn parse_expression(&mut self) -> Option<ASTExpression> {
-        let exp = self.parse_expression_part();
+        let exp = self.parse_expression_part(true);
         self.parse_binary(exp, 0)
     }
 
@@ -1029,7 +1040,7 @@ impl Parser {
                    },
                    "import" => {
                        let path_start = self.tokens.input.loc();
-                       let path = if let Some(t) = self.parse_expression_part() {
+                       let path = if let Some(t) = self.parse_expression_part(false) {
                            if let ASTExpression::Str(string) = t {
                                string
                            } else {

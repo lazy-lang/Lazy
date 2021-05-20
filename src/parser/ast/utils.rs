@@ -12,7 +12,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::DotAccess(access) => Range { start:  full_expression_range(&access.value).start, end: access.range.end },
                 ASTExpression::Block(block) => block.range,
                 ASTExpression::Declare(l) => l.range,
-                ASTExpression::Init(init) => Range { start: init.target.range.start, end: init.params.range.end},
+                ASTExpression::Init(init) => init.range,
                 ASTExpression::Optional(op) => {
                     let start = full_expression_range(&op.value).start;
                     Range { start, end: op.range.end }

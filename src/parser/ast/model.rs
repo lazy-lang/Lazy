@@ -108,7 +108,7 @@ pub struct ASTBlock {
 }
 
 pub struct ASTInitializor {
-    pub target: ASTVar,
+    pub target: ASTModAccessValues,
     pub params: ASTPairList,
     pub typings: Option<ASTListTyping>,
     pub range: Range

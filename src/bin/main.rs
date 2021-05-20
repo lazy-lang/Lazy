@@ -11,6 +11,8 @@ fn main() {
         c
     }
 
+    type Test<T> = {a: T}
+
     struct Smth {
         a: fn<A, B>(a: bool) -> A {
             console?.log(1);
@@ -24,6 +26,9 @@ fn main() {
 
         some_fn<A, B>();
         let myType = new A<A>{};
+
+        new A::B::C{a: 1};
+        3..=15;
         
         let a = [1, 2, 3, 4, 5, 6, none];
         let res = match a {
