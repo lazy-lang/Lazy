@@ -23,8 +23,7 @@ fn main() {
 
         some_fn<A, B>();
         let myType = new A<A>{};
-        A:a<A, B>;
-
+        
         let a = [1, 2, 3, 4, 5, 6, none];
         let res = match a {
             1 => {},
@@ -34,9 +33,9 @@ fn main() {
             },
             none => 1 + 1,
             true | false => print(1 + 5),
-            Option:None => {},
-            Option:Some(true) => print(\"Got Some!!!\"),
-            Number:Int when 1 > 5 => {},
+            Option::None => {},
+            Option::Some(true) => print(\"Got Some!!!\"),
+            Number::Int when 1 > 5 => {},
             3..5 => {},
             [1, 2, 3] => print('c'),
             10..=15 when a == \"hello\" => {},

@@ -162,34 +162,49 @@ impl Parser {
                     },
                     ':' => {
                         self.tokens.consume();
-                        let val = if let ASTExpression::Var(v) = token.unwrap() {
-                            v
-                        } else {
-                            self.tokens.error(ErrorType::Expected(String::from("enum identifier")), start, self.tokens.input.loc());
-                            return None;
+                        self.tokens.skip_or_err(TokenType::Punc(':'), None, None);
+                        let val = match token.unwrap() {
+                            ASTExpression::Var(v) => ASTModAccessValues::Var(Box::from(v)),
+                            ASTExpression::ModAccess(ma) => ASTModAccessValues::ModAccess(Box::from(ma)),
+                            _ => {
+                                self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
+                                return None;
+                            }
                         };
                         let variant_name = self.parse_varname(true, true, false);
                         if variant_name.0.is_none() {
-                            self.tokens.error(ErrorType::Expected(String::from("enum variant")), start, self.tokens.input.loc());
+                            self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
                             return None;
                         }
-                        let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
-                            self.tokens.consume();
-                            let exp = self.parse_expression();
-                            self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
-                            if let Some(t) = exp {
-                                Some(Box::from(t))
-                            } else { None }
-                        } else { None };
-                        Some(ASTExpression::EnumAccess(
-                            ASTEnumAccess {
-                                value: val,
-                                target: variant_name.0.unwrap(),
-                                typings: variant_name.1,
-                                init_value,
-                                range: Range { start, end: self.tokens.input.loc() }
-                            }
-                        ))
+                        if self.tokens.is_next(TokenType::Punc(':')) {
+                            self.parse_suffix(Some(ASTExpression::ModAccess(
+                                ASTModAccess {
+                                    value: val,
+                                    target: variant_name.0.unwrap(),
+                                    typings: variant_name.1,
+                                    init_value: None,
+                                    range: Range { start, end: self.tokens.input.loc() }
+                                }
+                            )))
+                        } else {
+                            let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
+                                self.tokens.consume();
+                                let exp = self.parse_expression();
+                                self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
+                                if let Some(t) = exp {
+                                    Some(Box::from(t))
+                                } else { None }
+                            } else { None };
+                            Some(ASTExpression::ModAccess(
+                                ASTModAccess {
+                                    value: val,
+                                    target: variant_name.0.unwrap(),
+                                    typings: variant_name.1,
+                                    init_value,
+                                    range: Range { start, end: self.tokens.input.loc() }
+                                }
+                            ))
+                        }
                     }
                     _ => token
                 }
@@ -580,7 +595,7 @@ impl Parser {
                     };
                     Some(ASTMatchArmExpressions::Rest)
                 },
-                ASTExpression::EnumAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
+                ASTExpression::ModAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
                 _ => {
                     self.tokens.error(ErrorType::WrongMatchArmExp, start, self.tokens.input.loc());
                     None

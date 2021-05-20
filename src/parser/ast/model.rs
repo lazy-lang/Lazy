@@ -133,8 +133,13 @@ pub struct ASTChar {
     pub range: Range
 }
 
-pub struct ASTEnumAccess {
-    pub value: ASTVar,
+pub enum ASTModAccessValues {
+    ModAccess(Box<ASTModAccess>),
+    Var(Box<ASTVar>)
+}
+
+pub struct ASTModAccess {
+    pub value: ASTModAccessValues,
     pub target: ASTVar,
     pub init_value: Option<Box<ASTExpression>>,
     pub typings: Option<ASTListTyping>,
@@ -198,7 +203,7 @@ pub enum ASTMatchArmExpressions {
     Tuple(ASTExpressionList),
     None(Range),
     Rest,
-    Enum(ASTEnumAccess)
+    Enum(ASTModAccess)
 }
 
 pub struct ASTMatchArm {
@@ -225,7 +230,7 @@ pub enum ASTExpression {
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
-    EnumAccess(ASTEnumAccess),
+    ModAccess(ASTModAccess),
     Optional(ASTOptional),
     Block(ASTBlock),
     Function(ASTFunction),
@@ -357,7 +362,7 @@ impl fmt::Display for ASTExpression {
             ASTExpression::Iterator(it) => it.fmt(f),
             ASTExpression::If(exp) => exp.fmt(f),
             ASTExpression::Char(ch) => ch.fmt(f),
-            ASTExpression::EnumAccess(e) => e.fmt(f),
+            ASTExpression::ModAccess(e) => e.fmt(f),
             ASTExpression::Call(call) => call.fmt(f),
             ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
             ASTExpression::While(while_loop) => while_loop.fmt(f),
@@ -477,9 +482,18 @@ impl fmt::Display for ASTCall {
     }
 }
 
-impl fmt::Display for ASTEnumAccess {
+impl fmt::Display for ASTModAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}{}({})", self.value, self.target, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap()) } else { String::from("") }, if self.init_value.is_some() { self.init_value.as_ref().unwrap().to_string() } else { String::from("none") })
+   }
+}
+
+impl fmt::Display for ASTModAccessValues {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::ModAccess(m) => m.fmt(f),
+            Self::Var(v) => v.fmt(f)
+        }
    }
 }
 
