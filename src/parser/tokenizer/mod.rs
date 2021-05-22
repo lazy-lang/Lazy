@@ -319,7 +319,8 @@ impl Tokenizer {
                         None
                     },
                     _ => {
-                        self.error(ErrorType::Expected(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
+                        let tstr = tok.val.to_string();
+                        self.error(ErrorType::ExpectedFound(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr), location.start, location.end);
                         None
                     }
                 }

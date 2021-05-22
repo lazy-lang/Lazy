@@ -141,8 +141,6 @@ pub enum ASTModAccessValues {
 pub struct ASTModAccess {
     pub value: ASTModAccessValues,
     pub target: ASTVar,
-    pub init_value: Option<Box<ASTExpression>>,
-    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -499,7 +497,7 @@ impl fmt::Display for ASTCall {
 
 impl fmt::Display for ASTModAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}{}({})", self.value, self.target, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap()) } else { String::from("") }, if self.init_value.is_some() { self.init_value.as_ref().unwrap().to_string() } else { String::from("none") })
+        write!(f, "{}::{}", self.value, self.target)
    }
 }
 

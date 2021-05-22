@@ -1,11 +1,20 @@
 
-struct Car {
-    model: str,
-    beep_noise: str,
+struct Person {
+    name: str,
+    age: i8,
 
-    beep: fn() {
-        print(self.beep_noise);
-        print("Hello!"); 
+    static create: fn(name: str, age: i8) -> Person {
+        new Person { name, age };
+    },
+
+    age_up: fn() {
+        self.age += 1;
     }
-    
+
+}
+
+main {
+    let me = Person::create::test<A>("Google", 19);
+    me.age_up();
+    print(me);
 }

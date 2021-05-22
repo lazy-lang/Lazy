@@ -25,9 +25,16 @@ impl Parser {
         }
     }
 
+    pub fn reset(&mut self, source: &str) {
+        self.tokens = Tokenizer::new(source);
+        self.parsed_main = false;
+        self.is_last_block = false;
+        self.allow_exp_statements = false;
+    }
+
     fn get_prec(op: &str) -> i8 {
         match op {
-            "=" => 1,
+            "=" | "+=" | "-=" | "*=" | "/=" | "%=" => 1,
             "||" => 2,
             "&&" => 3,
             "<" | ">" | "<=" | ">=" | "==" | "!=" => 10,
@@ -170,40 +177,18 @@ impl Parser {
                                 return None;
                             }
                         };
-                        let variant_name = self.parse_varname(true, true, false);
+                        let variant_name = self.parse_varname(false, false, false);
                         if variant_name.0.is_none() {
                             self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
                             return None;
                         }
-                        if self.tokens.is_next(TokenType::Punc(':')) {
-                            self.parse_suffix(Some(ASTExpression::ModAccess(
-                                ASTModAccess {
-                                    value: val,
-                                    target: variant_name.0.unwrap(),
-                                    typings: variant_name.1,
-                                    init_value: None,
-                                    range: Range { start, end: self.tokens.input.loc() }
+                        self.parse_suffix(Some(ASTExpression::ModAccess(
+                            ASTModAccess {
+                                value: val,
+                                target: variant_name.0.unwrap(),
+                                range: Range { start, end: self.tokens.input.loc() }
                                 }
                             )), parse_generics)
-                        } else {
-                            let init_value = if self.tokens.is_next(TokenType::Punc('(')) {
-                                self.tokens.consume();
-                                let exp = self.parse_expression();
-                                self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
-                                if let Some(t) = exp {
-                                    Some(Box::from(t))
-                                } else { None }
-                            } else { None };
-                            Some(ASTExpression::ModAccess(
-                                ASTModAccess {
-                                    value: val,
-                                    target: variant_name.0.unwrap(),
-                                    typings: variant_name.1,
-                                    init_value,
-                                    range: Range { start, end: self.tokens.input.loc() }
-                                }
-                            ))
-                        }
                     }
                     _ => token
                 }
@@ -330,7 +315,7 @@ impl Parser {
         };
         if self.tokens.is_next(TokenType::Op(String::from("<"))) {
             if !allow_generics {
-                self.tokens.error(ErrorType::NoGenerics, self.tokens.input.loc(), self.tokens.input.loc());
+                return (Some(var), None);
             }
             self.tokens.consume();
             return (Some(var), Some(self.parse_typing_list(only_varnames_as_generics, false, TokenType::Op(String::from(">")))));
