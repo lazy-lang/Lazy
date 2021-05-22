@@ -249,8 +249,12 @@ impl Tokenizer {
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
                 let loc = self.input.loc();
-                self.error(ErrorType::InvalidCharacter(ch), loc, loc);
                 self.input.consume();
+                if let Some(confused_err) = Self::is_confusable(ch) {
+                    self.error(confused_err, loc, loc);
+                    return None;
+                };
+                self.error(ErrorType::InvalidCharacter(ch), loc, loc);
                 None
             } 
         }
@@ -330,6 +334,21 @@ impl Tokenizer {
                 None
             }
         }
+    }
+
+    pub fn is_confusable<'a>(ch: char) -> Option<ErrorType> {
+        match ch {
+            ';' => Some(ErrorType::Confusable("; (Greek question mark)".to_string(), "; (semicolon)".to_string())),
+            '‚' => Some(ErrorType::Confusable("‚ (low-9 quatation mark)".to_string(), ", (comma)".to_string())),
+            '٫' => Some(ErrorType::Confusable("‚ (arabic decimal separator)".to_string(), ", (comma)".to_string())),
+            '：' => Some(ErrorType::Confusable("： (fullwidth colon)".to_string(), ": (colon)".to_string())),
+            '։' => Some(ErrorType::Confusable("： (armenian full stop)".to_string(), ": (colon)".to_string())),
+            '∶' => Some(ErrorType::Confusable("∶ (ratio)".to_string(), ": (colon)".to_string())),
+            '！' => Some(ErrorType::Confusable("！ (fullwidth exclamation mark)".to_string(), "! (exclamation mark)".to_string())),
+            'ǃ' => Some(ErrorType::Confusable("ǃ (latin letter retroflex click)".to_string(), "! (exclamation mark)".to_string())),
+            '․' => Some(ErrorType::Confusable("․ (one dot leader)".to_string(), ". (full stop)".to_string())),
+            _ => None
+        }‎
     }
 
 }

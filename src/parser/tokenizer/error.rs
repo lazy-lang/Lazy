@@ -26,7 +26,8 @@ pub enum ErrorType {
     WrongMatchArmExp,
     AlreadyHasModifier(String),
     Disallowed(String),
-    Custom(String)
+    Custom(String),
+    Confusable(String, String)
 }
 
 pub struct Error {
@@ -104,7 +105,8 @@ impl fmt::Display for Error {
             ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string),
             ErrorType::ManyEntryPoints => write!(f, "Too many entry points"),
             ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals."),
-            ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string)
+            ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
+            ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected)
         }
     }
 }

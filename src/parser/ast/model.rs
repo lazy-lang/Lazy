@@ -101,7 +101,6 @@ pub struct ASTFunction {
     pub range: Range
 }
 
-// A block of expressions or statements 
 pub struct ASTBlock {
     pub elements: Vec<ASTExpression>,
     pub range: Range
