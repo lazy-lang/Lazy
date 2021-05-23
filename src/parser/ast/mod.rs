@@ -200,7 +200,7 @@ impl Parser {
     fn parse_typing(&mut self, allow_fn_keyword: bool, allow_optional_after_var: bool) -> Option<ASTTypings> {
         let start = self.tokens.input.loc();
         let maybe_token = self.tokens.peek();
-        match maybe_token {
+        let t = match maybe_token {
             Some(token) => {
                 match &token.val {
                     TokenType::Punc('{') => {
@@ -235,13 +235,6 @@ impl Parser {
                     TokenType::Var(name) => {
                         let value = name.to_string();
                         self.tokens.consume();
-                        let optional = if self.tokens.is_next(TokenType::Op(String::from('?'))) {
-                            if !allow_optional_after_var {
-                                self.tokens.error(ErrorType::UnexpectedOp(String::from("?")), self.tokens.input.loc(), self.tokens.input.loc());
-                            }
-                            self.tokens.consume();
-                            true
-                        } else { false };
                         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                             self.tokens.consume(); // Skip <
                             Some(self.parse_typing_list(false, allow_fn_keyword, TokenType::Op(String::from(">"))))
@@ -249,7 +242,6 @@ impl Parser {
                         Some(ASTTypings::Var(ASTVarTyping {
                             value,
                             typings,
-                            optional,
                             range: Range { start, end: self.tokens.input.loc() }
                         }))
                     },
@@ -274,7 +266,13 @@ impl Parser {
                 }
             },
             None => None
-        }
+        };
+        if allow_optional_after_var && t.is_some() {
+            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
+                self.tokens.consume();
+                Some(ASTTypings::Optional(Box::from(t.unwrap())))
+            } else { t }
+        } else { t }
     }
 
     fn parse_block(&mut self, allow_statement_as_exp: bool) -> ASTBlock {

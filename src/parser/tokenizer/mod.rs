@@ -19,6 +19,14 @@ pub enum TokenType {
     None
 }
 
+#[derive(PartialEq)]
+pub enum NumberType {
+    Binary, // 0b
+    Octal, // 0o
+    Hex, // 0x
+    None
+}
+
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -129,11 +137,60 @@ impl Tokenizer {
         let mut dot = false;
         let mut num = String::new();
         let start = self.input.loc();
+        let mut num_type = NumberType::None; 
         while !self.input.is_eof() {
             match self.input.peek(0) {
             Some(ch) => {
             match ch {
-                '0'..='9' => num.push(self.input.consume().unwrap()),
+                '0' => {
+                    let next = self.input.peek(1);
+                    if next.is_none() {
+                        break;
+                    }
+                    match next.unwrap() {
+                        'o' => {
+                            num_type = NumberType::Octal;
+                            self.input.consume();
+                            self.input.consume();
+                        },
+                        'x' => {
+                            num_type = NumberType::Hex;
+                            self.input.consume();
+                            self.input.consume();
+                        },
+                        'b' => {
+                            num_type = NumberType::Binary;
+                            self.input.consume();
+                            self.input.consume();
+                        },
+                        _ => {
+                            num.push('0');
+                            self.input.consume();
+                        }
+                    }
+                },
+                '1'..='9' => {
+                    match num_type {
+                        NumberType::Binary if ch > '1' => {
+                            self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            num_type = NumberType::None;
+                        },
+                        NumberType::Octal if ch > '7' => {
+                            self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            num_type = NumberType::None;
+                        },
+                        _ => {}
+                    };
+                    num.push(self.input.consume().unwrap())
+                },
+                'A'..='F' | 'a'..='f' => {
+                    if num_type == NumberType::Hex {
+                        num.push(self.input.consume().unwrap())
+                    } else {
+                        self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                        break;
+                    }
+                },
                 '.' => {
                     if self.is_last_num_as_str {
                         self.is_last_num_as_str = false;
@@ -162,15 +219,23 @@ impl Tokenizer {
         None => break
         }
         };
+
         let multiply_val = match self.input.peek(0) {
             Some('s') => 1000,
             Some('m') => 60 * 1000,
             Some('h') => 60 * 60 * 1000,
             Some('d') => 24 * 60 * 60 * 1000,
             _ => 1
-        };
+        } as isize;
         if multiply_val != 1 { self.input.consume(); };
-        let token_type = if dot { TokenType::Float(num.parse::<f32>().unwrap() * multiply_val as f32) } else { TokenType::Int(num.parse::<i32>().unwrap() * multiply_val) };
+
+        let actual_num = match num_type {
+            NumberType::Hex => isize::from_str_radix(&num, 16).unwrap(),
+            NumberType::Octal => isize::from_str_radix(&num, 8).unwrap(),
+            NumberType::Binary => isize::from_str_radix(&num, 2).unwrap(),
+            NumberType::None => num.parse::<isize>().unwrap()
+        };
+        let token_type = if dot { TokenType::Float((actual_num * multiply_val) as f32) } else { TokenType::Int((actual_num * multiply_val) as i32) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 

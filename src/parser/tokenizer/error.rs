@@ -27,7 +27,8 @@ pub enum ErrorType {
     AlreadyHasModifier(String),
     Disallowed(String),
     Custom(String),
-    Confusable(String, String)
+    Confusable(String, String),
+    InvalidDigit,
 }
 
 pub struct Error {
@@ -106,7 +107,8 @@ impl fmt::Display for Error {
             ErrorType::ManyEntryPoints => write!(f, "Too many entry points"),
             ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals."),
             ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
-            ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected)
+            ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected),
+            ErrorType::InvalidDigit => write!(f, "Invalid digit")
         }
     }
 }

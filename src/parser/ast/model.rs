@@ -303,7 +303,6 @@ pub struct ASTListTyping {
 pub struct ASTVarTyping {
     pub value: String,
     pub typings: Option<ASTListTyping>,
-    pub optional: bool,
     pub range: Range
 }
 
@@ -311,12 +310,13 @@ pub enum ASTTypings {
     Var(ASTVarTyping),
     PairList(ASTPairListTyping),
     Function(ASTFunction),
+    Optional(Box<ASTTypings>),
     Tuple(ASTListTyping)
 }
 
 impl fmt::Display for ASTVarTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}{}", self.value, if self.optional { "?" } else { "" }, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") })
+        write!(f, "{}{}", self.value, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") })
     }
 }
 
@@ -392,6 +392,7 @@ impl fmt::Display for ASTTypings {
             ASTTypings::Tuple(tup) => tup.fmt(f),
             ASTTypings::Var(var) => var.fmt(f),
             ASTTypings::PairList(list) => list.fmt(f),
+            ASTTypings::Optional(typing) => write!(f, "{}?", typing),
             ASTTypings::Function(func) => func.fmt(f)
         }
     }

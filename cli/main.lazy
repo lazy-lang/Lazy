@@ -8,7 +8,7 @@ struct Person {
     }
 
     age_up: fn() {
-        self.age += 0b01;
+        self.age += 0x01;
     }
 
     next: fn() -> Vec<A>? {
