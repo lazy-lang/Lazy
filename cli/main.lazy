@@ -11,15 +11,15 @@ struct Person {
         self.age += 1;
     }
 
-    next: () -> i32? {
+    next: fn() -> Vec<A>? {
         if self.progress == self.max none 
-        else self.progress += 1
+        else self.progress += 1;
     }
 
 }
 
 main {
-    let me = Person::create("Google", 19);
+    let me = Person::create("Google", -5);
     me.age_up();
     print(me);
 }
