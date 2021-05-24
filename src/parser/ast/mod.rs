@@ -267,12 +267,41 @@ impl Parser {
             },
             None => None
         };
-        if allow_optional_after_var && t.is_some() {
-            if self.tokens.is_next(TokenType::Op(String::from("?"))) {
-                self.tokens.consume();
-                Some(ASTTypings::Optional(Box::from(t.unwrap())))
-            } else { t }
-        } else { t }
+        if let Some(typing) = t {
+            if let Some(tok) = self.tokens.peek() {
+                match &tok.val {
+                    TokenType::Op(op) => {
+                        match op.as_str() {
+                            "?" if allow_optional_after_var => {
+                                self.tokens.consume();
+                                Some(ASTTypings::Optional(Box::from(typing)))
+                            },
+                            "+" => {
+                                self.tokens.consume();
+                                let right = self.parse_typing(false, false);
+                                if right.is_none() {
+                                    self.tokens.error(ErrorType::Expected(String::from("typing")), self.tokens.input.loc(), self.tokens.input.loc());
+                                    return Some(typing);
+                                }
+                                Some(ASTTypings::Combine(
+                                    ASTCombineTyping {
+                                        left: Box::from(typing),
+                                        right: Box::from(right.unwrap()),
+                                        range: Range { start, end: self.tokens.input.loc() }
+                                    }
+                                ))
+                            },
+                            _ => { Some(typing) }
+                        }
+                    },
+                    _ => { Some(typing) }
+                }
+            } else {
+                Some(typing)
+            }
+        } else {
+            t
+        }
     }
 
     fn parse_block(&mut self, allow_statement_as_exp: bool) -> ASTBlock {

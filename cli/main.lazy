@@ -11,7 +11,7 @@ struct Person {
         self.age += 0x01;
     }
 
-    next: fn() -> Vec<A>? {
+    next: fn() -> Vec<A + B>? {
         let counter = 0;
         Promise::interval(fn() {
             print(counter);
@@ -20,6 +20,8 @@ struct Person {
     }
 
 }
+
+type AandB = A + B
 
 main {
     let me = Person::create("Google", -5);

@@ -313,12 +313,19 @@ pub struct ASTVarTyping {
     pub range: Range
 }
 
+pub struct ASTCombineTyping {
+    pub left: Box<ASTTypings>,
+    pub right: Box<ASTTypings>,
+    pub range: Range
+}
+
 pub enum ASTTypings {
     Var(ASTVarTyping),
     PairList(ASTPairListTyping),
     Function(ASTFunction),
     Optional(Box<ASTTypings>),
-    Tuple(ASTListTyping)
+    Tuple(ASTListTyping),
+    Combine(ASTCombineTyping)
 }
 
 impl fmt::Display for ASTVarTyping {
@@ -401,7 +408,8 @@ impl fmt::Display for ASTTypings {
             ASTTypings::Var(var) => var.fmt(f),
             ASTTypings::PairList(list) => list.fmt(f),
             ASTTypings::Optional(typing) => write!(f, "{}?", typing),
-            ASTTypings::Function(func) => func.fmt(f)
+            ASTTypings::Function(func) => func.fmt(f),
+            ASTTypings::Combine(c) => c.fmt(f)
         }
     }
 }
@@ -653,5 +661,11 @@ impl fmt::Display for ASTImport {
 impl fmt::Display for ASTAwait {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "await{} {}", if self.optional { "?" } else { "" }, self.expression)
+   }
+}
+
+impl fmt::Display for ASTCombineTyping {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} + {}", self.left, self.right)
    }
 }

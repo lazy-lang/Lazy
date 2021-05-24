@@ -401,7 +401,7 @@ impl Tokenizer {
         }
     }
 
-    pub fn is_confusable<'a>(ch: char) -> Option<ErrorType> {
+    pub fn is_confusable(ch: char) -> Option<ErrorType> {
         match ch {
             ';' => Some(ErrorType::Confusable("; (Greek question mark)".to_string(), "; (semicolon)".to_string())),
             '‚' => Some(ErrorType::Confusable("‚ (low-9 quatation mark)".to_string(), ", (comma)".to_string())),
