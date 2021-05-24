@@ -1,6 +1,6 @@
 # Partials
 
-`Lazy` does not have core OOP design patters like inheritance, or `traits` like in Rust, but it has another powerful tool: `Partials`!
+`Lazy` does not have core OOP design patters like inheritance, but it has `Partials`, which are pretty similar to rust's `Traits`, but a little more dynamic.
 
 ## Partial struct
 
@@ -35,6 +35,46 @@ main {
     get_name(some_animal); // Perry
 }
 ```
+
+## Implementing partials in structs
+
+An alternative syntax to the first example, which is more Rust-like, is using the `impl` keyword to annotate that struct `A` must be compatible with partial `B`.
+
+```
+struct A {
+    private id: i32
+}
+
+type WithName = { name: str, capitalized: () -> str }
+
+impl WithName for A {
+    name: str,
+    capitalized: () -> str {
+        self.name.at(0).toUpperCase() + self.name.slice(1, self.name.length);
+    }
+}
+```
+
+This syntax is syntactic sugar!
+
+## Combining types
+
+Partials can be combined to create more complex partials:
+
+```
+type Stringable = {
+    to_string: () -> str
+}
+
+type Numberable = {
+    to_int: () -> i32
+}
+
+static num_and_str = fn(val: Stringable + Numerable) -> [str, i32] {
+    [val.to_string(), val.to_int()];
+}
+```
+
 
 ## Partial function
 

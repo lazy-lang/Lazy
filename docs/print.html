@@ -514,7 +514,7 @@ me.name = &quot;Pedro&quot;; // Error!
 }
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
-<p><code>Lazy</code> does not have core OOP design patters like inheritance, or <code>traits</code> like in Rust, but it has another powerful tool: <code>Partials</code>!</p>
+<p><code>Lazy</code> does not have core OOP design patters like inheritance, but it has <code>Partials</code>, which are pretty similar to rust's <code>Traits</code>, but a little more dynamic.</p>
 <h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
 <pre><code>struct Animal {
     name: str,
@@ -544,6 +544,36 @@ main {
 
     get_name(me); // Google
     get_name(some_animal); // Perry
+}
+</code></pre>
+<h2 id="implementing-partials-in-structs"><a class="header" href="#implementing-partials-in-structs">Implementing partials in structs</a></h2>
+<p>An alternative syntax to the first example, which is more Rust-like, is using the <code>impl</code> keyword to annotate that struct <code>A</code> must be compatible with partial <code>B</code>.</p>
+<pre><code>struct A {
+    private id: i32
+}
+
+type WithName = { name: str, capitalized: () -&gt; str }
+
+impl WithName for A {
+    name: str,
+    capitalized: () -&gt; str {
+        self.name.at(0).toUpperCase() + self.name.slice(1, self.name.length);
+    }
+}
+</code></pre>
+<p>This syntax is syntactic sugar!</p>
+<h2 id="combining-types"><a class="header" href="#combining-types">Combining types</a></h2>
+<p>Partials can be combined to create more complex partials:</p>
+<pre><code>type Stringable = {
+    to_string: () -&gt; str
+}
+
+type Numberable = {
+    to_int: () -&gt; i32
+}
+
+static num_and_str = fn(val: Stringable + Numerable) -&gt; [str, i32] {
+    [val.to_string(), val.to_int()];
 }
 </code></pre>
 <h2 id="partial-function"><a class="header" href="#partial-function">Partial function</a></h2>
