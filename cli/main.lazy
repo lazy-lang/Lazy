@@ -12,14 +12,17 @@ struct Person {
     }
 
     next: fn() -> Vec<A>? {
-        if self.progress == self.max none 
-        else self.progress += 1;
+        let counter = 0;
+        Promise::interval(fn() {
+            print(counter);
+            counter += 1;
+        }, 1m);
     }
 
 }
 
 main {
     let me = Person::create("Google", -5);
-    me.age_up();
+    await await? me.age_up();
     print(me);
 }
