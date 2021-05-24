@@ -27,6 +27,16 @@ let one_min_in_milliseconds = 1m;
 one_min_in_milliseconds == 60000; // returns "true"
 ```
 
+### Binary / Octal / Hex literals
+
+Numbers can be prefixed with `0b`, `0o` and `0x` to be parsed as binary / octal / hex numbers.
+
+```
+0b010101 == 21 // true
+0o03621623 == 992147 // true
+0x0123ABCd == 19114957 // true
+```
+
 ## Iterators
 
 ```

@@ -12,4 +12,5 @@
 - [Variables](./variables/main.md)
 - [Logic](./logic/main.md)
 - [Loops](./loops/main.md)
+- [Promises](./promises/main.md)
 - [Modules](./modules/main.md)

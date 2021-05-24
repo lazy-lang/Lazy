@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">7.</strong> Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -251,6 +251,12 @@ big_num == same_big_num; // returns &quot;true&quot;
 <p>To improve working with milliseconds, numbers can be prefixed with <code>s</code>, <code>m</code>, <code>h</code> and <code>d</code> to be automatically converted. This is done during compile time, so there's zero overhead!</p>
 <pre><code>let one_min_in_milliseconds = 1m; 
 one_min_in_milliseconds == 60000; // returns &quot;true&quot;
+</code></pre>
+<h3 id="binary--octal--hex-literals"><a class="header" href="#binary--octal--hex-literals">Binary / Octal / Hex literals</a></h3>
+<p>Numbers can be prefixed with <code>0b</code>, <code>0o</code> and <code>0x</code> to be parsed as binary / octal / hex numbers.</p>
+<pre><code>0b010101 == 21 // true
+0o03621623 == 992147 // true
+0x0123ABCd == 19114957 // true
 </code></pre>
 <h2 id="iterators"><a class="header" href="#iterators">Iterators</a></h2>
 <pre><code>0..5; // Creates an iterator from 0 (inclusive) to 5 (exclusive), so 0, 1, 2, 3 and 4.
@@ -445,7 +451,7 @@ if char_token == TokenTypes::Char('a') {
 
 }
 
-let me = Person.new(&quot;Google&quot;);
+let me = Person::new(&quot;Google&quot;);
 </code></pre>
 <h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
 <p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
@@ -459,7 +465,7 @@ let me = Person.new(&quot;Google&quot;);
 
 }
 
-let me = Person.new(&quot;Google&quot;);
+let me = Person::new(&quot;Google&quot;);
 me.id; // Error!
 </code></pre>
 <h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
@@ -474,7 +480,7 @@ me.id; // Error!
 
 }
 
-let me = Person.new(&quot;Google&quot;);
+let me = Person::new(&quot;Google&quot;);
 me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
 <h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
@@ -670,6 +676,43 @@ let value = for i in vector {
 
 if value print(&quot;20 is in the vector!&quot;)
 else print(&quot;20 is NOT in the vector!&quot;)
+</code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="promises"><a class="header" href="#promises">Promises</a></h1>
+<p>Async programming in <code>Lazy</code> is made to be simple and easy:</p>
+<pre><code>import &quot;std/http&quot; as Http
+
+main {
+    const res = await? Http::get(&quot;https://google.com&quot;);
+    print(res.body);
+}
+</code></pre>
+<h2 id="creating-promises"><a class="header" href="#creating-promises">Creating promises</a></h2>
+<pre><code>let prom = Promise::spawn(fn() -&gt; Result&lt;i32, none&gt; Result::Ok(1 + 1));
+let res = await? prom; // 2
+</code></pre>
+<p>Promises return a <code>Result</code>, which is a special enum with two possible variants - <code>T</code>, the actual return value of the promise, or an <code>Error</code>:</p>
+<pre><code>Promise::spawn(fn() -&gt; Result&lt;none, str&gt; {
+    Result::Error(&quot;This promise always returns an error :x&quot;);
+});
+</code></pre>
+<p>A question mark (<code>?</code>) can be put after the <code>await</code> keyword to short-circuit the execution context if the promise returns an <code>Error</code>.</p>
+<h2 id="under-the-hood"><a class="header" href="#under-the-hood">Under the hood</a></h2>
+<p>Under the hood, <code>Promise</code>s are handled by the <a href="https://tokio.rs/">tokio</a> runtime.</p>
+<h2 id="timers"><a class="header" href="#timers">Timers</a></h2>
+<h3 id="repeating-a-function"><a class="header" href="#repeating-a-function">Repeating a function</a></h3>
+<pre><code>let counter = 0;
+Promise::interval(fn() {
+    print(counter);
+    counter += 1;
+}, 1m);
+</code></pre>
+<h3 id="timeout"><a class="header" href="#timeout">Timeout</a></h3>
+<pre><code>Promise::timeout(fn() {
+    print(&quot;This will be executed in 5 seconds!&quot;);
+}, 5s);
+</code></pre>
+<h3 id="stopping-function-execution"><a class="header" href="#stopping-function-execution">Stopping function execution</a></h3>
+<pre><code>await Promise::block(5m);
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="modules"><a class="header" href="#modules">Modules</a></h1>
 <p>Sometimes you want to split your code to multiple files - modules are just the thing you need!</p>

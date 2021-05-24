@@ -33,7 +33,7 @@ struct Person {
 
 }
 
-let me = Person.new("Google");
+let me = Person::new("Google");
 ```
 
 ### Hidden/Private fields
@@ -51,7 +51,7 @@ struct Person {
 
 }
 
-let me = Person.new("Google");
+let me = Person::new("Google");
 me.id; // Error!
 ```
 
@@ -70,7 +70,7 @@ struct Person {
 
 }
 
-let me = Person.new("Google");
+let me = Person::new("Google");
 me.name = "Pedro"; // Error!
 ```
 
