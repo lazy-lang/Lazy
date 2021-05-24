@@ -227,6 +227,12 @@ pub struct ASTImport {
     pub range: Range
 }
 
+pub struct ASTAwait {
+    pub optional: bool,
+    pub expression: Box<ASTExpression>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -253,7 +259,8 @@ pub enum ASTExpression {
     Yield(ASTYield),
     Spread(ASTSpread),
     None(Range),
-    Match(ASTMatch)
+    Match(ASTMatch),
+    Await(ASTAwait)
 }
 
 // Any statement
@@ -380,6 +387,7 @@ impl fmt::Display for ASTExpression {
             ASTExpression::Yield(y) => y.fmt(f),
             ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
             ASTExpression::Match(mtch) => mtch.fmt(f),
+            ASTExpression::Await(aw) => aw.fmt(f),
             ASTExpression::None(_) => write!(f, "none")
         }
     }
@@ -639,5 +647,11 @@ impl fmt::Display for ASTExport {
 impl fmt::Display for ASTImport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "import {}{}", self.path, if self._as.is_some() { format!(" as {}", self._as.as_ref().unwrap() )} else { String::from("") })
+   }
+}
+
+impl fmt::Display for ASTAwait {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "await{} {}", if self.optional { "?" } else { "" }, self.expression)
    }
 }

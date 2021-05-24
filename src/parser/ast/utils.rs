@@ -35,6 +35,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Yield(y) => y.range,
                 ASTExpression::Spread(sp) => sp.range,
                 ASTExpression::Match(mtch) => mtch.range,
+                ASTExpression::Await(aw) => aw.range,
                 ASTExpression::None(range) => *range
         }
 }

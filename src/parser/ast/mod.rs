@@ -858,6 +858,25 @@ impl Parser {
                                 range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
+                    },
+                    "await" => {
+                        let optional = if self.tokens.is_next(TokenType::Op(String::from("?"))) {
+                            self.tokens.consume();
+                            true 
+                        } else { false };
+                        let expression = if let Some(exp) = self.parse_expression() {
+                            Box::from(exp)
+                        } else {
+                            self.tokens.error(ErrorType::Expected(String::from("expression")), token.range.start, self.tokens.input.loc());
+                            return None;
+                        };
+                        Some(ASTExpression::Await(
+                            ASTAwait {
+                                optional,
+                                expression,
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                            }
+                        ))
                     }
                     _ => {
                         self.tokens.error(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), token.range.start, token.range.end);
