@@ -134,7 +134,7 @@ pub struct ASTChar {
 
 pub enum ASTModAccessValues {
     ModAccess(ASTModAccess),
-    Var(ASTVar)
+    Var(ASTVarTyping)
 }
 
 pub struct ASTModAccess {
@@ -234,6 +234,13 @@ pub struct ASTAwait {
     pub range: Range
 }
 
+pub struct ASTImpl {
+    pub partial: ASTModAccessValues,
+    pub target: ASTModAccessValues,
+    pub fields: ASTPairListTyping,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -272,7 +279,8 @@ pub enum ASTStatement {
     Type(ASTType),
     Main(ASTMain),
     Export(ASTExport),
-    Import(ASTImport)
+    Import(ASTImport),
+    Impl(ASTImpl)
 }
 
 bitflags! {
@@ -309,7 +317,7 @@ pub struct ASTListTyping {
 }
 
 pub struct ASTVarTyping {
-    pub value: String,
+    pub value: ASTVar,
     pub typings: Option<ASTListTyping>,
     pub range: Range
 }
@@ -426,7 +434,8 @@ impl fmt::Display for ASTStatement {
             ASTStatement::Static(st) => st.fmt(f),
             ASTStatement::Main(m) => m.fmt(f),
             ASTStatement::Export(ex) => ex.fmt(f),
-            ASTStatement::Import(imp) => imp.fmt(f)
+            ASTStatement::Import(imp) => imp.fmt(f),
+            ASTStatement::Impl(imp) => imp.fmt(f)
         } 
     }
 }
@@ -675,5 +684,11 @@ impl fmt::Display for ASTAwait {
 impl fmt::Display for ASTCombineTyping {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} + {}", self.left, self.right)
+   }
+}
+
+impl fmt::Display for ASTImpl {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "impl {} for {} {{\n{}\n}}", self.partial, self.target, self.fields)
    }
 }

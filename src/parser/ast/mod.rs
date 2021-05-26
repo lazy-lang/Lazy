@@ -170,7 +170,7 @@ impl Parser {
                         if let ASTExpression::Var(v) = token.unwrap() {
                             match self.parse_mod_access_or_var(v, true, true) {
                                 ASTModAccessValues::ModAccess(mod_access) => Some(ASTExpression::ModAccess(mod_access)),
-                                ASTModAccessValues::Var(v) => Some(ASTExpression::Var(v))
+                                ASTModAccessValues::Var(v) => Some(ASTExpression::Var(v.value))
                             }
                         } else {
                             self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
@@ -184,10 +184,10 @@ impl Parser {
         }
     }
 
-    pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool) -> Option<ASTModAccessValues> {
+    pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool, allow_typings: bool) -> Option<ASTModAccessValues> {
         let name = self.parse_varname(false, false, false).0;
         if let Some(v) = name {
-            Some(self.parse_mod_access_or_var(v, allow_exp_end, true))
+            Some(self.parse_mod_access_or_var(v, allow_exp_end, allow_typings))
         } else {
             None
         }
@@ -195,7 +195,15 @@ impl Parser {
 
     pub fn parse_mod_access_or_var(&mut self, start: ASTVar, allow_exp_end: bool, allow_typings: bool) -> ASTModAccessValues {
         if !self.tokens.is_next(TokenType::Punc(':')) {
-            return ASTModAccessValues::Var(start);
+            let r = start.range;
+            let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                if !allow_typings {
+                    self.tokens.error(ErrorType::Unexpected(String::from("typings")), self.tokens.input.loc(), self.tokens.input.loc());
+                }
+                self.tokens.consume();
+                Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
+            } else { None };
+            return ASTModAccessValues::Var(ASTVarTyping { value: start, range: r, typings });
         };
         let mut path: Vec<ASTVar> = vec![start];
         let start = self.tokens.input.loc();
@@ -282,17 +290,7 @@ impl Parser {
                         self.tokens.consume();
                         match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false, true) {
                             ASTModAccessValues::ModAccess(acc) => Some(ASTTypings::Mod(acc)),
-                            ASTModAccessValues::Var(v) => {
-                                let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-                                    self.tokens.consume(); // Skip <
-                                    Some(self.parse_typing_list(false, allow_fn_keyword, TokenType::Op(String::from(">"))))
-                                } else { None };
-                                Some(ASTTypings::Var(ASTVarTyping {
-                                    value: v.value,
-                                    typings,
-                                    range: Range { start, end: self.tokens.input.loc() }
-                                }))
-                            }
+                            ASTModAccessValues::Var(v) => Some(ASTTypings::Var(v))
                         }
                     },
                     TokenType::Kw(kw) => {
@@ -911,7 +909,7 @@ impl Parser {
                         }))
                     },
                     "new" => {
-                        let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false) {
+                        let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false, true) {
                             t
                         } else {
                             self.tokens.error(ErrorType::Expected(String::from("struct identifier")), token.range.start, self.tokens.input.loc());
@@ -1125,6 +1123,30 @@ impl Parser {
                            ASTImport {
                                path,
                                _as: as_binding,
+                               range: Range { start, end: self.tokens.input.loc() }
+                           }
+                       ))
+                   },
+                   "impl" => {
+                       let partial = if let Some(p) = self.parse_mod_access_or_var_without_var(false, true) {
+                           p 
+                       } else {
+                           self.tokens.error(ErrorType::Expected(String::from("Partial identifier")), start, self.tokens.input.loc());
+                           return None;
+                       };
+                       self.tokens.skip_or_err(TokenType::Kw(String::from("for")), None, None);
+                       let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false, true) {
+                           t 
+                       } else {
+                            self.tokens.error(ErrorType::Expected(String::from("Struct or enum identifier")), start, self.tokens.input.loc());
+                            return None;
+                       };
+                       self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
+                       Some(ASTStatement::Impl(
+                           ASTImpl {
+                               partial,
+                               target,
+                               fields: self.parse_typing_pair_list(false, true, false, true, '}'),
                                range: Range { start, end: self.tokens.input.loc() }
                            }
                        ))
