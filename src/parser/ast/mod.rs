@@ -167,34 +167,70 @@ impl Parser {
                         )), parse_generics)
                     },
                     ':' => {
-                        self.tokens.consume();
-                        self.tokens.skip_or_err(TokenType::Punc(':'), None, None);
-                        let val = match token.unwrap() {
-                            ASTExpression::Var(v) => ASTModAccessValues::Var(Box::from(v)),
-                            ASTExpression::ModAccess(ma) => ASTModAccessValues::ModAccess(Box::from(ma)),
-                            _ => {
-                                self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
-                                return None;
+                        if let ASTExpression::Var(v) = token.unwrap() {
+                            match self.parse_mod_access_or_var(v, true) {
+                                ASTModAccessValues::ModAccess(mod_access) => Some(ASTExpression::ModAccess(mod_access)),
+                                ASTModAccessValues::Var(v) => Some(ASTExpression::Var(v))
                             }
-                        };
-                        let variant_name = self.parse_varname(false, false, false);
-                        if variant_name.0.is_none() {
+                        } else {
                             self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
                             return None;
                         }
-                        self.parse_suffix(Some(ASTExpression::ModAccess(
-                            ASTModAccess {
-                                value: val,
-                                target: variant_name.0.unwrap(),
-                                range: Range { start, end: self.tokens.input.loc() }
-                                }
-                            )), parse_generics)
                     }
                     _ => token
                 }
             }
             _ => token
         }
+    }
+
+    pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool) -> Option<ASTModAccessValues> {
+        let name = self.parse_varname(false, false, false).0;
+        if let Some(v) = name {
+            Some(self.parse_mod_access_or_var(v, allow_exp_end))
+        } else {
+            None
+        }
+    }
+
+    pub fn parse_mod_access_or_var(&mut self, start: ASTVar, allow_exp_end: bool) -> ASTModAccessValues {
+        if !self.tokens.is_next(TokenType::Punc(':')) {
+            return ASTModAccessValues::Var(start);
+        };
+        let mut path: Vec<ASTVar> = vec![start];
+        let start = self.tokens.input.loc();
+        while self.tokens.is_next(TokenType::Punc(':')) {
+            self.tokens.consume();
+            self.tokens.skip_or_err(TokenType::Punc(':'), None, None);
+            if let Some(tok) = self.tokens.consume() {
+                match tok.val {
+                    TokenType::Var(v) => {
+                        path.push(ASTVar { value: v, range: tok.range });
+                    },
+                    _ => {
+                        if !allow_exp_end {
+                            self.tokens.error(ErrorType::Unexpected(String::from("expression")), tok.range.start, tok.range.end);
+                            break;
+                        }
+                        break;
+                    }
+                }
+            }
+        };
+        let init = if self.tokens.is_next(TokenType::Punc('(')) {
+            if !allow_exp_end {
+                self.tokens.error(ErrorType::Unexpected(String::from("initializer")), self.tokens.input.loc(), self.tokens.input.loc());
+            }
+            self.tokens.consume();
+            Some(self.parse_expression_list(')'))
+        } else { None };
+        ASTModAccessValues::ModAccess(
+            ASTModAccess {
+                path,
+                range: Range { start, end: self.tokens.input.loc() },
+                init
+            }
+        )
     }
 
     fn parse_typing(&mut self, allow_fn_keyword: bool, allow_optional_after_var: bool) -> Option<ASTTypings> {
@@ -233,17 +269,23 @@ impl Parser {
                         Some(ASTTypings::Tuple(values))
                     },
                     TokenType::Var(name) => {
-                        let value = name.to_string();
+                        let name_copy = name.clone();
+                        let tok_range = token.range;
                         self.tokens.consume();
-                        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-                            self.tokens.consume(); // Skip <
-                            Some(self.parse_typing_list(false, allow_fn_keyword, TokenType::Op(String::from(">"))))
-                        } else { None };
-                        Some(ASTTypings::Var(ASTVarTyping {
-                            value,
-                            typings,
-                            range: Range { start, end: self.tokens.input.loc() }
-                        }))
+                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false) {
+                            ASTModAccessValues::ModAccess(acc) => Some(ASTTypings::Mod(acc)),
+                            ASTModAccessValues::Var(v) => {
+                                let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                                    self.tokens.consume(); // Skip <
+                                    Some(self.parse_typing_list(false, allow_fn_keyword, TokenType::Op(String::from(">"))))
+                                } else { None };
+                                Some(ASTTypings::Var(ASTVarTyping {
+                                    value: v.value,
+                                    typings,
+                                    range: Range { start, end: self.tokens.input.loc() }
+                                }))
+                            }
+                        }
                     },
                     TokenType::Kw(kw) => {
                         if !allow_fn_keyword {
@@ -861,15 +903,8 @@ impl Parser {
                         }))
                     },
                     "new" => {
-                        let target = if let Some(t) = self.parse_expression_part(false) {
-                            match t {
-                                ASTExpression::Var(v) => ASTModAccessValues::Var(Box::from(v)),
-                                ASTExpression::ModAccess(v) => ASTModAccessValues::ModAccess(Box::from(v)),
-                                _ => {
-                                    self.tokens.error(ErrorType::ExpectedFound(String::from("struct identifier"), t.to_string()), token.range.start, self.tokens.input.loc());
-                                    return None;
-                                }
-                            }
+                        let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false) {
+                            t
                         } else {
                             self.tokens.error(ErrorType::Expected(String::from("struct identifier")), token.range.start, self.tokens.input.loc());
                             return None;

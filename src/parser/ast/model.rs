@@ -133,13 +133,13 @@ pub struct ASTChar {
 }
 
 pub enum ASTModAccessValues {
-    ModAccess(Box<ASTModAccess>),
-    Var(Box<ASTVar>)
+    ModAccess(ASTModAccess),
+    Var(ASTVar)
 }
 
 pub struct ASTModAccess {
-    pub value: ASTModAccessValues,
-    pub target: ASTVar,
+    pub path: Vec<ASTVar>,
+    pub init: Option<ASTExpressionList>,
     pub range: Range
 }
 
@@ -321,6 +321,7 @@ pub struct ASTCombineTyping {
 
 pub enum ASTTypings {
     Var(ASTVarTyping),
+    Mod(ASTModAccess),
     PairList(ASTPairListTyping),
     Function(ASTFunction),
     Optional(Box<ASTTypings>),
@@ -409,7 +410,8 @@ impl fmt::Display for ASTTypings {
             ASTTypings::PairList(list) => list.fmt(f),
             ASTTypings::Optional(typing) => write!(f, "{}?", typing),
             ASTTypings::Function(func) => func.fmt(f),
-            ASTTypings::Combine(c) => c.fmt(f)
+            ASTTypings::Combine(c) => c.fmt(f),
+            ASTTypings::Mod(m) => m.fmt(f)
         }
     }
 }
@@ -513,7 +515,12 @@ impl fmt::Display for ASTCall {
 
 impl fmt::Display for ASTModAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}::{}", self.value, self.target)
+        let mut path = String::new();
+        for path_part in 0..self.path.len() {
+            if path_part != 0 { path += "::" };
+            path += &self.path[path_part].to_string();
+        }
+        write!(f, "{}({})", path, if self.init.is_some() { self.init.as_ref().unwrap().to_string() } else { String::from("") })
    }
 }
 
