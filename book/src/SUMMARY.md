@@ -9,6 +9,7 @@
     - [Enums](./custom_types/enums.md)
     - [Structs](./custom_types/structs.md)
     - [Partials](./custom_types/partials.md)
+    - [Impl](./custom_types/impl.md)
 - [Variables](./variables/main.md)
 - [Logic](./logic/main.md)
 - [Loops](./loops/main.md)

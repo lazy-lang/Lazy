@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Iterators - Lazy By Example</title>
+        <title>Impl - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html" class="active"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="../custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="../custom_types/impl.html" class="active"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,61 +165,58 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="iterators"><a class="header" href="#iterators">Iterators</a></h1>
-<p><code>Iterator</code> is a type which allows you to loop over a struct. <code>for...in</code> loops are powered by iterators. An <code>Iterator</code> is any struct which satisfies the following type:</p>
-<pre><code>type Iterator&lt;T&gt; = { next: () -&gt; T? }
-</code></pre>
-<p>Any struct with a &quot;next&quot; function is a valid iterator!</p>
-<pre><code>struct RangeIter {
-    min: i32,
-    max: i32,
-    progress: i32,
+                        <h1 id="impl"><a class="header" href="#impl">Impl</a></h1>
+<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar.</p>
+<pre><code>struct Human {
+    age: i8
+}
 
-    next: () -&gt; i32? {
-        if self.progress == self.max none 
-        else self.progress += 1
+struct Animal {
+    age: i8,
+    species: AnimalTypes
+}
+
+type Speak = { speak: (...args?: str) -&gt; str } // A partial which requires the structure to have a &quot;speak&quot; method which returns a `str`
+
+impl Speak for Human {
+    speak: fn(...args?: str) -&gt; str {
+        if args.0 args.0;
+    }
+}
+
+impl Speak for Animal {
+    speak: fn(...args?: str) -&gt; str {
+        match self.species {
+            AnimalTypes::Cat =&gt; &quot;meow&quot;,
+            AnimalTypes::Dog =&gt; &quot;woof&quot;,
+            AnimalTypes::Mouse =&gt; &quot;*squick*&quot;
+        }
+    }
+}
+
+</code></pre>
+<h2 id="type-guards"><a class="header" href="#type-guards">Type guards</a></h2>
+<p>This feature can also be used to create type guards:</p>
+<pre><code>type TotalStrLen {
+    total_len: () -&gt; i32
+}
+
+impl TotalStrLen for Vec&lt;str&gt; {
+    total_len: fn() -&gt; i32 {
+        let len = 0;
+        for string in self {
+            len += string.length;
+        }
+        len;
     }
 }
 
 main {
-    let my_range = new Range { min: 0, max: 15, progress: 0 };
-    for i in my_range print(i);
+    let vec_of_strs = Vec::from&lt;str&gt;(&quot;a&quot;, &quot;b&quot;, &quot;cde&quot;);
+    vec_of_strs.total_len(); // 5
+    let vec_of_nums = Vec::from&lt;i32&gt;(1, 2, 3, 4, 5);
+    vec_of_nums.total_len(); // Error!
 }
-</code></pre>
-<h2 id="literals"><a class="header" href="#literals">Literals</a></h2>
-<p>Iterator literals are called <code>range</code> iterators, because they create an iterator that iterates through a range of numbers.</p>
-<pre><code>0..5 // Exclusive
-0..=5 // Inclusive
-</code></pre>
-<h2 id="spreading-iterators"><a class="header" href="#spreading-iterators">Spreading iterators</a></h2>
-<p>The <code>spread</code> syntax can be used to turn iterators into vectors!</p>
-<pre><code>let iterator = 0..10;
-let vec = ...iterator;
-print(vec.to_string()); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-</code></pre>
-<h3 id="spread-syntax-in-functions"><a class="header" href="#spread-syntax-in-functions">Spread syntax in functions</a></h3>
-<p>The <code>spread</code> syntax has a special meaning in function parameters:</p>
-<pre><code>type Stringable = { to_string: () -&gt; str };
-
-const print = fn(...strs?: Stringable) {
-    // code
-}
-</code></pre>
-<p>The <code>...strs:</code> syntax means that the function can receive an unlimited amount of values with the <code>Stringable</code> type. The <code>strs</code> value itself is either a <code>Vector</code> which contains <code>Stringable</code>, or <code>none</code> (Because of the <code>?</code> after the param name).</p>
-<pre><code>const println = fn(...strs?: Stringable) {
-    for string in strs? {
-        print(string.to_string() + &quot;\n&quot;);
-    }
-}
-
-print_many(&quot;Hello&quot;, new Vec{}, 4, true); 
-// Prints:
-/*
-Hello
-[]
-4,
-true
-*/
 </code></pre>
 
                     </main>
@@ -227,13 +224,13 @@ true
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../primitives/functions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../custom_types/partials.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="../custom_types/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../variables/main.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -245,13 +242,13 @@ true
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../primitives/functions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../custom_types/partials.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../custom_types/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../variables/main.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 

@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -617,6 +617,59 @@ main {
     stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
 }
 
+</code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="impl"><a class="header" href="#impl">Impl</a></h1>
+<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar.</p>
+<pre><code>struct Human {
+    age: i8
+}
+
+struct Animal {
+    age: i8,
+    species: AnimalTypes
+}
+
+type Speak = { speak: (...args?: str) -&gt; str } // A partial which requires the structure to have a &quot;speak&quot; method which returns a `str`
+
+impl Speak for Human {
+    speak: fn(...args?: str) -&gt; str {
+        if args.0 args.0;
+    }
+}
+
+impl Speak for Animal {
+    speak: fn(...args?: str) -&gt; str {
+        match self.species {
+            AnimalTypes::Cat =&gt; &quot;meow&quot;,
+            AnimalTypes::Dog =&gt; &quot;woof&quot;,
+            AnimalTypes::Mouse =&gt; &quot;*squick*&quot;
+        }
+    }
+}
+
+</code></pre>
+<h2 id="type-guards"><a class="header" href="#type-guards">Type guards</a></h2>
+<p>This feature can also be used to create type guards:</p>
+<pre><code>type TotalStrLen {
+    total_len: () -&gt; i32
+}
+
+impl TotalStrLen for Vec&lt;str&gt; {
+    total_len: fn() -&gt; i32 {
+        let len = 0;
+        for string in self {
+            len += string.length;
+        }
+        len;
+    }
+}
+
+main {
+    let vec_of_strs = Vec::from&lt;str&gt;(&quot;a&quot;, &quot;b&quot;, &quot;cde&quot;);
+    vec_of_strs.total_len(); // 5
+    let vec_of_nums = Vec::from&lt;i32&gt;(1, 2, 3, 4, 5);
+    vec_of_nums.total_len(); // Error!
+}
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="variables"><a class="header" href="#variables">Variables</a></h1>
 <p>Defining variables is done with the <code>let</code>, <code>const</code> and <code>static</code> keywords.</p>
