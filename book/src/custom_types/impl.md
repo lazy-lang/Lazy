@@ -69,7 +69,7 @@ type Add<Other, Output> = {
     add: (other: Other) -> Output
 }
 
-static add<Other, Output>(a: Add<Other, Output>!, b: Other) -> Output {
+static add = fn<Other, Output>(a: Add<Other, Output>!, b: Other) -> Output {
     a.add(b);
 }
 

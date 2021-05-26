@@ -34,8 +34,8 @@ struct Animal {
 type ThingWithName = {name: str};
 
 main {
-    let me = new Person{ name: "Google", age: 19 };
-    let my_pet = new Animal { name: "Baby", age: 1, type: AnimalTypes:Bird };
+    let me = new Person { name: "Google", age: 19 };
+    let my_pet = new Animal { name: "Baby", age: 1, type: AnimalTypes::Bird };
 
     let things = new Vec<ThingWithName>{};
     things.push(me);

@@ -27,13 +27,13 @@ Sometimes you want a field to be attached to the struct itself and not an instan
 struct Person {
     name: str,
 
-    static new: fn(name: str) -> Person {
+    static create: fn(name: str) -> Person {
         new Person { name };
     }
 
 }
 
-let me = Person::new("Google");
+let me = Person::create("Google");
 ```
 
 ### Hidden/Private fields
@@ -45,13 +45,13 @@ struct Person {
     name: str,
     private id: i32
 
-    static new: fn(name: str) -> Person {
+    static create: fn(name: str) -> Person {
         new Person { name, id: rng() };
     }
 
 }
 
-let me = Person::new("Google");
+let me = Person::create("Google");
 me.id; // Error!
 ```
 
@@ -64,13 +64,13 @@ struct Person {
     const name: str,
     private id: i32
 
-    static new: fn(name: str) -> Person {
+    static create: fn(name: str) -> Person {
         new Person { name, id: rng() };
     }
 
 }
 
-let me = Person::new("Google");
+let me = Person::create("Google");
 me.name = "Pedro"; // Error!
 ```
 
@@ -133,14 +133,10 @@ struct Person {
     last_name: str
 }
 
-impl Ops::Add<Person, Person> for Person {
+impl Ops::Add<Person, str> for Person {
 
-    add: fn(other: Person) -> Person {
-        new Person {
-            first: self.first_name,
-            middle_name: other.middle_name,
-            last_name: other.last_name
-        }
+    add: fn(other: Person) -> str {
+        self.first_name + " " + other.middle_name + " " + other.last_name;
     }
 
 }

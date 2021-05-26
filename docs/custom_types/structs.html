@@ -184,13 +184,13 @@
 <pre><code>struct Person {
     name: str,
 
-    static new: fn(name: str) -&gt; Person {
+    static create: fn(name: str) -&gt; Person {
         new Person { name };
     }
 
 }
 
-let me = Person::new(&quot;Google&quot;);
+let me = Person::create(&quot;Google&quot;);
 </code></pre>
 <h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
 <p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
@@ -198,13 +198,13 @@ let me = Person::new(&quot;Google&quot;);
     name: str,
     private id: i32
 
-    static new: fn(name: str) -&gt; Person {
+    static create: fn(name: str) -&gt; Person {
         new Person { name, id: rng() };
     }
 
 }
 
-let me = Person::new(&quot;Google&quot;);
+let me = Person::create(&quot;Google&quot;);
 me.id; // Error!
 </code></pre>
 <h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
@@ -213,13 +213,13 @@ me.id; // Error!
     const name: str,
     private id: i32
 
-    static new: fn(name: str) -&gt; Person {
+    static create: fn(name: str) -&gt; Person {
         new Person { name, id: rng() };
     }
 
 }
 
-let me = Person::new(&quot;Google&quot;);
+let me = Person::create(&quot;Google&quot;);
 me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
 <h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
@@ -262,14 +262,10 @@ struct Person {
     last_name: str
 }
 
-impl Ops::Add&lt;Person, Person&gt; for Person {
+impl Ops::Add&lt;Person, str&gt; for Person {
 
-    add: fn(other: Person) -&gt; Person {
-        new Person {
-            first: self.first_name,
-            middle_name: other.middle_name,
-            last_name: other.last_name
-        }
+    add: fn(other: Person) -&gt; str {
+        self.first_name + &quot; &quot; + other.middle_name + &quot; &quot; + other.last_name;
     }
 
 }
@@ -318,21 +314,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:4000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

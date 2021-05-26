@@ -5,7 +5,7 @@ In Lazy, functions are first-class citizens, this means they can be passed as fu
 
 ```
 main {
-    const say_alphabet_lowercase = fn () print('a'..='z');
+    const say_alphabet_lowercase = fn () print(...'a'..='z');
     say_alphabet_lowercase(); 
 }
 ```

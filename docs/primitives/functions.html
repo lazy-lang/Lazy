@@ -168,7 +168,7 @@
                         <h1 id="functions"><a class="header" href="#functions">Functions</a></h1>
 <p>In Lazy, functions are first-class citizens, this means they can be passed as function arguments, stored easily in data structures, and be saved in variables. </p>
 <pre><code>main {
-    const say_alphabet_lowercase = fn () print('a'..='z');
+    const say_alphabet_lowercase = fn () print(...'a'..='z');
     say_alphabet_lowercase(); 
 }
 </code></pre>
@@ -230,21 +230,6 @@
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:4000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         
