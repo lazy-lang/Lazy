@@ -218,6 +218,47 @@ if char_token == TokenTypes::Char('a') {
     }
 }
 </code></pre>
+<h2 id="attaching-methods-and-properties-to-enums"><a class="header" href="#attaching-methods-and-properties-to-enums">Attaching methods and properties to enums</a></h2>
+<p>Attaching methods and properties to enums is done via the <strong>impl</strong> keyword. </p>
+<pre><code>enum Option&lt;T&gt; {
+    Some: T,
+    None
+}
+
+type Unwrap&lt;T&gt; = {
+    unwrap: () -&gt; T,
+    is_some: () -&gt; bool,
+    unwrap_or: (v: T) -&gt; T
+}
+
+impl Unwrap&lt;T&gt; for Option&lt;T&gt; {
+    unwrap: fn() -&gt; T {
+        match self {
+            Some =&gt; self,
+            None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
+        }
+    }
+
+    is_some: fn() -&gt; bool {
+        self == Option::Some
+    }
+
+    unwrap_or: fn(v: T) -&gt; T {
+        match self {
+            Some =&gt; self,
+            None =&gt; v
+        }
+    }
+}
+
+main {
+    let maybe&lt;Option&lt;i32&gt;&gt; = Option::None;
+    maybe.unwrap_or(0); // 0
+    maybe = Option::Some(32);
+    maybe.is_some(); // true
+    maybe.unwrap(); // 32
+}
+</code></pre>
 
                     </main>
 
@@ -256,21 +297,6 @@ if char_token == TokenTypes::Char('a') {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

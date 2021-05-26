@@ -198,22 +198,6 @@ main {
     get_name(some_animal); // Perry
 }
 </code></pre>
-<h2 id="implementing-partials-in-structs"><a class="header" href="#implementing-partials-in-structs">Implementing partials in structs</a></h2>
-<p>An alternative syntax to the first example, which is more Rust-like, is using the <code>impl</code> keyword to annotate that struct <code>A</code> must be compatible with partial <code>B</code>.</p>
-<pre><code>struct A {
-    private id: i32
-}
-
-type WithName = { name: str, capitalized: () -&gt; str }
-
-impl WithName for A {
-    name: str,
-    capitalized: () -&gt; str {
-        self.name.at(0).toUpperCase() + self.name.slice(1, self.name.length);
-    }
-}
-</code></pre>
-<p>This syntax is syntactic sugar!</p>
 <h2 id="combining-types"><a class="header" href="#combining-types">Combining types</a></h2>
 <p>Partials can be combined to create more complex partials:</p>
 <pre><code>type Stringable = {
@@ -283,21 +267,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

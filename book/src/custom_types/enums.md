@@ -66,3 +66,48 @@ match char_token {
     }
 }
 ```
+
+## Attaching methods and properties to enums
+
+Attaching methods and properties to enums is done via the **impl** keyword. 
+
+```
+enum Option<T> {
+    Some: T,
+    None
+}
+
+type Unwrap<T> = {
+    unwrap: () -> T,
+    is_some: () -> bool,
+    unwrap_or: (v: T) -> T
+}
+
+impl Unwrap<T> for Option<T> {
+    unwrap: fn() -> T {
+        match self {
+            Some => self,
+            None => error("Tried to unwrap an empty option!")
+        }
+    }
+
+    is_some: fn() -> bool {
+        self == Option::Some
+    }
+
+    unwrap_or: fn(v: T) -> T {
+        match self {
+            Some => self,
+            None => v
+        }
+    }
+}
+
+main {
+    let maybe<Option<i32>> = Option::None;
+    maybe.unwrap_or(0); // 0
+    maybe = Option::Some(32);
+    maybe.is_some(); // true
+    maybe.unwrap(); // 32
+}
+```

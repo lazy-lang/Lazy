@@ -426,6 +426,47 @@ if char_token == TokenTypes::Char('a') {
     }
 }
 </code></pre>
+<h2 id="attaching-methods-and-properties-to-enums"><a class="header" href="#attaching-methods-and-properties-to-enums">Attaching methods and properties to enums</a></h2>
+<p>Attaching methods and properties to enums is done via the <strong>impl</strong> keyword. </p>
+<pre><code>enum Option&lt;T&gt; {
+    Some: T,
+    None
+}
+
+type Unwrap&lt;T&gt; = {
+    unwrap: () -&gt; T,
+    is_some: () -&gt; bool,
+    unwrap_or: (v: T) -&gt; T
+}
+
+impl Unwrap&lt;T&gt; for Option&lt;T&gt; {
+    unwrap: fn() -&gt; T {
+        match self {
+            Some =&gt; self,
+            None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
+        }
+    }
+
+    is_some: fn() -&gt; bool {
+        self == Option::Some
+    }
+
+    unwrap_or: fn(v: T) -&gt; T {
+        match self {
+            Some =&gt; self,
+            None =&gt; v
+        }
+    }
+}
+
+main {
+    let maybe&lt;Option&lt;i32&gt;&gt; = Option::None;
+    maybe.unwrap_or(0); // 0
+    maybe = Option::Some(32);
+    maybe.is_some(); // true
+    maybe.unwrap(); // 32
+}
+</code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="structs"><a class="header" href="#structs">Structs</a></h1>
 <p>Structs contain key-value pairs called <code>fields</code>. All keys and the types of the values must be known at compile-time.</p>
 <pre><code>struct Something&lt;GenericParam&gt; {
@@ -546,22 +587,6 @@ main {
     get_name(some_animal); // Perry
 }
 </code></pre>
-<h2 id="implementing-partials-in-structs"><a class="header" href="#implementing-partials-in-structs">Implementing partials in structs</a></h2>
-<p>An alternative syntax to the first example, which is more Rust-like, is using the <code>impl</code> keyword to annotate that struct <code>A</code> must be compatible with partial <code>B</code>.</p>
-<pre><code>struct A {
-    private id: i32
-}
-
-type WithName = { name: str, capitalized: () -&gt; str }
-
-impl WithName for A {
-    name: str,
-    capitalized: () -&gt; str {
-        self.name.at(0).toUpperCase() + self.name.slice(1, self.name.length);
-    }
-}
-</code></pre>
-<p>This syntax is syntactic sugar!</p>
 <h2 id="combining-types"><a class="header" href="#combining-types">Combining types</a></h2>
 <p>Partials can be combined to create more complex partials:</p>
 <pre><code>type Stringable = {
@@ -808,21 +833,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

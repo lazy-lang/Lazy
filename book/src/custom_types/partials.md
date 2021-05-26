@@ -36,27 +36,6 @@ main {
 }
 ```
 
-## Implementing partials in structs
-
-An alternative syntax to the first example, which is more Rust-like, is using the `impl` keyword to annotate that struct `A` must be compatible with partial `B`.
-
-```
-struct A {
-    private id: i32
-}
-
-type WithName = { name: str, capitalized: () -> str }
-
-impl WithName for A {
-    name: str,
-    capitalized: () -> str {
-        self.name.at(0).toUpperCase() + self.name.slice(1, self.name.length);
-    }
-}
-```
-
-This syntax is syntactic sugar!
-
 ## Combining types
 
 Partials can be combined to create more complex partials:

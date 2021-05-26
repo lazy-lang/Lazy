@@ -1,7 +1,7 @@
 [book]
 authors = ["GoogleFeud"]
 language = "en"
-multilingual = false
+multilingual = true
 src = "src"
 title = "Lazy By Example"
 
