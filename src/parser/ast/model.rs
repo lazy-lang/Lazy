@@ -140,6 +140,7 @@ pub enum ASTModAccessValues {
 pub struct ASTModAccess {
     pub path: Vec<ASTVar>,
     pub init: Option<ASTExpressionList>,
+    pub typings: Option<ASTListTyping>,
     pub range: Range
 }
 
@@ -267,7 +268,7 @@ pub enum ASTExpression {
 pub enum ASTStatement {
     EnumDeclaration(ASTEnumDeclaration),
     Struct(ASTStruct),
-    Static(ASTStatic),
+    Static(Box<ASTStatic>),
     Type(ASTType),
     Main(ASTMain),
     Export(ASTExport),
@@ -520,7 +521,7 @@ impl fmt::Display for ASTModAccess {
             if path_part != 0 { path += "::" };
             path += &self.path[path_part].to_string();
         }
-        write!(f, "{}({})", path, if self.init.is_some() { self.init.as_ref().unwrap().to_string() } else { String::from("") })
+        write!(f, "{}{}{}", path, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.init.is_some() { format!("({})", self.init.as_ref().unwrap().to_string()) } else { String::from("") })
    }
 }
 

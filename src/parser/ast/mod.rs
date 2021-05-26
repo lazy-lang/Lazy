@@ -168,13 +168,13 @@ impl Parser {
                     },
                     ':' => {
                         if let ASTExpression::Var(v) = token.unwrap() {
-                            match self.parse_mod_access_or_var(v, true) {
+                            match self.parse_mod_access_or_var(v, true, true) {
                                 ASTModAccessValues::ModAccess(mod_access) => Some(ASTExpression::ModAccess(mod_access)),
                                 ASTModAccessValues::Var(v) => Some(ASTExpression::Var(v))
                             }
                         } else {
                             self.tokens.error(ErrorType::Expected(String::from("identifier")), start, self.tokens.input.loc());
-                            return None;
+                            None
                         }
                     }
                     _ => token
@@ -187,13 +187,13 @@ impl Parser {
     pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool) -> Option<ASTModAccessValues> {
         let name = self.parse_varname(false, false, false).0;
         if let Some(v) = name {
-            Some(self.parse_mod_access_or_var(v, allow_exp_end))
+            Some(self.parse_mod_access_or_var(v, allow_exp_end, true))
         } else {
             None
         }
     }
 
-    pub fn parse_mod_access_or_var(&mut self, start: ASTVar, allow_exp_end: bool) -> ASTModAccessValues {
+    pub fn parse_mod_access_or_var(&mut self, start: ASTVar, allow_exp_end: bool, allow_typings: bool) -> ASTModAccessValues {
         if !self.tokens.is_next(TokenType::Punc(':')) {
             return ASTModAccessValues::Var(start);
         };
@@ -217,6 +217,13 @@ impl Parser {
                 }
             }
         };
+        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+            if !allow_typings {
+                self.tokens.error(ErrorType::Unexpected(String::from("typings")), self.tokens.input.loc(), self.tokens.input.loc());
+            }
+            self.tokens.consume();
+            Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
+        } else { None };
         let init = if self.tokens.is_next(TokenType::Punc('(')) {
             if !allow_exp_end {
                 self.tokens.error(ErrorType::Unexpected(String::from("initializer")), self.tokens.input.loc(), self.tokens.input.loc());
@@ -228,6 +235,7 @@ impl Parser {
             ASTModAccess {
                 path,
                 range: Range { start, end: self.tokens.input.loc() },
+                typings,
                 init
             }
         )
@@ -272,7 +280,7 @@ impl Parser {
                         let name_copy = name.clone();
                         let tok_range = token.range;
                         self.tokens.consume();
-                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false) {
+                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false, true) {
                             ASTModAccessValues::ModAccess(acc) => Some(ASTTypings::Mod(acc)),
                             ASTModAccessValues::Var(v) => {
                                 let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
@@ -1078,12 +1086,12 @@ impl Parser {
                         return None;
                        }
                        Some(ASTStatement::Static(
-                           ASTStatic {
+                           Box::from(ASTStatic {
                                typings,
                                var: varname.0.unwrap(),
                                value: exp.unwrap(),
                                range: Range { start, end: self.tokens.input.loc() } 
-                           }
+                           })
                        ))
                    },
                    "export" => {

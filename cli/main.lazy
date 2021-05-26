@@ -4,14 +4,14 @@ struct Person {
     age: i8
 
     static create: fn(name: str, age: i8) -> Person {
-        new Person { name, age };
+        new Person<A> { name, age };
     }
 
     age_up: fn() {
         self.age += 0x01;
     }
 
-    next: fn() -> Vec<A::B + B>? {
+    next: fn() -> Vec<A::B<C> + B>? {
         let counter = 0;
         Promise::interval(fn() {
             print(counter);
@@ -24,7 +24,7 @@ struct Person {
 type AandB = A + B
 
 main {
-    let me = Person::create("Google", -5);
+    let me = Person::create<A>("Google", -5);
     await await? me.age_up();
     print(me);
 }
