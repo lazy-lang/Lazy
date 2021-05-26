@@ -339,6 +339,19 @@ impl Parser {
                                     }
                                 ))
                             },
+                            "!" => {
+                                self.tokens.consume();
+                                Some(ASTTypings::ExplicitImpl(
+                                    match typing {
+                                        ASTTypings::Var(v) => ASTModAccessValues::Var(v),
+                                        ASTTypings::Mod(m) => ASTModAccessValues::ModAccess(m),
+                                        _ => {
+                                            self.tokens.error(ErrorType::Unexpected(String::from("explicit impl operator")), start, start);
+                                            return None
+                                        }
+                                    }
+                                ))
+                            },
                             _ => { Some(typing) }
                         }
                     },

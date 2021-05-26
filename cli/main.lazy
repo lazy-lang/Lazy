@@ -1,35 +1,25 @@
-
-type Queue<T> = {
-    enqueue: (e: T) -> i32,
-    dequeue: () -> T,
-    peek: () -> T
+type Add<Other, Output> = {
+    add: (other: Other) -> Output
 }
 
-
-impl Queue<T> for Vec<T> {
-
-    enqueue: fn(e: T) -> i32 {
-        self.insert(0, e);
-        self.length;
-    }
-
-    dequeue: fn() -> T {
-        self.pop();
-    }
-
-    peek: fn() -> T {
-        self.get(self.length - 1);
-    }
-
+static add = fn<Other, Output>(a: Add<Other, Output>!, b: {a: b}!) -> Output {
+    a.add(b);
 }
 
+struct Token {
+    value: char,
+
+    static create: fn(value: char) -> Token {
+        new Token { value };
+    }
+
+    add: fn(other: Token) -> Token {
+       new Token { value: self.value + other.value };
+    }
+}
 
 main {
-    let num_queue = Vec::from<i32>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-    num_queue.dequeue(); // 10
-    num_queue.dequeue(); // 9
-    num_queue.dequeue(); // 8
-    num_queue.enqueue(15); // 9
-    num_queue.join(", "); // 15, 1, 2, 3, 4, 5, 6, 7, 8
+    let tok1 = Token::create('a');
+    let tok2 = Token::create('b');
+    add<Token, Token>(tok1, tok2); // Invalid, because "Token" doesn't explicitly fit `Add`!
 }
-

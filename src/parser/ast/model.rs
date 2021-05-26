@@ -335,7 +335,8 @@ pub enum ASTTypings {
     Function(ASTFunction),
     Optional(Box<ASTTypings>),
     Tuple(ASTListTyping),
-    Combine(ASTCombineTyping)
+    Combine(ASTCombineTyping),
+    ExplicitImpl(ASTModAccessValues)
 }
 
 impl fmt::Display for ASTVarTyping {
@@ -420,7 +421,8 @@ impl fmt::Display for ASTTypings {
             ASTTypings::Optional(typing) => write!(f, "{}?", typing),
             ASTTypings::Function(func) => func.fmt(f),
             ASTTypings::Combine(c) => c.fmt(f),
-            ASTTypings::Mod(m) => m.fmt(f)
+            ASTTypings::Mod(m) => m.fmt(f),
+            ASTTypings::ExplicitImpl(im) => write!(f, "{}!", im)
         }
     }
 }
