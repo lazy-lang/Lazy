@@ -119,3 +119,35 @@ if my_struct != none {
     print(my_struct.something);
 }
 ```
+
+## Operator overloading
+
+Operator overloading is done via partials. 
+
+```
+import "std/ops" as Ops
+
+struct Person {
+    first_name: str,
+    middle_name: str,
+    last_name: str
+}
+
+impl Ops::Add<Person, Person> for Person {
+
+    add: fn(other: Person) -> Person {
+        new Person {
+            first: self.first_name,
+            middle_name: other.middle_name,
+            last_name: other.last_name
+        }
+    }
+
+}
+
+main {
+    const me = new Person {first_name: "Google", middle_name: "Something", last_name: "Feud"};
+    const you = new Person {first_name: "Taylor", middle_name: "Alison", last_name: "Swift"};
+    me + you; // Google Alison Swift
+}
+```

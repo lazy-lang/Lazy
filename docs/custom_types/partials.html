@@ -166,7 +166,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
-<p><code>Lazy</code> does not have core OOP design patters like inheritance, but it has <code>Partials</code>, which are pretty similar to rust's <code>Traits</code>, but a little more dynamic.</p>
+<p><code>Lazy</code> does not have core OOP design patters like inheritance, but it has <code>Partials</code>, which are very similar to rust's <code>Traits</code>, but a little more dynamic.</p>
 <h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
 <pre><code>struct Animal {
     name: str,
@@ -227,7 +227,6 @@ main {
     stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
     stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
 }
-
 </code></pre>
 
                     </main>
@@ -267,6 +266,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:4000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

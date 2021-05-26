@@ -373,6 +373,13 @@ main {
     let a&lt;i&gt; = 4;
 }
 </code></pre>
+<h2 id="none-able-types"><a class="header" href="#none-able-types">None-able types</a></h2>
+<p>A type which is prefixed with <code>?</code> is <code>none</code>-able. The value it may have may be <code>none</code> or the type.</p>
+<pre><code>static div = fn(a: i32, b: i32) -&gt; i32? {
+    if b == 0 none
+    else a / b
+}
+</code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="enums"><a class="header" href="#enums">Enums</a></h1>
 <p>Enums are types which may be one or a few different variants.</p>
 <pre><code>enum Number {
@@ -554,8 +561,36 @@ me.name = &quot;Pedro&quot;; // Error!
     print(my_struct.something);
 }
 </code></pre>
+<h2 id="operator-overloading"><a class="header" href="#operator-overloading">Operator overloading</a></h2>
+<p>Operator overloading is done via partials. </p>
+<pre><code>import &quot;std/ops&quot; as Ops
+
+struct Person {
+    first_name: str,
+    middle_name: str,
+    last_name: str
+}
+
+impl Ops::Add&lt;Person, Person&gt; for Person {
+
+    add: fn(other: Person) -&gt; Person {
+        new Person {
+            first: self.first_name,
+            middle_name: other.middle_name,
+            last_name: other.last_name
+        }
+    }
+
+}
+
+main {
+    const me = new Person {first_name: &quot;Google&quot;, middle_name: &quot;Something&quot;, last_name: &quot;Feud&quot;};
+    const you = new Person {first_name: &quot;Taylor&quot;, middle_name: &quot;Alison&quot;, last_name: &quot;Swift&quot;};
+    me + you; // Google Alison Swift
+}
+</code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="partials"><a class="header" href="#partials">Partials</a></h1>
-<p><code>Lazy</code> does not have core OOP design patters like inheritance, but it has <code>Partials</code>, which are pretty similar to rust's <code>Traits</code>, but a little more dynamic.</p>
+<p><code>Lazy</code> does not have core OOP design patters like inheritance, but it has <code>Partials</code>, which are very similar to rust's <code>Traits</code>, but a little more dynamic.</p>
 <h2 id="partial-struct"><a class="header" href="#partial-struct">Partial struct</a></h2>
 <pre><code>struct Animal {
     name: str,
@@ -616,10 +651,9 @@ main {
     stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
     stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
 }
-
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="impl"><a class="header" href="#impl">Impl</a></h1>
-<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar.</p>
+<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar. </p>
 <pre><code>struct Human {
     age: i8
 }
@@ -669,6 +703,49 @@ main {
     vec_of_strs.total_len(); // 5
     let vec_of_nums = Vec::from&lt;i32&gt;(1, 2, 3, 4, 5);
     vec_of_nums.total_len(); // Error!
+}
+</code></pre>
+<h2 id="require-impl"><a class="header" href="#require-impl">Require <code>impl</code></a></h2>
+<p>Sometimes, the creator of a partial may want it to be explicitly implemented via the <code>impl</code> keyword. Place a <code>!</code> after the partial type in order to make sure that the provided struct fits the partial:</p>
+<pre><code>type Add&lt;Other, Output&gt; = {
+    add: (other: Other) -&gt; Output
+}
+
+static add&lt;Other, Output&gt;(a: Add&lt;Other, Output&gt;!, b: Other) -&gt; Output {
+    a.add(b);
+}
+
+struct Token {
+    value: char,
+
+    static create: fn(value: char) -&gt; Token {
+        new Token { value };
+    }
+
+    add: fn(other: Token) -&gt; Token {
+       new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    let tok1 = Token::create('a');
+    let tok2 = Token::create('b');
+    add&lt;Token, Token&gt;(tok1, tok2); // Invalid, because &quot;Token&quot; doesn't explicitly fit `Add`!
+}
+</code></pre>
+<p>Correct implementation:</p>
+<pre><code>struct Token {
+    value: char
+}
+
+impl Add&lt;Token, Token&gt; for Token {
+    add: fn(other: Token) -&gt; Token {
+        new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    add&lt;Token, Token&gt;(Token::create('a'), Token::create('b')); // &quot;ab&quot;
 }
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="variables"><a class="header" href="#variables">Variables</a></h1>
@@ -886,6 +963,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:4000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

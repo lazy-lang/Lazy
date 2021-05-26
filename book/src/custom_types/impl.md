@@ -1,7 +1,7 @@
 
 # Impl
 
-The **impl** keyword is used to combine a struct or an enum with a **partial** type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar.
+The **impl** keyword is used to combine a struct or an enum with a **partial** type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar. 
 
 ```
 struct Human {
@@ -57,5 +57,55 @@ main {
     vec_of_strs.total_len(); // 5
     let vec_of_nums = Vec::from<i32>(1, 2, 3, 4, 5);
     vec_of_nums.total_len(); // Error!
+}
+```
+
+## Require `impl`
+
+Sometimes, the creator of a partial may want it to be explicitly implemented via the `impl` keyword. Place a `!` after the partial type in order to make sure that the provided struct fits the partial:
+
+```
+type Add<Other, Output> = {
+    add: (other: Other) -> Output
+}
+
+static add<Other, Output>(a: Add<Other, Output>!, b: Other) -> Output {
+    a.add(b);
+}
+
+struct Token {
+    value: char,
+
+    static create: fn(value: char) -> Token {
+        new Token { value };
+    }
+
+    add: fn(other: Token) -> Token {
+       new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    let tok1 = Token::create('a');
+    let tok2 = Token::create('b');
+    add<Token, Token>(tok1, tok2); // Invalid, because "Token" doesn't explicitly fit `Add`!
+}
+```
+
+Correct implementation:
+
+```
+struct Token {
+    value: char
+}
+
+impl Add<Token, Token> for Token {
+    add: fn(other: Token) -> Token {
+        new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    add<Token, Token>(Token::create('a'), Token::create('b')); // "ab"
 }
 ```

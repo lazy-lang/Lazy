@@ -1,6 +1,6 @@
 # Partials
 
-`Lazy` does not have core OOP design patters like inheritance, but it has `Partials`, which are pretty similar to rust's `Traits`, but a little more dynamic.
+`Lazy` does not have core OOP design patters like inheritance, but it has `Partials`, which are very similar to rust's `Traits`, but a little more dynamic.
 
 ## Partial struct
 
@@ -72,5 +72,4 @@ main {
     stuff_that_makes_noise.get(0)?.make_noise(); // "Hello World"
     stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
 }
-
 ```

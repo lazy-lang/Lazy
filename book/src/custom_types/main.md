@@ -17,3 +17,14 @@ main {
     let a<i> = 4;
 }
 ```
+
+## None-able types
+
+A type which is prefixed with `?` is `none`-able. The value it may have may be `none` or the type.
+
+```
+static div = fn(a: i32, b: i32) -> i32? {
+    if b == 0 none
+    else a / b
+}
+```

@@ -166,7 +166,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="impl"><a class="header" href="#impl">Impl</a></h1>
-<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar.</p>
+<p>The <strong>impl</strong> keyword is used to combine a struct or an enum with a <strong>partial</strong> type, so the struct/enum fits the partial. Generally, this keyword doesn't have to be used with structs in order to make a struct compatible with a type, but it's nice syntactic sugar. </p>
 <pre><code>struct Human {
     age: i8
 }
@@ -218,6 +218,49 @@ main {
     vec_of_nums.total_len(); // Error!
 }
 </code></pre>
+<h2 id="require-impl"><a class="header" href="#require-impl">Require <code>impl</code></a></h2>
+<p>Sometimes, the creator of a partial may want it to be explicitly implemented via the <code>impl</code> keyword. Place a <code>!</code> after the partial type in order to make sure that the provided struct fits the partial:</p>
+<pre><code>type Add&lt;Other, Output&gt; = {
+    add: (other: Other) -&gt; Output
+}
+
+static add&lt;Other, Output&gt;(a: Add&lt;Other, Output&gt;!, b: Other) -&gt; Output {
+    a.add(b);
+}
+
+struct Token {
+    value: char,
+
+    static create: fn(value: char) -&gt; Token {
+        new Token { value };
+    }
+
+    add: fn(other: Token) -&gt; Token {
+       new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    let tok1 = Token::create('a');
+    let tok2 = Token::create('b');
+    add&lt;Token, Token&gt;(tok1, tok2); // Invalid, because &quot;Token&quot; doesn't explicitly fit `Add`!
+}
+</code></pre>
+<p>Correct implementation:</p>
+<pre><code>struct Token {
+    value: char
+}
+
+impl Add&lt;Token, Token&gt; for Token {
+    add: fn(other: Token) -&gt; Token {
+        new Token { value: self.value + other.value };
+    }
+}
+
+main {
+    add&lt;Token, Token&gt;(Token::create('a'), Token::create('b')); // &quot;ab&quot;
+}
+</code></pre>
 
                     </main>
 
@@ -256,6 +299,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:4000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         
