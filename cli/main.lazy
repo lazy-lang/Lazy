@@ -1,30 +1,35 @@
 
-struct Person {
-    name: str
-    age: i8
+type Queue<T> = {
+    enqueue: (e: T) -> i32,
+    dequeue: () -> T,
+    peek: () -> T
+}
 
-    static create: fn(name: str, age: i8) -> Person {
-        new Person<A> { name, age };
+
+impl Queue<T> for Vec<T> {
+
+    enqueue: fn(e: T) -> i32 {
+        self.insert(0, e);
+        self.length;
     }
 
-    age_up: fn() {
-        self.age += 0x01;
+    dequeue: fn() -> T {
+        self.pop();
     }
 
-    next: fn() -> Vec<A::B<C> + B>? {
-        let counter = 0;
-        Promise::interval(fn() {
-            print(counter);
-            counter += 1;
-        }, 1m);
+    peek: fn() -> T {
+        self.get(self.length - 1);
     }
 
 }
 
-type AandB = A + B
 
 main {
-    let me = Person::create<A>("Google", -5);
-    await await? me.age_up();
-    print(me);
+    let num_queue = Vec::from<i32>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+    num_queue.dequeue(); // 10
+    num_queue.dequeue(); // 9
+    num_queue.dequeue(); // 8
+    num_queue.enqueue(15); // 9
+    num_queue.join(", "); // 15, 1, 2, 3, 4, 5, 6, 7, 8
 }
+
