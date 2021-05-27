@@ -26,6 +26,22 @@ As you notice, there's no `return` statement in `Lazy`. The last expression in t
 
 If a return type is not provided, the function will always return `none`. 
 
+## Optional parameters
+
+```
+const add(num1: i32, num2: i32, num3: i32?) -> i32 {
+    num1 + num2 + {if num3 num3 else 0};
+}
+```
+
+## Default values
+
+```
+const add(num1: i32, num2: i32, num3 = 0) -> i32 {
+    num1 + num2 + num3;
+}
+```
+
 ## Execution context
 
 All functions in `Lazy` have an **execution context** which can be referenced via `self` in the function body. The execution context of functions is always `none`, unless the function is defined inside a structure:

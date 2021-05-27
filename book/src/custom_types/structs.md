@@ -76,12 +76,12 @@ me.name = "Pedro"; // Error!
 
 ## Optional fields
 
-Fields which have a question mark (`?`) after the key are **optional**.
+Fields which have a question mark (`?`) after the type are **optional**.
 
 ```
 struct StructWithOptionalField {
     // Can either be "none", or "str"
-    something?: str
+    something: str?
 }
 ```
 

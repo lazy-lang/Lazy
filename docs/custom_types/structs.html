@@ -223,10 +223,10 @@ let me = Person::create(&quot;Google&quot;);
 me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
 <h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
-<p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
+<p>Fields which have a question mark (<code>?</code>) after the type are <strong>optional</strong>.</p>
 <pre><code>struct StructWithOptionalField {
     // Can either be &quot;none&quot;, or &quot;str&quot;
-    something?: str
+    something: str?
 }
 </code></pre>
 <h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>

@@ -206,7 +206,7 @@ const print = fn(...strs?: Stringable) {
 }
 </code></pre>
 <p>The <code>...strs:</code> syntax means that the function can receive an unlimited amount of values with the <code>Stringable</code> type. The <code>strs</code> value itself is either a <code>Vector</code> which contains <code>Stringable</code>, or <code>none</code> (Because of the <code>?</code> after the param name).</p>
-<pre><code>const println = fn(...strs?: Stringable) {
+<pre><code>const println = fn(...strs: Stringable?) {
     for string in strs? {
         print(string.to_string() + &quot;\n&quot;);
     }

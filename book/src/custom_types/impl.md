@@ -13,16 +13,16 @@ struct Animal {
     species: AnimalTypes
 }
 
-type Speak = { speak: (...args?: str) -> str } // A partial which requires the structure to have a "speak" method which returns a `str`
+type Speak = { speak: (...args: str?) -> str } // A partial which requires the structure to have a "speak" method which returns a `str`
 
 impl Speak for Human {
-    speak: fn(...args?: str) -> str {
+    speak: fn(...args: str?) -> str {
         if args.0 args.0;
     }
 }
 
 impl Speak for Animal {
-    speak: fn(...args?: str) -> str {
+    speak: fn(...args: str?) -> str {
         match self.species {
             AnimalTypes::Cat => "meow",
             AnimalTypes::Dog => "woof",

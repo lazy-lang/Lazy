@@ -63,7 +63,7 @@ const print = fn(...strs?: Stringable) {
 The `...strs:` syntax means that the function can receive an unlimited amount of values with the `Stringable` type. The `strs` value itself is either a `Vector` which contains `Stringable`, or `none` (Because of the `?` after the param name).
 
 ```
-const println = fn(...strs?: Stringable) {
+const println = fn(...strs: Stringable?) {
     for string in strs? {
         print(string.to_string() + "\n");
     }

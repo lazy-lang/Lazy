@@ -174,7 +174,7 @@
 <pre><code>struct Person {
     name: str,
     age: f32,
-    hobby?: str,
+    hobby: str?,
 
     age_up: fn() {
         self.age += 1;
@@ -231,7 +231,7 @@ items.1; // 64
 </code></pre>
 <h3 id="arrays"><a class="header" href="#arrays">Arrays?</a></h3>
 <p><code>Lazy</code> does not support arrays natively, but it does provide a <code>Vec</code> struct, which is an array located on the <strong>heap</strong>. Those are always more useful anyways.</p>
-<pre><code>let nums = new Vec&lt;i32&gt;{ iter: 0..10 };
+<pre><code>let nums = Vec::from(1..=10);
 nums.push(15);
 nums.filter(fn(n) n % 2);
 </code></pre>
@@ -292,6 +292,16 @@ my_fn(); // returns 2
 </code></pre>
 <p>As you notice, there's no <code>return</code> statement in <code>Lazy</code>. The last expression in the function body always gets returned. Everything in <code>Lazy</code> is an expression, except <code>type</code>, <code>struct</code> and <code>enum</code> declarations, so it's all good. </p>
 <p>If a return type is not provided, the function will always return <code>none</code>. </p>
+<h2 id="optional-parameters"><a class="header" href="#optional-parameters">Optional parameters</a></h2>
+<pre><code>const add(num1: i32, num2: i32, num3: i32?) -&gt; i32 {
+    num1 + num2 + {if num3 num3 else 0};
+}
+</code></pre>
+<h2 id="default-values"><a class="header" href="#default-values">Default values</a></h2>
+<pre><code>const add(num1: i32, num2: i32, num3 = 0) -&gt; i32 {
+    num1 + num2 + num3;
+}
+</code></pre>
 <h2 id="execution-context"><a class="header" href="#execution-context">Execution context</a></h2>
 <p>All functions in <code>Lazy</code> have an <strong>execution context</strong> which can be referenced via <code>self</code> in the function body. The execution context of functions is always <code>none</code>, unless the function is defined inside a structure:</p>
 <pre><code>struct Car {
@@ -344,7 +354,7 @@ const print = fn(...strs?: Stringable) {
 }
 </code></pre>
 <p>The <code>...strs:</code> syntax means that the function can receive an unlimited amount of values with the <code>Stringable</code> type. The <code>strs</code> value itself is either a <code>Vector</code> which contains <code>Stringable</code>, or <code>none</code> (Because of the <code>?</code> after the param name).</p>
-<pre><code>const println = fn(...strs?: Stringable) {
+<pre><code>const println = fn(...strs: Stringable?) {
     for string in strs? {
         print(string.to_string() + &quot;\n&quot;);
     }
@@ -533,10 +543,10 @@ let me = Person::create(&quot;Google&quot;);
 me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
 <h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
-<p>Fields which have a question mark (<code>?</code>) after the key are <strong>optional</strong>.</p>
+<p>Fields which have a question mark (<code>?</code>) after the type are <strong>optional</strong>.</p>
 <pre><code>struct StructWithOptionalField {
     // Can either be &quot;none&quot;, or &quot;str&quot;
-    something?: str
+    something: str?
 }
 </code></pre>
 <h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
@@ -660,16 +670,16 @@ struct Animal {
     species: AnimalTypes
 }
 
-type Speak = { speak: (...args?: str) -&gt; str } // A partial which requires the structure to have a &quot;speak&quot; method which returns a `str`
+type Speak = { speak: (...args: str?) -&gt; str } // A partial which requires the structure to have a &quot;speak&quot; method which returns a `str`
 
 impl Speak for Human {
-    speak: fn(...args?: str) -&gt; str {
+    speak: fn(...args: str?) -&gt; str {
         if args.0 args.0;
     }
 }
 
 impl Speak for Animal {
-    speak: fn(...args?: str) -&gt; str {
+    speak: fn(...args: str?) -&gt; str {
         match self.species {
             AnimalTypes::Cat =&gt; &quot;meow&quot;,
             AnimalTypes::Dog =&gt; &quot;woof&quot;,

@@ -181,6 +181,16 @@
 </code></pre>
 <p>As you notice, there's no <code>return</code> statement in <code>Lazy</code>. The last expression in the function body always gets returned. Everything in <code>Lazy</code> is an expression, except <code>type</code>, <code>struct</code> and <code>enum</code> declarations, so it's all good. </p>
 <p>If a return type is not provided, the function will always return <code>none</code>. </p>
+<h2 id="optional-parameters"><a class="header" href="#optional-parameters">Optional parameters</a></h2>
+<pre><code>const add(num1: i32, num2: i32, num3: i32?) -&gt; i32 {
+    num1 + num2 + {if num3 num3 else 0};
+}
+</code></pre>
+<h2 id="default-values"><a class="header" href="#default-values">Default values</a></h2>
+<pre><code>const add(num1: i32, num2: i32, num3 = 0) -&gt; i32 {
+    num1 + num2 + num3;
+}
+</code></pre>
 <h2 id="execution-context"><a class="header" href="#execution-context">Execution context</a></h2>
 <p>All functions in <code>Lazy</code> have an <strong>execution context</strong> which can be referenced via <code>self</code> in the function body. The execution context of functions is always <code>none</code>, unless the function is defined inside a structure:</p>
 <pre><code>struct Car {

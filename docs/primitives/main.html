@@ -186,7 +186,7 @@ items.1; // 64
 </code></pre>
 <h3 id="arrays"><a class="header" href="#arrays">Arrays?</a></h3>
 <p><code>Lazy</code> does not support arrays natively, but it does provide a <code>Vec</code> struct, which is an array located on the <strong>heap</strong>. Those are always more useful anyways.</p>
-<pre><code>let nums = new Vec&lt;i32&gt;{ iter: 0..10 };
+<pre><code>let nums = Vec::from(1..=10);
 nums.push(15);
 nums.filter(fn(n) n % 2);
 </code></pre>
