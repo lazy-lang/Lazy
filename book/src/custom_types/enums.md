@@ -83,22 +83,23 @@ type Unwrap<T> = {
     unwrap_or: (v: T) -> T
 }
 
+// The impl block's typings must match the structure's
 impl<T> Unwrap<T> for Option<T> {
     unwrap: fn() -> T {
         match self {
-            Some => self,
-            None => error("Tried to unwrap an empty option!")
+            Option::Some => self,
+            Option::None => error("Tried to unwrap an empty option!")
         }
     }
 
     is_some: fn() -> bool {
-        self == Option::Some
+        self == Option::Some;
     }
 
     unwrap_or: fn(v: T) -> T {
         match self {
-            Some => self,
-            None => v
+            Option::Some => self,
+            Option::None => v
         }
     }
 }

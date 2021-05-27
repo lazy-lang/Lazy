@@ -231,22 +231,23 @@ type Unwrap&lt;T&gt; = {
     unwrap_or: (v: T) -&gt; T
 }
 
+// The impl block's typings must match the structure's
 impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
     unwrap: fn() -&gt; T {
         match self {
-            Some =&gt; self,
-            None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
+            Option::Some =&gt; self,
+            Option::None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
         }
     }
 
     is_some: fn() -&gt; bool {
-        self == Option::Some
+        self == Option::Some;
     }
 
     unwrap_or: fn(v: T) -&gt; T {
         match self {
-            Some =&gt; self,
-            None =&gt; v
+            Option::Some =&gt; self,
+            Option::None =&gt; v
         }
     }
 }
