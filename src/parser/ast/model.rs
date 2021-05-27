@@ -302,7 +302,6 @@ pub struct ASTPairTypingItem {
     pub name: String,
     pub value: Option<ASTTypings>,
     pub spread: bool,
-    pub optional: bool,
     pub modifiers: ASTModifiers
 }
 
@@ -357,7 +356,7 @@ impl fmt::Display for ASTPairListTyping {
                 if pair.modifiers.contains(ASTModifiers::PRIVATE) { mods += "private " };
                 mods
             };
-            string.push(format!("{}{}{}{}: {}", modifiers, if pair.spread { "..." } else {""}, pair.name, if pair.optional {"?"} else {""}, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
+            string.push(format!("{}{}{}: {}", modifiers, if pair.spread { "..." } else {""}, pair.name, if pair.value.is_some() { pair.value.as_ref().unwrap().to_string() } else { String::from("none")}));
         };
         write!(f, "{}", string.join(", "))
     }

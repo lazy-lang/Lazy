@@ -526,11 +526,7 @@ impl Parser {
             };
             let key = self.parse_varname(false, false, false);
             if key.0.is_none() { continue };
-            let is_optional = if self.tokens.is_next(TokenType::Op(String::from("?"))) {
-                self.tokens.consume();
-                true
-            } else { false };
-            match self.tokens.expect_punc(&[',', ':', '?', closing_punc], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
+            match self.tokens.expect_punc(&[',', ':', closing_punc], Some(Range { start: tok_start, end: self.tokens.input.loc()})) {
                 Some(ch) => {
                     match ch {
                         ',' => {
@@ -538,16 +534,16 @@ impl Parser {
                                 self.tokens.error(ErrorType::Expected(String::from("type")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, optional: is_optional, modifiers, spread: is_spread});
+                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, modifiers, spread: is_spread});
                             modifiers.clear();
                         },
                         ':' => {
-                            let exp = self.parse_typing(allow_fn_keyword, false);
+                            let exp = self.parse_typing(allow_fn_keyword, true);
                             if exp.is_none() { 
                                 self.tokens.error(ErrorType::Expected(String::from("expression")), tok_start, self.tokens.input.loc());
                                 continue;
                             }
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, optional: is_optional, modifiers, spread: is_spread});
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: exp, modifiers, spread: is_spread});
                             modifiers.clear();
                         },
                         ch if ch == closing_punc => {
@@ -556,7 +552,7 @@ impl Parser {
                                 continue;
                             }
                             has_consumed_bracket = true;
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, optional: is_optional, modifiers, spread: is_spread});
+                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, modifiers, spread: is_spread});
                             modifiers.clear();
                             break;
                         },

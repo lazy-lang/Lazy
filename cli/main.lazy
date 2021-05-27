@@ -1,38 +1,40 @@
-enum Option<T> {
-    Some: T,
-    None
-}
+struct Person {
+    name: str,
+    age: f32,
+    hobby: str?,
 
-type Unwrap<T> = {
-    unwrap: () -> T,
-    is_some: () -> bool,
-    unwrap_or: (v: T) -> T
-}
-
-impl<T> Unwrap<T> for Option<T> {
-    unwrap: fn() -> T {
-        match self {
-            Option::Some => self,
-            Option::None => error("Tried to unwrap an empty option!")
-        }
+    age_up: fn() {
+        self.age += 1;
     }
 
-    is_some: fn() -> bool {
-        self == Option::Some;
-    }
-
-    unwrap_or: fn(v: T) -> T {
-        match self {
-            Option::Some => self,
-            Option::None => v
-        }
-    }
 }
+
+enum AnimalTypes {
+    Dog,
+    Cat,
+    Fish,
+    Bird
+}
+
+struct Animal {
+    name: str,
+    age: i8,
+    t_type: AnimalTypes
+}
+
+type ThingWithName = {name: str}
 
 main {
-    let maybe<Option<i32>> = Option::None;
-    maybe.unwrap_or(0); // 0
-    maybe = Option::Some(32);
-    maybe.is_some(); // true
-    maybe.unwrap(); // 32
+    let me = new Person { name: "Google", age: 19 };
+    me.hobby?;
+    let my_pet = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
+
+    let things = new Vec<ThingWithName>{};
+    things.push(me);
+    things.push(my_pet);
+
+    for thing in things {
+        print(thing.name);
+    }
+
 }
