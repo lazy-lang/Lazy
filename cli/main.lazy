@@ -1,25 +1,38 @@
-type Add<Other, Output> = {
-    add: (other: Other) -> Output
+enum Option<T> {
+    Some: T,
+    None
 }
 
-static add = fn<Other, Output>(a: Add<Other, Output>!, b: {a: b}!) -> Output {
-    a.add(b);
+type Unwrap<T> = {
+    unwrap: () -> T,
+    is_some: () -> bool,
+    unwrap_or: (v: T) -> T
 }
 
-struct Token {
-    value: char,
-
-    static create: fn(value: char) -> Token {
-        new Token { value };
+impl<T> Unwrap<T> for Option<T> {
+    unwrap: fn() -> T {
+        match self {
+            Option::Some => self,
+            Option::None => error("Tried to unwrap an empty option!")
+        }
     }
 
-    add: fn(other: Token) -> Token {
-       new Token { value: self.value + other.value };
+    is_some: fn() -> bool {
+        self == Option::Some;
+    }
+
+    unwrap_or: fn(v: T) -> T {
+        match self {
+            Option::Some => self,
+            Option::None => v
+        }
     }
 }
 
 main {
-    let tok1 = Token::create('a');
-    let tok2 = Token::create('b');
-    add<Token, Token>(tok1, tok2); // Invalid, because "Token" doesn't explicitly fit `Add`!
+    let maybe<Option<i32>> = Option::None;
+    maybe.unwrap_or(0); // 0
+    maybe = Option::Some(32);
+    maybe.is_some(); // true
+    maybe.unwrap(); // 32
 }

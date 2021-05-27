@@ -346,7 +346,7 @@ impl Parser {
                                         ASTTypings::Var(v) => ASTModAccessValues::Var(v),
                                         ASTTypings::Mod(m) => ASTModAccessValues::ModAccess(m),
                                         _ => {
-                                            self.tokens.error(ErrorType::Unexpected(String::from("explicit impl operator")), start, start);
+                                            self.tokens.error(ErrorType::Unexpected(String::from("explicit impl operator")), start, self.tokens.input.loc());
                                             return None
                                         }
                                     }
@@ -1141,6 +1141,10 @@ impl Parser {
                        ))
                    },
                    "impl" => {
+                       let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                           self.tokens.consume();
+                           Some(self.parse_typing_list(true, false, TokenType::Op(String::from(">"))))
+                       } else { None };
                        let partial = if let Some(p) = self.parse_mod_access_or_var_without_var(false, true) {
                            p 
                        } else {
@@ -1159,6 +1163,7 @@ impl Parser {
                            ASTImpl {
                                partial,
                                target,
+                               typings,
                                fields: self.parse_typing_pair_list(false, true, false, true, '}'),
                                range: Range { start, end: self.tokens.input.loc() }
                            }

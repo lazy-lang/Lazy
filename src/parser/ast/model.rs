@@ -237,6 +237,7 @@ pub struct ASTAwait {
 pub struct ASTImpl {
     pub partial: ASTModAccessValues,
     pub target: ASTModAccessValues,
+    pub typings: Option<ASTListTyping>,
     pub fields: ASTPairListTyping,
     pub range: Range
 }
@@ -691,6 +692,6 @@ impl fmt::Display for ASTCombineTyping {
 
 impl fmt::Display for ASTImpl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "impl {} for {} {{\n{}\n}}", self.partial, self.target, self.fields)
+        write!(f, "impl{} {} for {} {{\n{}\n}}", if let Some(t) = &self.typings { format!("<{}>", t) } else { String::from("") }, self.partial, self.target, self.fields)
    }
 }
