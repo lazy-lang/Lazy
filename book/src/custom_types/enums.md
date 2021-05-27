@@ -83,7 +83,7 @@ type Unwrap<T> = {
     unwrap_or: (v: T) -> T
 }
 
-impl Unwrap<T> for Option<T> {
+impl<T> Unwrap<T> for Option<T> {
     unwrap: fn() -> T {
         match self {
             Some => self,

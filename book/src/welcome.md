@@ -9,7 +9,7 @@ Lazy is a statically typed, interpreted programming language.
 ```
 struct Person {
     name: str,
-    age: float,
+    age: f32,
     hobby?: str,
 
     age_up: fn() {

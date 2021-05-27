@@ -173,7 +173,7 @@
 <h2 id="a-taste"><a class="header" href="#a-taste">A taste</a></h2>
 <pre><code>struct Person {
     name: str,
-    age: float,
+    age: f32,
     hobby?: str,
 
     age_up: fn() {
@@ -446,7 +446,7 @@ type Unwrap&lt;T&gt; = {
     unwrap_or: (v: T) -&gt; T
 }
 
-impl Unwrap&lt;T&gt; for Option&lt;T&gt; {
+impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
     unwrap: fn() -&gt; T {
         match self {
             Some =&gt; self,

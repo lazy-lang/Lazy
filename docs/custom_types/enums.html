@@ -231,7 +231,7 @@ type Unwrap&lt;T&gt; = {
     unwrap_or: (v: T) -&gt; T
 }
 
-impl Unwrap&lt;T&gt; for Option&lt;T&gt; {
+impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
     unwrap: fn() -&gt; T {
         match self {
             Some =&gt; self,
