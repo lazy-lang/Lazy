@@ -3,7 +3,7 @@ struct Person {
     age: f32,
     hobby: str?,
 
-    age_up: fn() {
+    age_up: fn(a: i32 = 1) {
         self.age += 1;
     }
 
