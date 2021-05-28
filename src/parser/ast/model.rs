@@ -43,7 +43,7 @@ pub struct ASTDeclare {
 
 pub struct ASTStatic {
     pub var: ASTVar,
-    pub typings: Option<ASTTypings>,
+    pub typings: Option<ASTListTyping>,
     pub value: ASTExpression,
     pub range: Range
 }

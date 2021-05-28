@@ -3,8 +3,8 @@ struct Person {
     age: f32,
     hobby: str?,
 
-    age_up: fn(a: i32 = 1) {
-        self.age += 1;
+    age_up: fn(inc: i32 = 1) {
+        self.age += inc;
     }
 
 }
@@ -29,7 +29,7 @@ main {
     me.hobby?;
     let my_pet = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
-    let things = new Vec<ThingWithName>{};
+    let things = new Vec<ThingWithName> {};
     things.push(me);
     things.push(my_pet);
 

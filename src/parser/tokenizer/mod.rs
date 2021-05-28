@@ -1,7 +1,9 @@
 
 use std::fmt;
 pub mod error;
+pub mod range_recorder;
 use error::*;
+use range_recorder::*;
 use super::input_parser::{LoC, InputParser};
 
 #[derive(PartialEq)]
@@ -62,6 +64,26 @@ impl fmt::Display for Range {
     }
 }
 
+impl Range {
+    #[inline]
+    pub fn err(&self, err: ErrorType, tokens: &mut Tokenizer) {
+        tokens.error(err, self.start, self.end)
+    }
+
+    #[inline]
+    pub fn err_start(&self, err: ErrorType, tokens: &mut Tokenizer) {
+        tokens.error(err, self.start, tokens.input.loc())
+    }
+
+    #[inline]
+    pub fn end(&self, tokens: &Tokenizer) -> Range {
+        Range {
+            start: self.start,
+            end: tokens.input.loc()
+        }
+    }
+}
+
 macro_rules! match_str {
     ($s: expr, $($strs: expr),*) => {
         match $s {
@@ -81,7 +103,8 @@ pub struct Tokenizer {
     current: Option<Token>,
     pub errors: Vec<Error>,
     pub input: InputParser,
-    pub is_last_num_as_str: bool
+    pub is_last_num_as_str: bool,
+    pub last_loc: LoC
 }
 
 impl Tokenizer {
@@ -91,7 +114,8 @@ impl Tokenizer {
             current: None,
             errors: vec![],
             is_last_num_as_str: false,
-            input: InputParser::new(code)
+            input: InputParser::new(code),
+            last_loc: LoC::default()
         }
     }
 
@@ -221,14 +245,24 @@ impl Tokenizer {
         };
 
         let multiply_val = match self.input.peek(0) {
-            Some('s') => 1000,
-            Some('m') => 60 * 1000,
-            Some('h') => 60 * 60 * 1000,
-            Some('d') => 24 * 60 * 60 * 1000,
+            Some('s') => {
+                self.input.consume();
+                1000
+            },
+            Some('m') => {
+                self.input.consume();
+                60 * 1000
+            },
+            Some('h') => {
+                self.input.consume();
+                60 * 60 * 1000
+            },
+            Some('d') => {
+                self.input.consume();
+                24 * 60 * 60 * 1000
+            },
             _ => 1
         } as isize;
-        if multiply_val != 1 { self.input.consume(); };
-
         let actual_num = match num_type {
             NumberType::Hex => isize::from_str_radix(&num, 16).unwrap(),
             NumberType::Octal => isize::from_str_radix(&num, 8).unwrap(),
@@ -284,6 +318,7 @@ impl Tokenizer {
 
     fn _next(&mut self) -> Option<Token> {
         if self.input.is_eof() { return None; };
+        self.last_loc = self.input.loc();
         let tok = self.input.peek(0)?;
         if tok == '/' && self.input.peek(1)? == '/' {
             self.input.consume();
@@ -346,6 +381,11 @@ impl Tokenizer {
         self.errors.push(Error { e_type, range: Range {start, end} });
     }
 
+    #[inline]
+    pub fn error_here(&mut self, e_type: ErrorType) {
+        self.errors.push(Error { e_type, range: Range {start: self.input.loc(), end: self.input.loc() } });
+    }
+
     pub fn is_next(&mut self, tok: TokenType) -> bool {
         let next = self.peek();
         match next {
@@ -355,7 +395,7 @@ impl Tokenizer {
     }
 
     pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ErrorType>, loc: Option<Range>) -> bool {
-        let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
+        let location = loc.unwrap_or(Range { start: self.last_loc, end: self.last_loc});
         match self.peek() {
             Some(token) => {
                 if token.val != tok {
@@ -414,6 +454,10 @@ impl Tokenizer {
             '․' => Some(ErrorType::Confusable("․ (one dot leader)".to_string(), ". (full stop)".to_string())),
             _ => None
         }‎
+    }
+
+    pub fn recorder(&self) -> RangeRecorder {
+        RangeRecorder::new(self)
     }
 
 }
