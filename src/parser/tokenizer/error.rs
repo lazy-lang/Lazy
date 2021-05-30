@@ -28,7 +28,9 @@ pub enum ErrorType {
     Disallowed(String),
     Custom(String),
     Confusable(String, String),
+    Invalid(String),
     InvalidDigit,
+    MacroNotFound,
     NotAllowed(String)
 }
 
@@ -110,7 +112,9 @@ impl fmt::Display for Error {
             ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
             ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected),
             ErrorType::InvalidDigit => write!(f, "Invalid digit"),
-            ErrorType::NotAllowed(thing) => write!(f, "{} is not allowed here", thing)
+            ErrorType::NotAllowed(thing) => write!(f, "{} is not allowed here", thing),
+            ErrorType::Invalid(thing) => write!(f, "Invalid {}", thing),
+            ErrorType::MacroNotFound => write!(f, "Macro not found")
         }
     }
 }

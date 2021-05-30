@@ -1,8 +1,9 @@
 
 use std::fmt;
 use super::Range;
+use super::macros::MacroRepeatingTypes;
 
-// A string literalz
+// A string literal
 pub struct ASTStr {
     pub value: String,
     pub range: Range
@@ -29,6 +30,7 @@ pub struct ASTBool {
 // A variable / typing name  
 pub struct ASTVar {
     pub value: String,
+    pub is_macro: bool,
     pub range: Range
 }
 
@@ -199,6 +201,8 @@ pub enum ASTMatchArmExpressions {
     Char(ASTChar),
     Bool(ASTBool),
     Tuple(ASTExpressionList),
+    MacroVar(ASTVar),
+    MacroRepeat(ASTMacroRepeat),
     None(Range),
     Rest,
     Enum(ASTModAccess)
@@ -242,7 +246,13 @@ pub struct ASTImpl {
     pub range: Range
 }
 
-// Any expression
+pub struct ASTMacroRepeat {
+    pub body: Box<ASTExpression>,
+    pub repeat_type: MacroRepeatingTypes,
+    pub separator: String,
+    pub range: Range
+}
+
 pub enum ASTExpression {
     Str(ASTStr),
     Float(ASTFloat),
@@ -269,7 +279,8 @@ pub enum ASTExpression {
     Spread(ASTSpread),
     None(Range),
     Match(ASTMatch),
-    Await(ASTAwait)
+    Await(ASTAwait),
+    MacroRepeat(ASTMacroRepeat)
 }
 
 // Any statement
@@ -407,6 +418,7 @@ impl fmt::Display for ASTExpression {
             ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
             ASTExpression::Match(mtch) => mtch.fmt(f),
             ASTExpression::Await(aw) => aw.fmt(f),
+            ASTExpression::MacroRepeat(r) => r.fmt(f),
             ASTExpression::None(_) => write!(f, "none")
         }
     }
@@ -469,7 +481,7 @@ impl fmt::Display for ASTFloat {
 
 impl fmt::Display for ASTVar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.value)
+        write!(f, "{}{}", if self.is_macro { "$" } else { "" } ,self.value)
     }
 }
 
@@ -653,6 +665,8 @@ impl fmt::Display for ASTMatchArmExpressions {
             Self::Enum(en) => en.fmt(f),
             Self::Tuple(t) => t.fmt(f),
             Self::Bool(b) => b.fmt(f),
+            Self::MacroRepeat(r) => r.fmt(f),
+            Self::MacroVar(v) => write!(f, "${}", v),
             Self::None(_) => write!(f, "none"),
             Self::Rest => write!(f, "_")
         }
@@ -693,5 +707,11 @@ impl fmt::Display for ASTCombineTyping {
 impl fmt::Display for ASTImpl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "impl{} {} for {} {{\n{}\n}}", if let Some(t) = &self.typings { format!("<{}>", t) } else { String::from("") }, self.partial, self.target, self.fields)
+   }
+}
+
+impl fmt::Display for ASTMacroRepeat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "$({}){}", self.body, self.repeat_type)
    }
 }

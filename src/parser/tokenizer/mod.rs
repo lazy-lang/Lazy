@@ -291,7 +291,7 @@ impl Tokenizer {
         else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
         else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
 
-        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "when", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
+        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "when", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in", "macro") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 
@@ -310,7 +310,7 @@ impl Tokenizer {
             }
             if match_str!(op.as_str(), "?", ">") { break; };
             let ch = self.input.peek(0).unwrap();
-            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?') { op.push(self.input.consume().unwrap()) }
+            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '*') { op.push(self.input.consume().unwrap()) }
             else { break; };
         };
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
@@ -344,8 +344,8 @@ impl Tokenizer {
                 self.input.consume();
                 self._next()
             },
-            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' => Some(self.parse_op()),
-            ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
+            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' | '*'  => Some(self.parse_op()),
+            ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' | '#' | '@' | '$' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
                 let loc = self.input.loc();
@@ -383,7 +383,7 @@ impl Tokenizer {
 
     #[inline]
     pub fn error_here(&mut self, e_type: ErrorType) {
-        self.errors.push(Error { e_type, range: Range {start: self.input.loc(), end: self.input.loc() } });
+        self.errors.push(Error { e_type, range: Range {start: self.last_loc, end: self.last_loc } });
     }
 
     pub fn is_next(&mut self, tok: TokenType) -> bool {
@@ -410,6 +410,34 @@ impl Tokenizer {
             None => {
                 self.error(err.unwrap_or_else(|| ErrorType::Expected(tok.to_string())), location.start, location.end);
                 true
+            }
+        }
+    }
+
+    pub fn expect_op(&mut self, ops: &[&str]) -> Option<String> {
+        match self.peek() {
+            Some(tok) => {
+                match &tok.val {
+                    TokenType::Op(op) => {
+                        if ops.contains(&op.as_str()) {
+                            let newop = op.to_string();
+                            self.consume();
+                            return Some(newop)
+                        };
+                        let opstr = op.to_string();
+                        self.error_here(ErrorType::ExpectedFound(format!("one of {}", ops.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), opstr));
+                        None
+                    },
+                    _ => {
+                        let tstr = tok.val.to_string();
+                        self.error_here(ErrorType::ExpectedFound(format!("one of {}", ops.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr));
+                        None
+                    }
+                }
+            },
+            None => {
+                self.error_here(ErrorType::Expected(format!("one of {}", ops.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))));
+                None
             }
         }
     }

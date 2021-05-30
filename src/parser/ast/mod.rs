@@ -4,11 +4,15 @@ use super::tokenizer::error::ErrorType;
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;
+pub mod macros;
 use model::*;
+use macros::*;
 
 
 pub struct Parser {
     pub tokens: Tokenizer,
+    pub macros: std::collections::HashMap<String, Macro>,
+    pub allow_macro_exps: bool,
     is_last_block: bool,
     allow_exp_statements: bool,
     parsed_main: bool
@@ -21,7 +25,9 @@ impl Parser {
             tokens: Tokenizer::new(source),
             parsed_main: false,
             is_last_block: false,
-            allow_exp_statements: false
+            allow_exp_statements: false,
+            allow_macro_exps: false,
+            macros: std::collections::HashMap::new()
         }
     }
 
@@ -30,6 +36,7 @@ impl Parser {
         self.parsed_main = false;
         self.is_last_block = false;
         self.allow_exp_statements = false;
+        self.allow_macro_exps = false;
     }
 
     fn get_prec(op: &str) -> i8 {
@@ -176,7 +183,7 @@ impl Parser {
                             recorder.err(ErrorType::Expected(String::from("identifier")), &mut self.tokens);
                             None
                         }
-                    }
+                    },
                     _ => token
                 }
             }
@@ -213,7 +220,7 @@ impl Parser {
             if let Some(tok) = self.tokens.consume() {
                 match tok.val {
                     TokenType::Var(v) => {
-                        path.push(ASTVar { value: v, range: tok.range });
+                        path.push(ASTVar { value: v, range: tok.range, is_macro: false });
                     },
                     _ => {
                         if !allow_exp_end {
@@ -288,7 +295,7 @@ impl Parser {
                         let name_copy = name.clone();
                         let tok_range = token.range;
                         self.tokens.consume();
-                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false, true) {
+                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range, is_macro: false}, false, true) {
                             ASTModAccessValues::ModAccess(acc) => Some(ASTTypings::Mod(acc)),
                             ASTModAccessValues::Var(v) => Some(ASTTypings::Var(v))
                         }
@@ -306,11 +313,7 @@ impl Parser {
                             _ => None
                         }
                     }
-                    _ => {
-                        //let token_stringed = token.val.to_string();
-                        //self.tokens.error(ErrorType::ExpectedFound(String::from("typing"), token_stringed), self.tokens.input.loc(), self.tokens.input.loc());
-                        None
-                    }
+                    _ => None
                 }
             },
             None => None
@@ -368,7 +371,7 @@ impl Parser {
     fn parse_block(&mut self, allow_statement_as_exp: bool) -> ASTBlock {
         let range = self.tokens.recorder();
         let mut res: Vec<ASTExpression> = vec![];
-        while !self.tokens.input.is_eof() && !self.tokens.is_next(TokenType::Punc('}')) {
+        while !self.tokens.is_next(TokenType::Punc('}')) {
             let exp = if allow_statement_as_exp { self.parse_expression_or_expression_statement() } else { self.parse_expression() };
             let range = utils::get_range_or(&exp, self.tokens.input.loc());
             match exp {
@@ -387,6 +390,10 @@ impl Parser {
 
     fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool) -> (Option<ASTVar>, Option<ASTListTyping>) {
         if allow_ints { self.tokens.is_last_num_as_str = true }; 
+        let is_macro = if self.allow_macro_exps && self.tokens.is_next(TokenType::Punc('$')) {
+            self.tokens.consume();
+            true
+        } else { false };
         let next = self.tokens.consume();
         if next.is_none() { 
             self.tokens.error_here(ErrorType::Expected(String::from("itentifier")));
@@ -394,17 +401,14 @@ impl Parser {
         };
         let unwrapped = next.unwrap();
         let var = match unwrapped.val {
-            TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range },
-            TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
+            TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range, is_macro },
+            TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range, is_macro },
             _ => {
                 self.tokens.error(ErrorType::ExpectedFound(String::from("identifier"), unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
                 return (None, None);
             }
         };
-        if self.tokens.is_next(TokenType::Op(String::from("<"))) {
-            if !allow_generics {
-                return (Some(var), None);
-            }
+        if self.tokens.is_next(TokenType::Op(String::from("<"))) && allow_generics {
             self.tokens.consume();
             return (Some(var), Some(self.parse_typing_list(only_varnames_as_generics, false, TokenType::Op(String::from(">")))));
         }
@@ -676,8 +680,18 @@ impl Parser {
                     }
                     Some(ASTMatchArmExpressions::Iterator(i_obj))
                 },
+                ASTExpression::Var(v) => {
+                    if v.is_macro {
+                        return Some(ASTMatchArmExpressions::MacroVar(v));
+                    }
+                    if v.value != "_" {
+                        range.err(ErrorType::Unexpected(String::from("variable name")), &mut self.tokens);
+                    };
+                    Some(ASTMatchArmExpressions::Rest)
+                },
                 ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
                 ASTExpression::ModAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
+                ASTExpression::MacroRepeat(rp) => Some(ASTMatchArmExpressions::MacroRepeat(rp)),
                 _ => {
                     range.err(ErrorType::WrongMatchArmExp, &mut self.tokens);
                     None
@@ -699,7 +713,7 @@ impl Parser {
             TokenType::Str(value) => Some(ASTExpression::Str(ASTStr { value, range: token.range })),
             TokenType::Char(value) => Some(ASTExpression::Char(ASTChar { value, range: token.range })),
             TokenType::None => Some(ASTExpression::None(token.range)),
-            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range })),
+            TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range, is_macro: false })),
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
             TokenType::Op(value) => {
                 // Prefixes
@@ -720,7 +734,7 @@ impl Parser {
                                 range: token.range.end(&self.tokens)
                             }
                         ))
-                    }
+                    },
                     _ => {
                         token.range.err(ErrorType::UnexpectedOp(value), &mut self.tokens);
                         None
@@ -747,6 +761,58 @@ impl Parser {
                         };
                         let expressions = self.parse_expression_list(']');
                         Some(ASTExpression::Tuple(expressions))
+                    },
+                    '$' if self.allow_macro_exps => {
+                        if self.tokens.is_next(TokenType::Punc('(')) {
+                            self.tokens.consume();
+                            let body = if let Some(exp) = self.parse_expression() {
+                                Box::from(exp)
+                            } else {
+                                self.tokens.error_here(ErrorType::Expected(String::from("macro repeat expression")));
+                                return None;
+                            };
+                            self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
+                            let repeat_type = match self.tokens.expect_op(&["+", "*"])?.as_str() {
+                                "+" => MacroRepeatingTypes::OneOrMore,
+                                "*" => MacroRepeatingTypes::ZeroOrMore,
+                                _ => MacroRepeatingTypes::None
+                            };
+                            return Some(ASTExpression::MacroRepeat(
+                                ASTMacroRepeat {
+                                    repeat_type,
+                                    body,
+                                    range: token.range.end(&self.tokens)
+                                }
+                            ))
+                        } else {
+                            if let Some(mut v) = self.parse_varname(false, false, false).0 {
+                                v.is_macro = true;
+                                Some(ASTExpression::Var(v))
+                            } else {
+                                self.tokens.error_here(ErrorType::Expected(String::from("macro parameter or repeat")));
+                                return None;
+                            }
+                        }
+                    },
+                    '@' => {
+                        let macro_name = self.parse_varname(false, false, false).0?;
+                        let val = macro_name.value;
+                        let called_macro = self.macros.get(&val);
+                        if called_macro.is_none() {
+                            token.range.err(ErrorType::MacroNotFound, &mut self.tokens);
+                            return None;
+                        }
+                        let closing_punc = match self.tokens.consume()?.val {
+                            TokenType::Punc('(') => ')',
+                            TokenType::Punc('[') => ']',
+                            TokenType::Punc('{') => '}',
+                            val @ _ => {
+                                self.tokens.error_here(ErrorType::ExpectedFound(String::from("either (, [ or {"), val.to_string()));
+                                return None;
+                            }
+                        };
+
+                        None
                     },
                     _ => {
                         token.range.err(ErrorType::UnexpectedPunc(val), &mut self.tokens);
@@ -1179,6 +1245,12 @@ impl Parser {
                                range: range.end(&self.tokens)
                            }
                        ))
+                   },
+                   "macro" => {
+                       let m = macros::parse_macro(self)?;
+                       println!("{}", m.1);
+                       self.macros.insert(m.0, m.1);
+                       None
                    },
                    _ => {
                     token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
