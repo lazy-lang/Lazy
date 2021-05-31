@@ -676,6 +676,12 @@ impl Parser {
                     }
                     Some(ASTMatchArmExpressions::Iterator(i_obj))
                 },
+                ASTExpression::Var(v) => {
+                    if v.value != "_" {
+                        range.err(ErrorType::Unexpected(String::from("variable name")), &mut self.tokens);
+                    };
+                    Some(ASTMatchArmExpressions::Rest)
+                },
                 ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
                 ASTExpression::ModAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
                 _ => {
