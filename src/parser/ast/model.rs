@@ -32,9 +32,19 @@ pub struct ASTVar {
     pub range: Range
 }
 
-// let statement
+pub struct ASTVarList {
+    pub values: Vec<ASTVar>,
+    pub range: Range
+}
+
+pub enum ASTDeclareTypes {
+    TupleDeconstruct(ASTVarList),
+    StructDeconstruct(ASTVarList),
+    Var(ASTVar)
+}
+
 pub struct ASTDeclare {
-    pub var: ASTVar,
+    pub var: ASTDeclareTypes,
     pub is_const: bool,
     pub value: Option<Box<ASTExpression>>,
     pub typings: Option<ASTTypings>,
@@ -576,7 +586,7 @@ impl fmt::Display for ASTBlock {
 
 impl fmt::Display for ASTDeclare {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "{} {}{} = {}", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
+        writeln!(f, "{} {}{} = {}", if self.is_const { "const" } else { "let" },self.var, if self.typings.is_some() { format!(": {}", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, if self.value.is_some() { self.value.as_ref().unwrap().to_string()} else { String::from("none") })
    }
 }
 
@@ -693,5 +703,21 @@ impl fmt::Display for ASTCombineTyping {
 impl fmt::Display for ASTImpl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "impl{} {} for {} {{\n{}\n}}", if let Some(t) = &self.typings { format!("<{}>", t) } else { String::from("") }, self.partial, self.target, self.fields)
+   }
+}
+
+impl fmt::Display for ASTVarList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.values.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(", "))
+   }
+}
+
+impl fmt::Display for ASTDeclareTypes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Var(v) => v.fmt(f),
+            Self::TupleDeconstruct(vars) => write!(f, "[{}]", vars),
+            Self::StructDeconstruct(vars) => write!(f, "{{{}}}", vars)
+        }
    }
 }

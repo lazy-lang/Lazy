@@ -1,7 +1,7 @@
 struct Person {
-    name: str,
-    age: f32,
-    hobby: str?,
+    name: str
+    age: f32
+    hobby: str?
 
     age_up: fn(inc: i32 = 1) {
         self.age += inc;
@@ -17,8 +17,8 @@ enum AnimalTypes {
 }
 
 struct Animal {
-    name: str,
-    age: i8,
+    name: str
+    age: i8
     t_type: AnimalTypes
 }
 
@@ -27,7 +27,7 @@ type ThingWithName = {name: str}
 main {
     let me = new Person { name: "Google", age: 19 };
     me.hobby?;
-    let my_pet = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
+    let (a, b, c) = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
     let things = new Vec<ThingWithName> {};
     things.push(me);

@@ -463,15 +463,39 @@ impl Parser {
     fn parse_expression_list(&mut self, closing_punc: char) -> ASTExpressionList {
         let range = self.tokens.recorder();
         let mut expressions: Vec<ASTExpression> = vec![];
+        let mut is_first = true;
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
+            if !is_first {
+                self.tokens.skip_or_err(TokenType::Punc(','), None, None);
+            };
             let exp = self.parse_expression();
             if exp.is_none() { break; };
             expressions.push(exp.unwrap());
-            if !self.tokens.is_next(TokenType::Punc(closing_punc)) { self.tokens.skip_or_err(TokenType::Punc(','), None, None); };
+            is_first = false;
         };
         self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None);
         ASTExpressionList {
             expressions,
+            range: range.end(&self.tokens)
+        }
+    }
+
+    fn parse_varname_list(&mut self, closing_punc: char) -> ASTVarList {
+        let range = self.tokens.recorder();
+        let mut values: Vec<ASTVar> = vec![];
+        let mut is_first = true;
+        while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
+            if !is_first {
+                self.tokens.skip_or_err(TokenType::Punc(','), None, None);
+            };
+            let exp = self.parse_varname(false, false, false).0;
+            if exp.is_none() { break; };
+            values.push(exp.unwrap());
+            is_first = false;
+        };
+        self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None);
+        ASTVarList {
+            values,
             range: range.end(&self.tokens)
         }
     }
@@ -580,7 +604,6 @@ impl Parser {
                 },
                 None => continue
             };
-            if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
         if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None); };
         ASTPairListTyping {
@@ -763,33 +786,30 @@ impl Parser {
             TokenType::Kw(val) => {
                 match val.as_str() {
                     "let" | "const" => {
-                        let name = self.parse_varname(true, false, false);
-                        if name.0.is_none() {
-                            token.range.err(ErrorType::Expected("variable name".to_string()), &mut self.tokens);
-                            return None;
-                        }
-                        let varname = name.0.unwrap();
-                        let mut end = varname.range.end;
-                        let typings = if let Some(mut typing) = name.1 {
-                            let len = typing.entries.len();
-                            if len == 0 {
-                                token.range.err_start(ErrorType::Expected(String::from("at least one type")), &mut self.tokens);
-                                None
-                            }
-                            else if len > 1 {
-                                token.range.err_start(ErrorType::TooMuchTypes(1), &mut self.tokens);
-                                None
-                            } else { Some(typing.entries.remove(0)) }
-                        } else { None };
                         let is_const = val.as_str() == "const";
+                        let to_get_name = self.tokens.consume()?;
+                        let var = match to_get_name.val {
+                            TokenType::Punc('[') => ASTDeclareTypes::TupleDeconstruct(self.parse_varname_list(']')),
+                            TokenType::Punc('{') => ASTDeclareTypes::StructDeconstruct(self.parse_varname_list('}')),
+                            TokenType::Var(v) => ASTDeclareTypes::Var(ASTVar { value: v, range: to_get_name.range  }),
+                            _ => {
+                                to_get_name.range.err(ErrorType::ExpectedFound(String::from("identifier or deconstruct pattern"), to_get_name.val.to_string()), &mut self.tokens);
+                                return None;
+                            }
+                        };
+                        let typings = if self.tokens.is_next(TokenType::Punc(':')) {
+                            self.tokens.consume();
+                            let typing = self.parse_typing(false, true);
+                            if typing.is_none() {
+                                self.tokens.error_here(ErrorType::Expected(String::from("typing")));
+                            }
+                            typing
+                        } else { None };
                         let value = if self.tokens.is_next(TokenType::Op("=".to_string())) {
                             let equals = self.tokens.consume().unwrap(); // Skip =
                             let exp = self.parse_expression();
                             match exp {
-                                Some(e) => {
-                                    end = utils::full_expression_range(&e).end;
-                                    Some(Box::from(e))
-                                },
+                                Some(e) => Some(Box::from(e)),
                                 None => {
                                     self.tokens.error(ErrorType::Expected(String::from("initializor")), token.range.start, equals.range.end);
                                     None
@@ -797,17 +817,17 @@ impl Parser {
                             }
                         } else { 
                             if is_const {
-                                self.tokens.error(ErrorType::ConstantWithoutInit, token.range.start, end);
+                                token.range.err(ErrorType::ConstantWithoutInit, &mut self.tokens)
                             }
                             None
                          };
                         return Some(ASTExpression::Declare(
                             ASTDeclare {
-                                var: varname,
+                                var,
                                 is_const,
                                 typings,
                                 value,
-                                range: Range { start: token.range.start, end }
+                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
                             }
                         ))
                         },
