@@ -257,7 +257,7 @@ impl Parser {
                 match &token.val {
                     TokenType::Punc('{') => {
                         self.tokens.consume();
-                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, allow_fn_keyword, false, false, false, '}')))
+                        Some(ASTTypings::PairList(self.parse_typing_pair_list(false, true, false, true, false, '}')))
                     },
                     TokenType::Punc('(') => {
                         self.tokens.consume();
