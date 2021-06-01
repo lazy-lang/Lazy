@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li><li class="chapter-item expanded "><a href="native/main.html"><strong aria-hidden="true">9.</strong> Native Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -965,6 +965,95 @@ main {
 
 main {
     let bloodmoney = Songs::create_song(&quot;what do you believe in?&quot;, Songs::SongGenre::Metal);
+}
+</code></pre>
+<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="native-modules"><a class="header" href="#native-modules">Native modules</a></h1>
+<p>Any <code>dynamic library</code> can be loaded into a lazy program. </p>
+<pre><code>
+#native(&quot;./path/to/dynamic/lib.dll&quot;)
+struct SymbolsFromNativeLib {
+    static add: (num1: i32, num2: i32) -&gt; i32
+    static replace: (string: str, pattern: str, new: str) -&gt; str
+}
+
+main {
+    let num = SymbolsFromNativeLib::add(1, 5); // 6
+}
+</code></pre>
+<p>File which compiles to <code>./path/to/dynamic/lib.dll</code>:</p>
+<pre><code class="language-rs">use lazydyno::DataTypes;
+
+pub fn add(num1: DataTypes::i32, num: DataTypes::i32) -&gt; DataTypes::i32 {
+    num1 + num2
+}
+
+pub fn replace(string: DataTypes::str, pattern: DataTypes::str, new: DataTypes::str) -&gt; DataTypes::str {
+    string.replace(pattern, new)
+}
+</code></pre>
+<h2 id="structs-1"><a class="header" href="#structs-1">Structs</a></h2>
+<p>Native:</p>
+<pre><code class="language-rs">use lazydyno::{Struct, DataTypes};
+
+pub fn create_person(name: DataTypes::str, age: DataTypes::i32) -&gt; Struct {
+    let person = Struct::new();
+    person.add_str(name);
+    person.add_i32(age);
+    person
+}
+</code></pre>
+<p>Lazy:</p>
+<pre><code>struct Person {
+    name: str,
+    age: i32
+}
+
+#native(&quot;...&quot;)
+struct PersonInterface {
+    static create_person: (name: str, age: i32) -&gt; Person
+}
+
+main {
+    let {name, age} = PersonInterface::create_person(&quot;Google&quot;, 19); // same as new Person { name: &quot;Google&quot;, age: 19 };
+    print(name, age); // &quot;Google&quot; 19
+}
+</code></pre>
+<h2 id="enums-1"><a class="header" href="#enums-1">Enums</a></h2>
+<p>Native:</p>
+<pre><code class="language-rs">use lazydyno::{Enum, DataTypes};
+
+pub fn create_result(val: i32) -&gt; Enum::Variant {
+    let res = Enum::common::Result::new(); // Result is a built-in enum
+    res.set_i32(Enum::common::Result::Ok, val);
+    res
+}
+
+pub fn create_custom(enum_id: Enum::Id, var_id: Enum::Id, val: DataTypes::i32) -&gt; Enum::Variant {
+    let res = Enum::from(enum_id);
+    res.variant(var_id);
+    res.set_usize(val);
+}
+</code></pre>
+<p>Lazy:</p>
+<pre><code>import &quot;std/native&quot; as Native;
+
+enum Sizes {
+    S: i32,
+    M: i32,
+    L: i32,
+    XL: i32,
+    None
+}
+
+#native(&quot;...&quot;)
+struct EnumInterface {
+    static create_result(val: i32) -&gt; Result
+    static create_custom(enum_id: u16, var_id: u16, val: i32) -&gt; Sizes
+}
+
+main {
+    let res = EnumInterface::create_custom(Native::idof(Sizes), Native::idof(Sizes::XL), 32);
+    print(res == Sizes::XL); // true
 }
 </code></pre>
 

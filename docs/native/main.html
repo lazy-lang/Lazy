@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Structs - Lazy By Example</title>
+        <title>Native Modules - Lazy By Example</title>
         
         
 
@@ -95,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html" class="active"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="../custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../native/main.html"><strong aria-hidden="true">9.</strong> Native Modules</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../welcome.html"><strong aria-hidden="true">1.</strong> Welcome</a></li><li class="chapter-item expanded "><a href="../primitives/main.html"><strong aria-hidden="true">2.</strong> Primitives</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../primitives/literals.html"><strong aria-hidden="true">2.1.</strong> Literals</a></li><li class="chapter-item expanded "><a href="../primitives/functions.html"><strong aria-hidden="true">2.2.</strong> Functions</a></li><li class="chapter-item expanded "><a href="../primitives/iterators.html"><strong aria-hidden="true">2.3.</strong> Iterators</a></li></ol></li><li class="chapter-item expanded "><a href="../custom_types/main.html"><strong aria-hidden="true">3.</strong> Custom Types</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../custom_types/enums.html"><strong aria-hidden="true">3.1.</strong> Enums</a></li><li class="chapter-item expanded "><a href="../custom_types/structs.html"><strong aria-hidden="true">3.2.</strong> Structs</a></li><li class="chapter-item expanded "><a href="../custom_types/partials.html"><strong aria-hidden="true">3.3.</strong> Partials</a></li><li class="chapter-item expanded "><a href="../custom_types/impl.html"><strong aria-hidden="true">3.4.</strong> Impl</a></li></ol></li><li class="chapter-item expanded "><a href="../variables/main.html"><strong aria-hidden="true">4.</strong> Variables</a></li><li class="chapter-item expanded "><a href="../logic/main.html"><strong aria-hidden="true">5.</strong> Logic</a></li><li class="chapter-item expanded "><a href="../loops/main.html"><strong aria-hidden="true">6.</strong> Loops</a></li><li class="chapter-item expanded "><a href="../promises/main.html"><strong aria-hidden="true">7.</strong> Promises</a></li><li class="chapter-item expanded "><a href="../modules/main.html"><strong aria-hidden="true">8.</strong> Modules</a></li><li class="chapter-item expanded "><a href="../native/main.html" class="active"><strong aria-hidden="true">9.</strong> Native Modules</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,115 +165,93 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="structs"><a class="header" href="#structs">Structs</a></h1>
-<p>Structs contain key-value pairs called <code>fields</code>. All keys and the types of the values must be known at compile-time.</p>
-<pre><code>struct Something&lt;GenericParam&gt; {
-    val: GenericParam,
-
-    set: fn(val: GenericParam) -&gt; bool {
-        self.val = val;
-        true;
-    }
-
-}
-</code></pre>
-<h2 id="field-modifiers"><a class="header" href="#field-modifiers">Field modifiers</a></h2>
-<p>All of the following field modifiers can be used together on a single field, and the order of the modifiers does <strong>not</strong> matter.</p>
-<h3 id="static-fields"><a class="header" href="#static-fields">Static fields</a></h3>
-<p>Sometimes you want a field to be attached to the struct itself and not an instance of the struct.</p>
-<pre><code>struct Person {
-    name: str,
-
-    static create: fn(name: str) -&gt; Person {
-        new Person { name };
-    }
-
-}
-
-let me = Person::create(&quot;Google&quot;);
-</code></pre>
-<h3 id="hiddenprivate-fields"><a class="header" href="#hiddenprivate-fields">Hidden/Private fields</a></h3>
-<p>Fields that can only be accessed in the execution context of the functions inside the sctruct.</p>
-<pre><code>struct Person {
-    name: str,
-    private id: i32
-
-    static create: fn(name: str) -&gt; Person {
-        new Person { name, id: rng() };
-    }
-
-}
-
-let me = Person::create(&quot;Google&quot;);
-me.id; // Error!
-</code></pre>
-<h3 id="immutable-fields"><a class="header" href="#immutable-fields">Immutable fields</a></h3>
-<p>Fields that cannot be mutated.</p>
-<pre><code>struct Person {
-    const name: str,
-    private id: i32
-
-    static create: fn(name: str) -&gt; Person {
-        new Person { name, id: rng() };
-    }
-
-}
-
-let me = Person::create(&quot;Google&quot;);
-me.name = &quot;Pedro&quot;; // Error!
-</code></pre>
-<h2 id="optional-fields"><a class="header" href="#optional-fields">Optional fields</a></h2>
-<p>Fields which have a question mark (<code>?</code>) after the type are <strong>optional</strong>.</p>
-<pre><code>struct StructWithOptionalField {
-    // Can either be &quot;none&quot;, or &quot;str&quot;
-    something: str?
-}
-</code></pre>
-<h2 id="accessing-fields"><a class="header" href="#accessing-fields">Accessing fields</a></h2>
-<p>Fields are accessed using the dot notation (<code>.</code>).</p>
-<pre><code>main {
-    let my_smth = new Something&lt;str&gt;{val: &quot;Hello&quot;};
-    my_smth.set(val: &quot;World&quot;);
-    my_smth.val.length; // returns 5
-}
-</code></pre>
-<h2 id="accessing-optional-fields"><a class="header" href="#accessing-optional-fields">Accessing optional fields</a></h2>
-<p>Optional fields can be accessed by the dot notation, but you must put a question mark (<code>?</code>) before the dot. If the optional struct is empty, then the expression returns <code>none</code>.</p>
-<pre><code>main {
-    let my_struct = new StructWithOptionalField{}; // the optional field is `none`
-    my_fn(my_struct.something?); // The function doesn't get executed because my_struct cannot be unwrapped
-    my_struct.something = &quot;Hello&quot;;
-    my_fn(my_struct.something?); // Runs fine!
-}
-</code></pre>
-<p>Keep in mind that you <strong>cannot</strong> use optional fields before you make sure they are not <code>none</code>. </p>
-<pre><code>if my_struct != none {
-    // my_struct is guaranteed to not be none here, no need for question marks!
-    print(my_struct.something);
-}
-</code></pre>
-<h2 id="operator-overloading"><a class="header" href="#operator-overloading">Operator overloading</a></h2>
-<p>Operator overloading is done via partials. </p>
-<pre><code>import &quot;std/ops&quot; as Ops
-
-struct Person {
-    first_name: str,
-    middle_name: str,
-    last_name: str
-}
-
-impl Ops::Add&lt;Person, str&gt; for Person {
-
-    add: fn(other: Person) -&gt; str {
-        self.first_name + &quot; &quot; + other.middle_name + &quot; &quot; + other.last_name;
-    }
-
+                        <h1 id="native-modules"><a class="header" href="#native-modules">Native modules</a></h1>
+<p>Any <code>dynamic library</code> can be loaded into a lazy program. </p>
+<pre><code>
+#native(&quot;./path/to/dynamic/lib.dll&quot;)
+struct SymbolsFromNativeLib {
+    static add: (num1: i32, num2: i32) -&gt; i32
+    static replace: (string: str, pattern: str, new: str) -&gt; str
 }
 
 main {
-    const me = new Person {first_name: &quot;Google&quot;, middle_name: &quot;Something&quot;, last_name: &quot;Feud&quot;};
-    const you = new Person {first_name: &quot;Taylor&quot;, middle_name: &quot;Alison&quot;, last_name: &quot;Swift&quot;};
-    me + you; // Google Alison Swift
+    let num = SymbolsFromNativeLib::add(1, 5); // 6
+}
+</code></pre>
+<p>File which compiles to <code>./path/to/dynamic/lib.dll</code>:</p>
+<pre><code class="language-rs">use lazydyno::DataTypes;
+
+pub fn add(num1: DataTypes::i32, num: DataTypes::i32) -&gt; DataTypes::i32 {
+    num1 + num2
+}
+
+pub fn replace(string: DataTypes::str, pattern: DataTypes::str, new: DataTypes::str) -&gt; DataTypes::str {
+    string.replace(pattern, new)
+}
+</code></pre>
+<h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
+<p>Native:</p>
+<pre><code class="language-rs">use lazydyno::{Struct, DataTypes};
+
+pub fn create_person(name: DataTypes::str, age: DataTypes::i32) -&gt; Struct {
+    let person = Struct::new();
+    person.add_str(name);
+    person.add_i32(age);
+    person
+}
+</code></pre>
+<p>Lazy:</p>
+<pre><code>struct Person {
+    name: str,
+    age: i32
+}
+
+#native(&quot;...&quot;)
+struct PersonInterface {
+    static create_person: (name: str, age: i32) -&gt; Person
+}
+
+main {
+    let {name, age} = PersonInterface::create_person(&quot;Google&quot;, 19); // same as new Person { name: &quot;Google&quot;, age: 19 };
+    print(name, age); // &quot;Google&quot; 19
+}
+</code></pre>
+<h2 id="enums"><a class="header" href="#enums">Enums</a></h2>
+<p>Native:</p>
+<pre><code class="language-rs">use lazydyno::{Enum, DataTypes};
+
+pub fn create_result(val: i32) -&gt; Enum::Variant {
+    let res = Enum::common::Result::new(); // Result is a built-in enum
+    res.set_i32(Enum::common::Result::Ok, val);
+    res
+}
+
+pub fn create_custom(enum_id: Enum::Id, var_id: Enum::Id, val: DataTypes::i32) -&gt; Enum::Variant {
+    let res = Enum::from(enum_id);
+    res.variant(var_id);
+    res.set_usize(val);
+}
+</code></pre>
+<p>Lazy:</p>
+<pre><code>import &quot;std/native&quot; as Native;
+
+enum Sizes {
+    S: i32,
+    M: i32,
+    L: i32,
+    XL: i32,
+    None
+}
+
+#native(&quot;...&quot;)
+struct EnumInterface {
+    static create_result(val: i32) -&gt; Result
+    static create_custom(enum_id: u16, var_id: u16, val: i32) -&gt; Sizes
+}
+
+main {
+    let res = EnumInterface::create_custom(Native::idof(Sizes), Native::idof(Sizes::XL), 32);
+    print(res == Sizes::XL); // true
 }
 </code></pre>
 
@@ -282,15 +260,11 @@ main {
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../custom_types/enums.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../modules/main.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
-                        
-                            <a rel="next" href="../custom_types/partials.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -300,15 +274,11 @@ main {
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../custom_types/enums.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../modules/main.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
-                
-                    <a rel="next" href="../custom_types/partials.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
                 
             </nav>
 
