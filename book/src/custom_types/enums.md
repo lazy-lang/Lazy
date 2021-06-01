@@ -105,7 +105,7 @@ impl<T> Unwrap<T> for Option<T> {
 }
 
 main {
-    let maybe<Option<i32>> = Option::None;
+    let maybe: Option<i32> = Option::None;
     maybe.unwrap_or(0); // 0
     maybe = Option::Some(32);
     maybe.is_some(); // true

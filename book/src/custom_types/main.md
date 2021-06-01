@@ -14,7 +14,7 @@ Type aliasing can be done by using the `type` keyword:
 type i = i8;
 
 main {
-    let a<i> = 4;
+    let a: i = 4;
 }
 ```
 

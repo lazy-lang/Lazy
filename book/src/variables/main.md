@@ -45,3 +45,34 @@ main {
     const PI = 5; // Invalid
 }
 ```
+
+
+## Type hinting in variables
+
+```
+let someOption = none;  // Incorrect
+```
+
+Here, the compiler doesn't know what else can `someOption` be other than none, so it throws an error. You need to specify the other possible type.
+
+```
+let someOption: i32? = none; // Correct!
+```
+
+## Deconstructing structs or tuples
+
+```
+let my_tuple = [1, 2, 3, 4, 5];
+let [firstElement, secondElement] = my_tuple;
+print(firstElement, secondElement); // 1, 2
+```
+
+```
+struct Student {
+    grades: Map<str, Grade>
+    favorite_subject: str
+}
+
+const { favorite_subject } = new Student { grades: Map::create(), favorite_subject: "programming" };
+print(favorite_subject); // "programming"
+```

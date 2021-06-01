@@ -176,7 +176,7 @@
 <pre><code>type i = i8;
 
 main {
-    let a&lt;i&gt; = 4;
+    let a: i = 4;
 }
 </code></pre>
 <h2 id="none-able-types"><a class="header" href="#none-able-types">None-able types</a></h2>
@@ -224,6 +224,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

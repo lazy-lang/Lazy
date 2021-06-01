@@ -380,7 +380,7 @@ true
 <pre><code>type i = i8;
 
 main {
-    let a&lt;i&gt; = 4;
+    let a: i = 4;
 }
 </code></pre>
 <h2 id="none-able-types"><a class="header" href="#none-able-types">None-able types</a></h2>
@@ -478,7 +478,7 @@ impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
 }
 
 main {
-    let maybe&lt;Option&lt;i32&gt;&gt; = Option::None;
+    let maybe: Option&lt;i32&gt; = Option::None;
     maybe.unwrap_or(0); // 0
     maybe = Option::Some(32);
     maybe.is_some(); // true
@@ -786,6 +786,25 @@ main {
     const PI = 5; // Invalid
 }
 </code></pre>
+<h2 id="type-hinting-in-variables"><a class="header" href="#type-hinting-in-variables">Type hinting in variables</a></h2>
+<pre><code>let someOption = none;  // Incorrect
+</code></pre>
+<p>Here, the compiler doesn't know what else can <code>someOption</code> be other than none, so it throws an error. You need to specify the other possible type.</p>
+<pre><code>let someOption: i32? = none; // Correct!
+</code></pre>
+<h2 id="deconstructing-structs-or-tuples"><a class="header" href="#deconstructing-structs-or-tuples">Deconstructing structs or tuples</a></h2>
+<pre><code>let my_tuple = [1, 2, 3, 4, 5];
+let [firstElement, secondElement] = my_tuple;
+print(firstElement, secondElement); // 1, 2
+</code></pre>
+<pre><code>struct Student {
+    grades: Map&lt;str, Grade&gt;
+    favorite_subject: str
+}
+
+const { favorite_subject } = new Student { grades: Map::create(), favorite_subject: &quot;programming&quot; };
+print(favorite_subject); // &quot;programming&quot;
+</code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="logic"><a class="header" href="#logic">Logic</a></h1>
 <h2 id="ifelse"><a class="header" href="#ifelse">if/else</a></h2>
 <p>In Lazy, if/else conditionals are expressions. All branches of the condition <strong>must</strong> return the same type, or none. Any expression can be used for the condition and the body - even other if expressions.</p>
@@ -970,6 +989,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

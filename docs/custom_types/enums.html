@@ -253,7 +253,7 @@ impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
 }
 
 main {
-    let maybe&lt;Option&lt;i32&gt;&gt; = Option::None;
+    let maybe: Option&lt;i32&gt; = Option::None;
     maybe.unwrap_or(0); // 0
     maybe = Option::Some(32);
     maybe.is_some(); // true
@@ -298,6 +298,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         

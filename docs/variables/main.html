@@ -196,6 +196,25 @@ main {
     const PI = 5; // Invalid
 }
 </code></pre>
+<h2 id="type-hinting-in-variables"><a class="header" href="#type-hinting-in-variables">Type hinting in variables</a></h2>
+<pre><code>let someOption = none;  // Incorrect
+</code></pre>
+<p>Here, the compiler doesn't know what else can <code>someOption</code> be other than none, so it throws an error. You need to specify the other possible type.</p>
+<pre><code>let someOption: i32? = none; // Correct!
+</code></pre>
+<h2 id="deconstructing-structs-or-tuples"><a class="header" href="#deconstructing-structs-or-tuples">Deconstructing structs or tuples</a></h2>
+<pre><code>let my_tuple = [1, 2, 3, 4, 5];
+let [firstElement, secondElement] = my_tuple;
+print(firstElement, secondElement); // 1, 2
+</code></pre>
+<pre><code>struct Student {
+    grades: Map&lt;str, Grade&gt;
+    favorite_subject: str
+}
+
+const { favorite_subject } = new Student { grades: Map::create(), favorite_subject: &quot;programming&quot; };
+print(favorite_subject); // &quot;programming&quot;
+</code></pre>
 
                     </main>
 
@@ -234,6 +253,21 @@ main {
 
         </div>
 
+        
+        <!-- Livereload script (if served using the cli tool) -->
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3000/__livereload");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
         
 
         
