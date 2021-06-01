@@ -345,7 +345,7 @@ impl Tokenizer {
                 self._next()
             },
             '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' => Some(self.parse_op()),
-            ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' => Some(self.parse_punc()),
+            ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' | '#' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
                 let loc = self.input.loc();

@@ -1,3 +1,6 @@
+
+#native("./path/to/shared/library")
+
 struct Person {
     name: str
     age: f32
@@ -9,6 +12,7 @@ struct Person {
 
 }
 
+#SmartEnum(+, -, 123)
 enum AnimalTypes {
     Dog,
     Cat,
@@ -27,7 +31,7 @@ type ThingWithName = {name: str}
 main {
     let me = new Person { name: "Google", age: 19 };
     me.hobby?;
-    let (a, b, c) = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
+    let {name, age} = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
     let things = new Vec<ThingWithName> {};
     things.push(me);

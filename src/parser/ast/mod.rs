@@ -1216,6 +1216,29 @@ impl Parser {
             TokenType::Punc(';') => {
                 None
             },
+            TokenType::Punc('#') => {
+                let name = self.parse_varname(false, false, false).0?.value;
+                let mut args: Vec<TokenType> = vec![];
+                if self.tokens.is_next(TokenType::Punc('(')) {
+                    self.tokens.consume();
+                    let mut is_first = true;
+                    while !self.tokens.is_next(TokenType::Punc(')')) {
+                        if !is_first {
+                            if self.tokens.skip_or_err(TokenType::Punc(','), None, None) { return None };
+                        }
+                        if self.tokens.is_next(TokenType::Punc(')')) { break; };
+                        args.push(self.tokens.consume()?.val);
+                        is_first = false;
+                    }
+                    self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
+                }
+                Some(ASTStatement::Meta(
+                    ASTMeta {
+                    name,
+                    args,
+                    range: token.range.end(&self.tokens)
+                }))
+            },
             _ => {
                 token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
                 self.tokens.input.skip_line();

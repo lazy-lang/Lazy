@@ -1,6 +1,6 @@
 
 use std::fmt;
-use super::Range;
+use super::{Range, TokenType};
 
 // A string literalz
 pub struct ASTStr {
@@ -252,6 +252,12 @@ pub struct ASTImpl {
     pub range: Range
 }
 
+pub struct ASTMeta {
+    pub name: String,
+    pub args: Vec<TokenType>,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -291,6 +297,7 @@ pub enum ASTStatement {
     Main(ASTMain),
     Export(ASTExport),
     Import(ASTImport),
+    Meta(ASTMeta),
     Impl(ASTImpl)
 }
 
@@ -392,32 +399,32 @@ impl fmt::Display for ASTListTyping {
 impl fmt::Display for ASTExpression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            ASTExpression::Str(str) => str.fmt(f),
-            ASTExpression::Bool(boolean) => boolean.fmt(f),
-            ASTExpression::Int(i) => i.fmt(f),
-            ASTExpression::Float(fl) => fl.fmt(f),
-            ASTExpression::Binary(bin) => bin.fmt(f),
-            ASTExpression::Unary(un) => un.fmt(f),
-            ASTExpression::Var(variable) => variable.fmt(f),
-            ASTExpression::Optional(op) => op.fmt(f),
-            ASTExpression::DotAccess(op) => op.fmt(f),
-            ASTExpression::Block(block) => block.fmt(f),
-            ASTExpression::Function(func) => func.fmt(f),
-            ASTExpression::Declare(st) => st.fmt(f),
-            ASTExpression::Init(initializor) => initializor.fmt(f),
-            ASTExpression::Iterator(it) => it.fmt(f),
-            ASTExpression::If(exp) => exp.fmt(f),
-            ASTExpression::Char(ch) => ch.fmt(f),
-            ASTExpression::ModAccess(e) => e.fmt(f),
-            ASTExpression::Call(call) => call.fmt(f),
-            ASTExpression::ForIn(for_loop) => for_loop.fmt(f),
-            ASTExpression::While(while_loop) => while_loop.fmt(f),
-            ASTExpression::Tuple(tup) => write!(f, "[{}]", tup.to_string()),
-            ASTExpression::Yield(y) => y.fmt(f),
-            ASTExpression::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
-            ASTExpression::Match(mtch) => mtch.fmt(f),
-            ASTExpression::Await(aw) => aw.fmt(f),
-            ASTExpression::None(_) => write!(f, "none")
+            Self::Str(str) => str.fmt(f),
+            Self::Bool(boolean) => boolean.fmt(f),
+            Self::Int(i) => i.fmt(f),
+            Self::Float(fl) => fl.fmt(f),
+            Self::Binary(bin) => bin.fmt(f),
+            Self::Unary(un) => un.fmt(f),
+            Self::Var(variable) => variable.fmt(f),
+            Self::Optional(op) => op.fmt(f),
+            Self::DotAccess(op) => op.fmt(f),
+            Self::Block(block) => block.fmt(f),
+            Self::Function(func) => func.fmt(f),
+            Self::Declare(st) => st.fmt(f),
+            Self::Init(initializor) => initializor.fmt(f),
+            Self::Iterator(it) => it.fmt(f),
+            Self::If(exp) => exp.fmt(f),
+            Self::Char(ch) => ch.fmt(f),
+            Self::ModAccess(e) => e.fmt(f),
+            Self::Call(call) => call.fmt(f),
+            Self::ForIn(for_loop) => for_loop.fmt(f),
+            Self::While(while_loop) => while_loop.fmt(f),
+            Self::Tuple(tup) => write!(f, "[{}]", tup.to_string()),
+            Self::Yield(y) => y.fmt(f),
+            Self::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
+            Self::Match(mtch) => mtch.fmt(f),
+            Self::Await(aw) => aw.fmt(f),
+            Self::None(_) => write!(f, "none")
         }
     }
 }
@@ -426,14 +433,14 @@ impl fmt::Display for ASTExpression {
 impl fmt::Display for ASTTypings {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            ASTTypings::Tuple(tup) => tup.fmt(f),
-            ASTTypings::Var(var) => var.fmt(f),
-            ASTTypings::PairList(list) => list.fmt(f),
-            ASTTypings::Optional(typing) => write!(f, "{}?", typing),
-            ASTTypings::Function(func) => func.fmt(f),
-            ASTTypings::Combine(c) => c.fmt(f),
-            ASTTypings::Mod(m) => m.fmt(f),
-            ASTTypings::ExplicitImpl(im) => write!(f, "{}!", im)
+            Self::Tuple(tup) => tup.fmt(f),
+            Self::Var(var) => var.fmt(f),
+            Self::PairList(list) => list.fmt(f),
+            Self::Optional(typing) => write!(f, "{}?", typing),
+            Self::Function(func) => func.fmt(f),
+            Self::Combine(c) => c.fmt(f),
+            Self::Mod(m) => m.fmt(f),
+            Self::ExplicitImpl(im) => write!(f, "{}!", im)
         }
     }
 }
@@ -441,14 +448,15 @@ impl fmt::Display for ASTTypings {
 impl fmt::Display for ASTStatement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            ASTStatement::Struct(structure) => structure.fmt(f),
-            ASTStatement::EnumDeclaration(en) => en.fmt(f),
-            ASTStatement::Type(typing) => typing.fmt(f),
-            ASTStatement::Static(st) => st.fmt(f),
-            ASTStatement::Main(m) => m.fmt(f),
-            ASTStatement::Export(ex) => ex.fmt(f),
-            ASTStatement::Import(imp) => imp.fmt(f),
-            ASTStatement::Impl(imp) => imp.fmt(f)
+            Self::Struct(structure) => structure.fmt(f),
+            Self::EnumDeclaration(en) => en.fmt(f),
+            Self::Type(typing) => typing.fmt(f),
+            Self::Static(st) => st.fmt(f),
+            Self::Main(m) => m.fmt(f),
+            Self::Export(ex) => ex.fmt(f),
+            Self::Import(imp) => imp.fmt(f),
+            Self::Impl(imp) => imp.fmt(f),
+            Self::Meta(m) => m.fmt(f)
         } 
     }
 }
@@ -719,5 +727,11 @@ impl fmt::Display for ASTDeclareTypes {
             Self::TupleDeconstruct(vars) => write!(f, "[{}]", vars),
             Self::StructDeconstruct(vars) => write!(f, "{{{}}}", vars)
         }
+   }
+}
+
+impl fmt::Display for ASTMeta {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "#{}({})", self.name, self.args.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(", "))
    }
 }
