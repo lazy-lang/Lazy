@@ -32,12 +32,13 @@ pub enum ErrorType {
     NotAllowed(String)
 }
 
-pub struct Error {
+pub struct Error<T> where T: fmt::Display {
     pub range: Range,
-    pub e_type: ErrorType
+    pub e_type: T 
 }
 
-impl Error {
+
+impl<T> Error<T> where T: fmt::Display {
     pub fn format(&self, source: &[&str]) -> String {
         // Multi-line errors
         if self.range.start.line != self.range.end.line {
@@ -67,7 +68,7 @@ impl Error {
                     line.push_str(&cols);
                 }
             }
-            return format!("\n{}\n\n{} {}", line, self.to_string().red(), self.range);
+            return format!("\n{}\n\n{} {}", line, self.e_type.to_string().red(), self.range);
         };
         let mut col = String::new();
         let start_line = self.range.start.line as usize;
@@ -76,14 +77,14 @@ impl Error {
             if x >= self.range.start.col { col.push_str(&format!("{}", "^".red())); }
             else { col.push(' '); };
         };
-        format!("\n{} {} {}\n\n{}\n{} {}", start_line, &"|".cyan(), source[start_line - 1], col, self.to_string().red(), self.range)
+        format!("\n{} {} {}\n\n{}\n{} {}", start_line, &"|".cyan(), source[start_line - 1], col, self.e_type.to_string().red(), self.range)
     }
 
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.e_type {
+        match &self {
             ErrorType::EndOfStr => write!(f, "Expected end of string"),
             ErrorType::DecimalPoint =>  write!(f, "Numbers cannot contain more than one decimal point"),
             ErrorType::ProperProperty =>  write!(f, "Expected a property name"),

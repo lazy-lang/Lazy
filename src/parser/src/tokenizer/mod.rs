@@ -101,7 +101,7 @@ pub struct Token {
 
 pub struct Tokenizer {
     current: Option<Token>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<Error<ErrorType>>,
     pub input: InputParser,
     pub is_last_num_as_str: bool,
     pub last_loc: LoC
