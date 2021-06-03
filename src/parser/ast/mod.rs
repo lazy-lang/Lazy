@@ -35,8 +35,10 @@ impl Parser {
     fn get_prec(op: &str) -> i8 {
         match op {
             "=" | "+=" | "-=" | "*=" | "/=" | "%=" => 1,
-            "||" => 2,
-            "&&" => 3,
+            "&" | "|" | "^" => 2,
+            ">>" | "<<" | ">>>" => 3,
+            "||" => 5,
+            "&&" => 7,
             "<" | ">" | "<=" | ">=" | "==" | "!=" => 10,
             "+" | "-" => 15,
             "*" | "/" | "%" => 20,
@@ -733,7 +735,7 @@ impl Parser {
             TokenType::Op(value) => {
                 // Prefixes
                 match value.as_str() {
-                    "-" | "!" => {
+                    "-" | "!" | "~" => {
                         Some(ASTExpression::Unary(
                             ASTUnary {
                                 op: value,

@@ -304,13 +304,15 @@ impl Tokenizer {
         let start = self.input.loc();
         let mut op = String::new();
         while !self.input.is_eof() {
+            // Invalid operators
             if match_str!(op.as_str(), "<>") {
                 self.error(ErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
                 break;
             }
-            if match_str!(op.as_str(), "?", ">") { break; };
+            // Operators which cannot be folled by other operators
+            if match_str!(op.as_str(), "?") { break; };
             let ch = self.input.peek(0).unwrap();
-            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?') { op.push(self.input.consume().unwrap()) }
+            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '~', '^') { op.push(self.input.consume().unwrap()) }
             else { break; };
         };
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
@@ -344,7 +346,7 @@ impl Tokenizer {
                 self.input.consume();
                 self._next()
             },
-            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' => Some(self.parse_op()),
+            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' | '~' | '^' => Some(self.parse_op()),
             ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' | '#' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {
