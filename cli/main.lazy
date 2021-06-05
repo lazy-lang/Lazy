@@ -31,10 +31,10 @@ type ThingWithName = {name: str}
 main {
     [1, 2, 3, 40];
     a[1][2][3].abc.3;
-    `Hello ${variable}! ${a[1][2][3].abc.3}!`;
+    `Hello \${yield 1}! ${a[1][2][3].abc.3}!`;
     let me = new Person { name: "Google", age: ..19 };
     me.hobby?;
-    let {name, age} = new Animal { name: `Baby`, age: 1, t_type: AnimalTypes::Bird };
+    let {name, age} = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
     let things = new Vec<ThingWithName> {};
     things.push(me);

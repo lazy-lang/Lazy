@@ -751,12 +751,13 @@ impl Parser {
             TokenType::TempStrStart => {
                 let mut string = String::new();
                 let mut exps: HashMap<usize, ASTExpression> = HashMap::new();
+                let mut is_prev_escape = false;
                 loop {
                     match self.tokens.input.consume() {
                         Some(ch) => {
                             match ch {
                                 '`' => break,
-                                '$' => {
+                                '$' if !is_prev_escape => {
                                     self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
                                     let exp = self.parse_expression();
                                     if exp.is_none() {
@@ -766,8 +767,12 @@ impl Parser {
                                     self.tokens.skip_or_err(TokenType::Punc('}'), None, None);
                                     exps.insert(string.len(), exp.unwrap());
                                     string.push(' ');
+                                },
+                                '\\' => is_prev_escape = true,
+                                _ => {
+                                    is_prev_escape = false;
+                                    string.push(ch);
                                 }
-                                _ => string.push(ch)
                             }
                         },
                         None => {
