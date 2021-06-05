@@ -168,6 +168,22 @@ impl Parser {
                             }
                         )), parse_generics)
                     },
+                    '[' => {
+                        self.tokens.consume();
+                        let target = self.parse_expression();
+                        if target.is_none() {
+                            recorder.err(ErrorType::ProperProperty, &mut self.tokens);
+                            return None;
+                        };
+                        self.tokens.skip_or_err(TokenType::Punc(']'), None, None);
+                        self.parse_suffix(Some(ASTExpression::IndexAccess(
+                            ASTIndexAccess {
+                            target: Box::from(target.unwrap()),
+                            value: Box::from(token.unwrap()),
+                            range: recorder.end(&self.tokens)
+                            }
+                        )), parse_generics)
+                    },
                     ':' => {
                         if let ASTExpression::Var(v) = token.unwrap() {
                             match self.parse_mod_access_or_var(v, true, true) {
@@ -743,6 +759,14 @@ impl Parser {
                                 range: token.range
                             }
                         ))
+                    },
+                    ".." | "..=" => {
+                        Some(ASTExpression::Iterator(ASTIterator {
+                            start: Box::from(ASTExpression::Int(ASTInt { value: 0, range: token.range.clone() })),
+                            end: Box::from(self.parse_expression()?),
+                            inclusive: value == "..=",
+                            range: token.range.end(&self.tokens)
+                        }))
                     },
                     "..." => {
                         Some(ASTExpression::Spread(

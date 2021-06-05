@@ -91,6 +91,12 @@ pub struct ASTDotAccess {
     pub range: Range
 }
 
+pub struct ASTIndexAccess {
+    pub value: Box<ASTExpression>,
+    pub target: Box<ASTExpression>,
+    pub range: Range
+}
+
 pub struct ASTOptional {
     pub value: Box<ASTExpression>,
     pub range: Range
@@ -269,6 +275,7 @@ pub enum ASTExpression {
     Binary(ASTBinary),
     Unary(ASTUnary),
     DotAccess(ASTDotAccess),
+    IndexAccess(ASTIndexAccess),
     ModAccess(ASTModAccess),
     Optional(ASTOptional),
     Block(ASTBlock),
@@ -408,6 +415,7 @@ impl fmt::Display for ASTExpression {
             Self::Var(variable) => variable.fmt(f),
             Self::Optional(op) => op.fmt(f),
             Self::DotAccess(op) => op.fmt(f),
+            Self::IndexAccess(op) => op.fmt(f),
             Self::Block(block) => block.fmt(f),
             Self::Function(func) => func.fmt(f),
             Self::Declare(st) => st.fmt(f),
@@ -433,7 +441,7 @@ impl fmt::Display for ASTExpression {
 impl fmt::Display for ASTTypings {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            Self::Tuple(tup) => tup.fmt(f),
+            Self::Tuple(tup) => write!(f, "[{}]", tup),
             Self::Var(var) => var.fmt(f),
             Self::PairList(list) => list.fmt(f),
             Self::Optional(typing) => write!(f, "{}?", typing),
@@ -669,7 +677,7 @@ impl fmt::Display for ASTMatchArmExpressions {
             Self::Float(fl) => fl.fmt(f),
             Self::Iterator(iter) => iter.fmt(f),
             Self::Enum(en) => en.fmt(f),
-            Self::Tuple(t) => t.fmt(f),
+            Self::Tuple(t) => write!(f, "[{}]", t),
             Self::Bool(b) => b.fmt(f),
             Self::None(_) => write!(f, "none"),
             Self::Rest => write!(f, "_")
@@ -733,5 +741,11 @@ impl fmt::Display for ASTDeclareTypes {
 impl fmt::Display for ASTMeta {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "#{}({})", self.name, self.args.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(", "))
+   }
+}
+
+impl fmt::Display for ASTIndexAccess {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}[{}]", self.value, self.target)
    }
 }

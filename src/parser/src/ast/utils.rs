@@ -10,6 +10,7 @@ pub fn full_expression_range(ast: &ASTExpression) -> Range {
                 ASTExpression::Binary(bin) => Range{start: full_expression_range(&bin.left).start, end: full_expression_range(&bin.right).end},
                 ASTExpression::Unary(un) => Range { start: un.range.start, end: full_expression_range(&un.value).end },
                 ASTExpression::DotAccess(access) => Range { start:  full_expression_range(&access.value).start, end: access.range.end },
+                ASTExpression::IndexAccess(access) => Range { start: full_expression_range(&access.value).start, end: access.range.end },
                 ASTExpression::Block(block) => block.range,
                 ASTExpression::Declare(l) => l.range,
                 ASTExpression::Init(init) => init.range,

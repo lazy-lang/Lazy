@@ -6,7 +6,7 @@ struct Person {
     age: f32
     hobby: str?
 
-    age_up: fn(inc: i32 = 1) {
+    age_up: fn(inc: [i32]) {
         self.age += inc;
     }
 
@@ -29,7 +29,9 @@ struct Animal {
 type ThingWithName = {name: str}
 
 main {
-    let me = new Person { name: "Google", age: 19 };
+    [1, 2, 3, 40];
+    a[1][2][3].abc.3;
+    let me = new Person { name: "Google", age: ..19 };
     me.hobby?;
     let {name, age} = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
@@ -41,7 +43,7 @@ main {
         print(thing.name);
     }
 
-    print(1 >>> 10 << 3,  ~c);
+    print(1 >>> 10 << 3,  ~c).abc;
 
     a.1.2.3.4;
 
