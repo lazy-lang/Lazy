@@ -29,7 +29,7 @@ pub enum ErrorType {
     Custom(String),
     Confusable(String, String),
     InvalidDigit,
-    NotAllowed(String)
+    PointlessTemplate
 }
 
 pub struct Error<T> where T: fmt::Display {
@@ -111,7 +111,7 @@ impl fmt::Display for ErrorType {
             ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
             ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected),
             ErrorType::InvalidDigit => write!(f, "Invalid digit"),
-            ErrorType::NotAllowed(thing) => write!(f, "{} is not allowed here", thing)
+            ErrorType::PointlessTemplate => write!(f, "Pointless template literal")
         }
     }
 }

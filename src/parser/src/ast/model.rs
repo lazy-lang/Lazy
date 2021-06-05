@@ -1,10 +1,17 @@
 
 use std::fmt;
 use super::{Range, TokenType};
+pub use std::collections::hash_map::HashMap;
 
 // A string literalz
 pub struct ASTStr {
     pub value: String,
+    pub range: Range
+}
+
+pub struct ASTTempStr {
+    pub template: String,
+    pub values: HashMap<usize, ASTExpression>,
     pub range: Range
 }
 
@@ -267,6 +274,7 @@ pub struct ASTMeta {
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
+    TempStr(ASTTempStr),
     Float(ASTFloat),
     Int(ASTInt),
     Bool(ASTBool),
@@ -432,6 +440,7 @@ impl fmt::Display for ASTExpression {
             Self::Spread(sp) => write!(f, "...{}", sp.value.to_string()),
             Self::Match(mtch) => mtch.fmt(f),
             Self::Await(aw) => aw.fmt(f),
+            Self::TempStr(tmp) => tmp.fmt(f),
             Self::None(_) => write!(f, "none")
         }
     }
@@ -747,5 +756,20 @@ impl fmt::Display for ASTMeta {
 impl fmt::Display for ASTIndexAccess {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}[{}]", self.value, self.target)
+   }
+}
+
+impl fmt::Display for ASTTempStr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut new_str = String::new();
+        println!("{}", self.template.len());
+        for (ind, ch) in self.template.chars().enumerate() {
+            if let Some(k) = self.values.get(&ind) {
+                new_str.push_str(&format!("${{{}}}", k));
+            } else {
+                new_str.push(ch);
+            };
+        }
+        write!(f, "`{}`", new_str)
    }
 }

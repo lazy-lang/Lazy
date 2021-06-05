@@ -570,7 +570,7 @@ impl Parser {
             if key.0.is_none() { continue };
             if self.tokens.is_next(TokenType::Op(String::from("="))) {
                 if !allow_default {
-                    self.tokens.error_here(ErrorType::NotAllowed(String::from("default parameter")))
+                    self.tokens.error_here(ErrorType::Disallowed(String::from("default parameter")))
                 }
                 self.tokens.consume();
                 let default_value = self.parse_expression();
@@ -599,7 +599,7 @@ impl Parser {
                             }
                             let default_value = if self.tokens.is_next(TokenType::Op(String::from("="))) {
                                 if !allow_default {
-                                    self.tokens.error(ErrorType::NotAllowed(String::from("default parameter")), self.tokens.last_loc, self.tokens.input.loc())
+                                    self.tokens.error(ErrorType::Disallowed(String::from("default parameter")), self.tokens.last_loc, self.tokens.input.loc())
                                 }
                                 self.tokens.consume();
                                 self.parse_expression()
@@ -748,6 +748,44 @@ impl Parser {
             TokenType::None => Some(ASTExpression::None(token.range)),
             TokenType::Var(value) => Some(ASTExpression::Var(ASTVar { value, range: token.range })),
             TokenType::Bool(value) => Some(ASTExpression::Bool(ASTBool { value, range: token.range })),
+            TokenType::TempStrStart => {
+                let mut string = String::new();
+                let mut exps: HashMap<usize, ASTExpression> = HashMap::new();
+                loop {
+                    match self.tokens.input.consume() {
+                        Some(ch) => {
+                            match ch {
+                                '`' => break,
+                                '$' => {
+                                    self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
+                                    let exp = self.parse_expression();
+                                    if exp.is_none() {
+                                        self.tokens.error_here(ErrorType::Expected(String::from("expression")));
+                                        continue;
+                                    };
+                                    self.tokens.skip_or_err(TokenType::Punc('}'), None, None);
+                                    exps.insert(string.len(), exp.unwrap());
+                                    string.push(' ');
+                                }
+                                _ => string.push(ch)
+                            }
+                        },
+                        None => {
+                            token.range.err_start(ErrorType::EndOfStr, &mut self.tokens);
+                            return None;
+                        }
+                    }
+                };
+                if exps.len() == 0 {
+                    token.range.err_start(ErrorType::PointlessTemplate, &mut self.tokens);
+                    return None;
+                }
+                Some(ASTExpression::TempStr(ASTTempStr {
+                    template: string,
+                    values: exps,
+                    range: token.range.end(&self.tokens)
+                }))
+            },
             TokenType::Op(value) => {
                 // Prefixes
                 match value.as_str() {

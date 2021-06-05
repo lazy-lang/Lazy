@@ -10,6 +10,7 @@ use super::input_parser::{LoC, InputParser};
 #[derive(Clone)]
 pub enum TokenType {
     Str(String),
+    TempStrStart,
     Float(f32),
     Int(i32),
     Kw(String),
@@ -41,6 +42,7 @@ impl fmt::Display for TokenType {
             Self::Op(op) => write!(f, "operator {}", op),
             Self::Punc(punc) => write!(f, "punctuation {}", punc),
             Self::Char(ch) => write!(f, "char {}", ch),
+            Self::TempStrStart => write!(f, "beginning of template literal"),
             Self::None => write!(f, "none")
         }
     }
@@ -119,14 +121,14 @@ impl Tokenizer {
         }
     }
 
-    fn parse_str(&mut self) -> Token {
+    fn parse_str(&mut self, end_char: char) -> Token {
         self.input.consume(); // Consume the starting "
         let start = self.input.loc();
         let mut str = String::new();
         loop {
             match self.input.consume() {
                 Some(character) => {
-                    if character == '"' { break; };
+                    if character == end_char { break; };
                     str.push(character);
                 },
                 None => {
@@ -136,7 +138,7 @@ impl Tokenizer {
                 }
             }
         };
-        Token { val: TokenType::Str(str), range: Range {start, end: self.input.loc()} }
+    Token { val: TokenType::Str(str), range: Range {start, end: self.input.loc()} } 
     }
 
     fn parse_char(&mut self) -> Token {
@@ -340,7 +342,14 @@ impl Tokenizer {
         }
         match tok {
             '\'' => Some(self.parse_char()),
-            '"' => Some(self.parse_str()),
+            '"' => Some(self.parse_str('"')),
+            '`' => {
+                self.input.consume();
+                Some(Token {
+                val: TokenType::TempStrStart,
+                range: Range { start: self.input.loc(), end: self.input.loc() }
+                })
+            },
             '0'..='9' => Some(self.parse_num()),
             ' ' | '\n' | '\t' => {
                 self.input.consume();
