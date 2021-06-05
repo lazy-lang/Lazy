@@ -241,7 +241,7 @@ nums.filter(fn(n) n % 2);
 <pre><code>let my_age = 18; //  inferred type: i32
 let my_height = 6.1; // inferred type: f32
 
-let not_inferred&lt;u8&gt; = 12; // Not inferred, number is an u8
+let not_inferred: u8 = 12; // Not inferred, number is an u8
 </code></pre>
 <p>Numbers can contain underscores (<code>_</code>) to improve readability:</p>
 <pre><code>let big_num = 100_00_00; 
@@ -258,9 +258,17 @@ one_min_in_milliseconds == 60000; // returns &quot;true&quot;
 0o03621623 == 992147 // true
 0x0123ABCd == 19114957 // true
 </code></pre>
+<h2 id="template-literals"><a class="header" href="#template-literals">Template literals</a></h2>
+<p>String concatenation is very messy in many languages - Lazy makes this easy with template literals:</p>
+<pre><code>let age = 1 + 17;
+print(`Hello World! I am ${age} years old`); // Hello World! I am 18 years old
+</code></pre>
+<p>They work exactly like in javascript!</p>
 <h2 id="iterators"><a class="header" href="#iterators">Iterators</a></h2>
 <pre><code>0..5; // Creates an iterator from 0 (inclusive) to 5 (exclusive), so 0, 1, 2, 3 and 4.
 5..=10; // Creates an iterator from 5 (inclusive) to 10 (inclusive) 
+..5; // Short syntax for 0..5
+..=10; // Short syntax for 0..=10
 </code></pre>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <p>In <code>Lazy</code>, functions are <strong>first-class citizens</strong>, you can pass them as parameters, save them in variables and so on.</p>
@@ -655,8 +663,8 @@ main {
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 
-    stuff_that_makes_noise.get(0)?.make_noise(); // &quot;Hello World&quot;
-    stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
+    stuff_that_makes_noise[0]?.make_noise(); // &quot;Hello World&quot;
+    stuff_that_makes_noise[1]?.make_noise(); // *quiet*
 }
 </code></pre>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="impl"><a class="header" href="#impl">Impl</a></h1>
@@ -1078,21 +1086,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

@@ -69,7 +69,7 @@ main {
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 
-    stuff_that_makes_noise.get(0)?.make_noise(); // "Hello World"
-    stuff_that_makes_noise.get(1)?.make_noise(); // *quiet*
+    stuff_that_makes_noise[0]?.make_noise(); // "Hello World"
+    stuff_that_makes_noise[1]?.make_noise(); // *quiet*
 }
 ```
