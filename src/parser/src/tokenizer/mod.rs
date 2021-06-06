@@ -22,7 +22,7 @@ pub enum TokenType {
     None
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, fmt::Debug)]
 pub enum NumberType {
     Binary, // 0b
     Octal, // 0o
@@ -219,18 +219,16 @@ impl Tokenizer {
                 },
                 '.' => {
                     if self.is_last_num_as_str {
-                        self.is_last_num_as_str = false;
                         break;
+                    }
+                    if self.input.peek(1) == Some('.') {
+                        return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
                     }
                     if dot {
                         self.input.consume();
-                        let loc = self.input.loc();
-                        self.error(ErrorType::DecimalPoint, start, loc); 
+                        self.error(ErrorType::DecimalPoint, start, self.input.loc()); 
                         break;
                      };
-                     if self.input.peek(1) == Some('.') {
-                        return Token { val: TokenType::Int(num.parse().unwrap()), range: Range {start, end: self.input.loc()} }
-                    }
                     self.input.consume();
                     dot = true;
                     num.push(ch);
@@ -265,13 +263,15 @@ impl Tokenizer {
             },
             _ => 1
         } as isize;
-        let actual_num = match num_type {
-            NumberType::Hex => isize::from_str_radix(&num, 16).unwrap(),
-            NumberType::Octal => isize::from_str_radix(&num, 8).unwrap(),
-            NumberType::Binary => isize::from_str_radix(&num, 2).unwrap(),
-            NumberType::None => num.parse::<isize>().unwrap()
+        let token_type = match num_type {
+            NumberType::Hex => TokenType::Int((isize::from_str_radix(&num, 16).unwrap() * multiply_val) as i32),
+            NumberType::Octal => TokenType::Int((isize::from_str_radix(&num, 8).unwrap() * multiply_val) as i32),
+            NumberType::Binary => TokenType::Int((isize::from_str_radix(&num, 2).unwrap() * multiply_val) as i32),
+            NumberType::None => {
+                if dot { TokenType::Float(num.parse::<f32>().unwrap() * (multiply_val as f32)) }
+                else { TokenType::Int(num.parse::<i32>().unwrap() * (multiply_val as i32)) }
+            }
         };
-        let token_type = if dot { TokenType::Float((actual_num * multiply_val) as f32) } else { TokenType::Int((actual_num * multiply_val) as i32) };
         Token { val: token_type, range: Range {start, end: self.input.loc()} }
     }
 

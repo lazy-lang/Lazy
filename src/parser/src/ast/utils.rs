@@ -53,16 +53,28 @@ pub fn is_natural_tuple(ast: &ASTExpressionList) -> bool {
     true
 }
 
+pub fn is_natural_mod_access(ast: &ASTModAccess) -> bool {
+    if let Some(init) = &ast.init {
+    for val in &init.expressions {
+        if !is_natural_val(val) { return false };
+    } 
+    return true
+    } else {
+        return true
+    }
+}
+
 pub fn is_natural_val(ast: &ASTExpression) -> bool {
     match ast {
         ASTExpression::Char(_) | ASTExpression::Int(_) | ASTExpression::Float(_) | ASTExpression::Str(_) | ASTExpression::None(_) | ASTExpression::Bool(_) => true,
         ASTExpression::Iterator(iter) => is_natural_iter(iter),
         ASTExpression::Tuple(tup) => is_natural_tuple(tup),
+        ASTExpression::ModAccess(m) => is_natural_mod_access(m),
         _ => false
     }
 }
 
- pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
+pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
      match ast {
          Some(exp) => full_expression_range(&exp),
          None => Range { start: default, end: default }

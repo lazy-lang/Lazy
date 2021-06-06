@@ -95,7 +95,8 @@ impl Parser {
                 match val.as_str() {
                     "." => {
                         self.tokens.consume();
-                        let target = self.parse_varname(true, false, true);
+                        let val = token.unwrap();
+                        let target = self.parse_varname(true, false, !matches!(val, ASTExpression::Int(_) | ASTExpression::Float(_)));
                         if target.0.is_none() { 
                             recorder.err(ErrorType::ProperProperty, &mut self.tokens);
                             return None;
@@ -103,7 +104,7 @@ impl Parser {
                         self.parse_suffix(Some(ASTExpression::DotAccess(
                             ASTDotAccess {
                                 target: target.0.unwrap(),
-                                value: Box::from(token.unwrap()),
+                                value: Box::from(val),
                                 range: recorder.end(&self.tokens)
                             }
                         )), parse_generics)
@@ -404,8 +405,12 @@ impl Parser {
     }
 
     fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool) -> (Option<ASTVar>, Option<ASTListTyping>) {
-        if allow_ints { self.tokens.is_last_num_as_str = true }; 
-        let next = self.tokens.consume();
+        let next = if allow_ints {
+            self.tokens.is_last_num_as_str = true;
+            let v = self.tokens.consume();
+            self.tokens.is_last_num_as_str = false;
+            v
+        } else { self.tokens.consume() };
         if next.is_none() { 
             self.tokens.error_here(ErrorType::Expected(String::from("itentifier")));
             return (None, None);
@@ -724,7 +729,12 @@ impl Parser {
                     Some(ASTMatchArmExpressions::Rest)
                 },
                 ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
-                ASTExpression::ModAccess(acc) => Some(ASTMatchArmExpressions::Enum(acc)),
+                ASTExpression::ModAccess(acc) => {
+                    if !utils::is_natural_mod_access(&acc) {
+                        range.err(ErrorType::Expected(String::from("natural enum value")), &mut self.tokens);
+                    }
+                    Some(ASTMatchArmExpressions::Enum(acc))
+                },
                 _ => {
                     range.err(ErrorType::WrongMatchArmExp, &mut self.tokens);
                     None
