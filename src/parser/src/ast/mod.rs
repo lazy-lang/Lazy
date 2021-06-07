@@ -1006,12 +1006,12 @@ impl Parser {
                             possibilities.push(self.parse_match_arm_exp()?);
                             if self.tokens.is_next(TokenType::Op(String::from("|"))) {
                                 self.tokens.consume();
-                                while !self.tokens.is_next(TokenType::Op(String::from("=>"))) && !self.tokens.is_next(TokenType::Kw(String::from("when")))  {
+                                while !self.tokens.is_next(TokenType::Op(String::from("=>"))) && !self.tokens.is_next(TokenType::Kw(String::from("if")))  {
                                     possibilities.push(self.parse_match_arm_exp()?);
                                     if self.tokens.is_next(TokenType::Op(String::from("|"))) { self.tokens.consume(); };
                                 }
                             }
-                            let guard = if self.tokens.is_next(TokenType::Kw(String::from("when"))) {
+                            let guard = if self.tokens.is_next(TokenType::Kw(String::from("if"))) {
                                 self.tokens.consume();
                                 self.parse_expression()
                             } else { None };
@@ -1311,10 +1311,17 @@ impl Parser {
                     }
                     self.tokens.skip_or_err(TokenType::Punc(')'), None, None);
                 }
+                let target = if let Some(stm) = self.parse_statement() {
+                    Box::from(stm)
+                } else {
+                    token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
+                    return None;
+                };
                 Some(ASTStatement::Meta(
                     ASTMeta {
                     name,
                     args,
+                    target,
                     range: token.range.end(&self.tokens)
                 }))
             },

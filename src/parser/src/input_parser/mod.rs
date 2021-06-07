@@ -71,6 +71,7 @@ impl InputParser {
     }
 
     pub fn skip_line(&mut self) {
+        if self.is_eof() { return; };
         while self.code[self.pos] != '\n' {
             self.pos += 1;
         }

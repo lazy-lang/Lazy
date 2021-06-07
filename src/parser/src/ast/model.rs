@@ -268,6 +268,7 @@ pub struct ASTImpl {
 pub struct ASTMeta {
     pub name: String,
     pub args: Vec<TokenType>,
+    pub target: Box<ASTStatement>,
     pub range: Range
 }
 
@@ -749,7 +750,7 @@ impl fmt::Display for ASTDeclareTypes {
 
 impl fmt::Display for ASTMeta {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "#{}({})", self.name, self.args.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(", "))
+        write!(f, "#{}({})\n{}", self.name, self.args.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(", "), self.target)
    }
 }
 
