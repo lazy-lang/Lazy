@@ -9,7 +9,7 @@ Almost all literals are what'd you expect them to be.
 let my_age = 18; //  inferred type: i32
 let my_height = 6.1; // inferred type: f32
 
-let not_inferred<u8> = 12; // Not inferred, number is an u8
+let not_inferred: u8 = 12; // Not inferred, number is an u8
 ```
 
 Numbers can contain underscores (`_`) to improve readability:
@@ -37,11 +37,24 @@ Numbers can be prefixed with `0b`, `0o` and `0x` to be parsed as binary / octal 
 0x0123ABCd == 19114957 // true
 ```
 
+## Template literals
+
+String concatenation is very messy in many languages - Lazy makes this easy with template literals:
+
+```
+let age = 1 + 17;
+print(`Hello World! I am ${age} years old`); // Hello World! I am 18 years old
+```
+
+They work exactly like in javascript!
+
 ## Iterators
 
 ```
 0..5; // Creates an iterator from 0 (inclusive) to 5 (exclusive), so 0, 1, 2, 3 and 4.
 5..=10; // Creates an iterator from 5 (inclusive) to 10 (inclusive) 
+..5; // Short syntax for 0..5
+..=10; // Short syntax for 0..=10
 ```
 
 ## Functions
