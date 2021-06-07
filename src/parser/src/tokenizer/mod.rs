@@ -68,7 +68,7 @@ impl fmt::Display for Range {
 
 impl Range {
     #[inline]
-    pub fn err(&self, err: ErrorType, tokens: &mut Tokenizer) {
+    pub fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>) {
         tokens.error(err, self.start, self.end)
     }
 
@@ -388,11 +388,6 @@ impl Tokenizer {
     }
 
     #[inline]
-    pub fn error(&mut self, e_type: ErrorType, start: LoC, end: LoC) {
-        self.errors.push(Error { e_type, range: Range {start, end} });
-    }
-
-    #[inline]
     pub fn error_here(&mut self, e_type: ErrorType) {
         self.errors.push(Error { e_type, range: Range {start: self.input.loc(), end: self.input.loc() } });
     }
@@ -471,4 +466,12 @@ impl Tokenizer {
         RangeRecorder::new(self)
     }
 
+}
+
+impl error::ErrorCollector<ErrorType> for Tokenizer {
+
+    #[inline]
+    fn error(&mut self, e_type: ErrorType, start: LoC, end: LoC) {
+        self.errors.push(Error { e_type, range: Range {start, end} });
+    }
 }

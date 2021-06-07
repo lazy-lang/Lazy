@@ -1,6 +1,6 @@
 
 use super::tokenizer::{Tokenizer, TokenType, Range};
-use super::tokenizer::error::ErrorType;
+use super::tokenizer::error::{ErrorType, ErrorCollector};
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;

@@ -32,11 +32,14 @@ pub enum ErrorType {
     PointlessTemplate
 }
 
+pub trait ErrorCollector<T> where T: fmt::Display {
+    fn error(&mut self, e_type: T, start: LoC, end: LoC);
+}
+
 pub struct Error<T> where T: fmt::Display {
     pub range: Range,
     pub e_type: T 
 }
-
 
 impl<T> Error<T> where T: fmt::Display {
     pub fn format(&self, source: &[&str]) -> String {
