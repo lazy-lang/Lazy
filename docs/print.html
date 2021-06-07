@@ -839,7 +839,7 @@ match my_num {
     Number::Float(3.14) =&gt; print(&quot;Found pi!&quot;),
 
     // Guards
-    Number::Int when my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
+    Number::Int if my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
 
     // Execute the same body for different expressions
     Number::Int(3) | Number::Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
@@ -1078,21 +1078,6 @@ main {
 
         </div>
 
-        
-        <!-- Livereload script (if served using the cli tool) -->
-        <script type="text/javascript">
-            var socket = new WebSocket("ws://localhost:3000/__livereload");
-            socket.onmessage = function (event) {
-                if (event.data === "reload") {
-                    socket.close();
-                    location.reload();
-                }
-            };
-
-            window.onbeforeunload = function() {
-                socket.close();
-            }
-        </script>
         
 
         

@@ -43,7 +43,7 @@ match my_num {
     Number::Float(3.14) => print("Found pi!"),
 
     // Guards
-    Number::Int when my_num > 10 => print("Found integer bigger than 10),
+    Number::Int if my_num > 10 => print("Found integer bigger than 10),
 
     // Execute the same body for different expressions
     Number::Int(3) | Number::Float(3.1) => print("Number is ", my_num),
