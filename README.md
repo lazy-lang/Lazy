@@ -2,7 +2,7 @@
 
 A statically typed programming language which is a mix of **typescript** and **rust**, written in **rust**.
 
-You can find all of the language's features [here](https://googlefeud.github.io/Lazy/).
+You can find all of the language's features [here](https://lazy-lang.github.io/Lazy/).
 
 ## Progress
 
