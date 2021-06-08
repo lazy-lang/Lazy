@@ -73,7 +73,7 @@ impl Range {
     }
 
     #[inline]
-    pub fn err_start(&self, err: ErrorType, tokens: &mut Tokenizer) {
+    pub fn err_start<'a>(&self, err: ParserErrorType, tokens: &mut Tokenizer) {
         tokens.error(err, self.start, tokens.input.loc())
     }
 
@@ -103,7 +103,7 @@ pub struct Token {
 
 pub struct Tokenizer {
     current: Option<Token>,
-    pub errors: Vec<Error<ErrorType>>,
+    pub errors: Vec<Error<ParserErrorType>>,
     pub input: InputParser,
     pub is_last_num_as_str: bool,
     pub last_loc: LoC
@@ -133,7 +133,7 @@ impl Tokenizer {
                 },
                 None => {
                     let loc = self.input.loc();
-                    self.error(ErrorType::EndOfStr, start, loc);
+                    self.error(ParserErrorType::EndOfStr, start, loc);
                     break;
                 }
             }
@@ -148,13 +148,13 @@ impl Tokenizer {
         let val = match maybe_ch {
             Some(ch) => ch,
             None => {
-                self.error(ErrorType::EmptyCharLiteral, self.input.loc(), self.input.loc());
+                self.error(ParserErrorType::EmptyCharLiteral, self.input.loc(), self.input.loc());
                 '_'
             }
         };
         let next = self.input.consume();
         if next == None || next.unwrap() != '\'' {
-            self.error(ErrorType::Expected(String::from("character literal may only contain one codepoint")), start, self.input.loc());
+            self.error(ParserErrorType::Expected("character literal may only contain one codepoint"), start, self.input.loc());
         }
         Token { val: TokenType::Char(val), range: Range { start, end: self.input.loc() }}
     }
@@ -198,11 +198,11 @@ impl Tokenizer {
                 '1'..='9' => {
                     match num_type {
                         NumberType::Binary if ch > '1' => {
-                            self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
                             num_type = NumberType::None;
                         },
                         NumberType::Octal if ch > '7' => {
-                            self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
                             num_type = NumberType::None;
                         },
                         _ => {}
@@ -213,7 +213,7 @@ impl Tokenizer {
                     if num_type == NumberType::Hex {
                         num.push(self.input.consume().unwrap())
                     } else {
-                        self.error(ErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                        self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
                         break;
                     }
                 },
@@ -226,7 +226,7 @@ impl Tokenizer {
                     }
                     if dot {
                         self.input.consume();
-                        self.error(ErrorType::DecimalPoint, start, self.input.loc()); 
+                        self.error(ParserErrorType::DecimalPoint, start, self.input.loc()); 
                         break;
                      };
                     self.input.consume();
@@ -308,7 +308,7 @@ impl Tokenizer {
         while !self.input.is_eof() {
             // Invalid operators
             if match_str!(op.as_str(), "<>") {
-                self.error(ErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
+                self.error(ParserErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
                 break;
             }
             // Operators which cannot be folled by other operators
@@ -365,7 +365,7 @@ impl Tokenizer {
                     self.error(confused_err, loc, loc);
                     return None;
                 };
-                self.error(ErrorType::InvalidCharacter(ch), loc, loc);
+                self.error(ParserErrorType::InvalidCharacter(ch), loc, loc);
                 None
             } 
         }
@@ -388,7 +388,7 @@ impl Tokenizer {
     }
 
     #[inline]
-    pub fn error_here(&mut self, e_type: ErrorType) {
+    pub fn error_here(&mut self, e_type: ParserErrorType) {
         self.errors.push(Error { e_type, range: Range {start: self.input.loc(), end: self.input.loc() } });
     }
 
@@ -400,13 +400,13 @@ impl Tokenizer {
         }
     }
 
-    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ErrorType>, loc: Option<Range>) -> bool {
+    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ParserErrorType>, loc: Option<Range>) -> bool {
         let location = loc.unwrap_or(Range { start: self.last_loc, end: self.last_loc});
         match self.peek() {
             Some(token) => {
                 if token.val != tok {
                     let other = token.val.to_string();
-                    self.error(err.unwrap_or_else(|| ErrorType::ExpectedFound(tok.to_string(), other)), location.start, location.end);
+                    self.error(err.unwrap_or_else(|| ParserErrorType::expected_found(tok.to_string(), other)), location.start, location.end);
                     true
                 } else {
                     self.consume();
@@ -414,7 +414,7 @@ impl Tokenizer {
                 }
             },
             None => {
-                self.error(err.unwrap_or_else(|| ErrorType::Expected(tok.to_string())), location.start, location.end);
+                self.error(err.unwrap_or_else(|| ParserErrorType::ExpectedString(tok.to_string())), location.start, location.end);
                 true
             }
         }
@@ -430,34 +430,34 @@ impl Tokenizer {
                             self.consume();
                             return Some(punc);
                          };
-                        self.error(ErrorType::ExpectedFound(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), punc.to_string()), location.start, location.end);
+                        self.error(ParserErrorType::expected_found(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), punc.to_string()), location.start, location.end);
                         None
                     },
                     _ => {
                         let tstr = tok.val.to_string();
-                        self.error(ErrorType::ExpectedFound(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr), location.start, location.end);
+                        self.error(ParserErrorType::expected_found(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr), location.start, location.end);
                         None
                     }
                 }
             },
             None => {
-                self.error(ErrorType::Expected(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
+                self.error(ParserErrorType::ExpectedString(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
                 None
             }
         }
     }
 
-    pub fn is_confusable(ch: char) -> Option<ErrorType> {
+    pub fn is_confusable(ch: char) -> Option<ParserErrorType> {
         match ch {
-            ';' => Some(ErrorType::Confusable("; (Greek question mark)".to_string(), "; (semicolon)".to_string())),
-            '‚' => Some(ErrorType::Confusable("‚ (low-9 quatation mark)".to_string(), ", (comma)".to_string())),
-            '٫' => Some(ErrorType::Confusable("‚ (arabic decimal separator)".to_string(), ", (comma)".to_string())),
-            '：' => Some(ErrorType::Confusable("： (fullwidth colon)".to_string(), ": (colon)".to_string())),
-            '։' => Some(ErrorType::Confusable("： (armenian full stop)".to_string(), ": (colon)".to_string())),
-            '∶' => Some(ErrorType::Confusable("∶ (ratio)".to_string(), ": (colon)".to_string())),
-            '！' => Some(ErrorType::Confusable("！ (fullwidth exclamation mark)".to_string(), "! (exclamation mark)".to_string())),
-            'ǃ' => Some(ErrorType::Confusable("ǃ (latin letter retroflex click)".to_string(), "! (exclamation mark)".to_string())),
-            '․' => Some(ErrorType::Confusable("․ (one dot leader)".to_string(), ". (full stop)".to_string())),
+            ';' => Some(ParserErrorType::Confusable("; (Greek question mark)", "; (semicolon)")),
+            '‚' => Some(ParserErrorType::Confusable("‚ (low-9 quatation mark)", ", (comma)")),
+            '٫' => Some(ParserErrorType::Confusable("‚ (arabic decimal separator)", ", (comma)")),
+            '：' => Some(ParserErrorType::Confusable("： (fullwidth colon)", ": (colon)")),
+            '։' => Some(ParserErrorType::Confusable("： (armenian full stop)", ": (colon)")),
+            '∶' => Some(ParserErrorType::Confusable("∶ (ratio)", ": (colon)")),
+            '！' => Some(ParserErrorType::Confusable("！ (fullwidth exclamation mark)", "! (exclamation mark)")),
+            'ǃ' => Some(ParserErrorType::Confusable("ǃ (latin letter retroflex click)", "! (exclamation mark)")),
+            '․' => Some(ParserErrorType::Confusable("․ (one dot leader)", ". (full stop)")),
             _ => None
         }‎
     }
@@ -468,10 +468,10 @@ impl Tokenizer {
 
 }
 
-impl error::ErrorCollector<ErrorType> for Tokenizer {
+impl error::ErrorCollector<ParserErrorType> for Tokenizer {
 
     #[inline]
-    fn error(&mut self, e_type: ErrorType, start: LoC, end: LoC) {
+    fn error(&mut self, e_type: ParserErrorType, start: LoC, end: LoC) {
         self.errors.push(Error { e_type, range: Range {start, end} });
     }
 }

@@ -31,7 +31,7 @@ impl RangeRecorder {
     }
 
     #[inline]
-    pub fn err(&self, err: ErrorType, tok: &mut Tokenizer) {
+    pub fn err(&self, err: ParserErrorType, tok: &mut Tokenizer) {
         tok.error(err, self.start, tok.input.loc())
     }
     

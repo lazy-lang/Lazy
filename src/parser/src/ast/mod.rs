@@ -1,6 +1,6 @@
 
 use super::tokenizer::{Tokenizer, TokenType, Range};
-use super::tokenizer::error::{ErrorType, ErrorCollector};
+use super::tokenizer::error::{ParserErrorType, ErrorCollector};
 use super::input_parser::LoC;
 pub mod model;
 pub mod utils;
@@ -68,7 +68,7 @@ impl Parser {
                     let exp = self.parse_expression_part(false);
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { 
-                        self.tokens.error(ErrorType::UnexpectedOp(opval), err_start, err_end);
+                        self.tokens.error(ParserErrorType::UnexpectedOp(opval), err_start, err_end);
                         return Some(left_tok)
                      };
                     return self.parse_binary(Some(ASTExpression::Binary(ASTBinary {
@@ -98,7 +98,7 @@ impl Parser {
                         let val = token.unwrap();
                         let target = self.parse_varname(true, false, !matches!(val, ASTExpression::Int(_) | ASTExpression::Float(_)));
                         if target.0.is_none() { 
-                            recorder.err(ErrorType::ProperProperty, &mut self.tokens);
+                            recorder.err(ParserErrorType::ProperProperty, &mut self.tokens);
                             return None;
                         };
                         self.parse_suffix(Some(ASTExpression::DotAccess(
@@ -122,7 +122,7 @@ impl Parser {
                         self.tokens.consume();
                         let end = self.parse_expression_part(true);
                         if end.is_none() {
-                            recorder.err(ErrorType::EndOfIterator, &mut self.tokens);
+                            recorder.err(ParserErrorType::EndOfIterator, &mut self.tokens);
                             return None;
                         }
                         Some(ASTExpression::Iterator(
@@ -173,7 +173,7 @@ impl Parser {
                         self.tokens.consume();
                         let target = self.parse_expression();
                         if target.is_none() {
-                            recorder.err(ErrorType::ProperProperty, &mut self.tokens);
+                            recorder.err(ParserErrorType::ProperProperty, &mut self.tokens);
                             return None;
                         };
                         self.tokens.skip_or_err(TokenType::Punc(']'), None, None);
@@ -192,7 +192,7 @@ impl Parser {
                                 ASTModAccessValues::Var(v) => Some(ASTExpression::Var(v.value))
                             }
                         } else {
-                            recorder.err(ErrorType::Expected(String::from("identifier")), &mut self.tokens);
+                            recorder.err(ParserErrorType::Expected("identifier"), &mut self.tokens);
                             None
                         }
                     }
@@ -217,7 +217,7 @@ impl Parser {
             let r = start.range;
             let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                 if !allow_typings {
-                    self.tokens.error_here(ErrorType::Unexpected(String::from("typings")));
+                    self.tokens.error_here(ParserErrorType::Unexpected("typings"));
                 }
                 self.tokens.consume();
                 Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
@@ -236,7 +236,7 @@ impl Parser {
                     },
                     _ => {
                         if !allow_exp_end {
-                            self.tokens.error_here(ErrorType::Unexpected(String::from("expression")));
+                            self.tokens.error_here(ParserErrorType::Unexpected("expression"));
                             break;
                         }
                         break;
@@ -246,14 +246,14 @@ impl Parser {
         };
         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
             if !allow_typings {
-                self.tokens.error_here(ErrorType::Unexpected(String::from("typings")));
+                self.tokens.error_here(ParserErrorType::Unexpected("typings"));
             }
             self.tokens.consume();
             Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
         } else { None };
         let init = if self.tokens.is_next(TokenType::Punc('(')) {
             if !allow_exp_end {
-                self.tokens.error_here(ErrorType::Unexpected(String::from("initializer")));
+                self.tokens.error_here(ParserErrorType::Unexpected("initializer"));
             }
             self.tokens.consume();
             Some(self.parse_expression_list(')'))
@@ -285,7 +285,7 @@ impl Parser {
                             self.tokens.consume(); 
                             let typing = self.parse_typing(allow_fn_keyword, true);
                             if typing.is_none() { 
-                                range.err(ErrorType::Expected(String::from("return type")), &mut self.tokens);
+                                range.err(ParserErrorType::Expected("return type"), &mut self.tokens);
                                 return None
                             };
                             Some(Box::from(typing.unwrap()))
@@ -314,7 +314,7 @@ impl Parser {
                     },
                     TokenType::Kw(kw) => {
                         if !allow_fn_keyword {
-                            range.err(ErrorType::Unexpected(String::from("keyword fn")), &mut self.tokens);
+                            range.err(ParserErrorType::Unexpected("keyword fn"), &mut self.tokens);
                             return None;
                         }
                         match kw.as_str() {
@@ -327,7 +327,7 @@ impl Parser {
                     }
                     _ => {
                         //let token_stringed = token.val.to_string();
-                        //self.tokens.error(ErrorType::ExpectedFound(String::from("typing"), token_stringed), self.tokens.input.loc(), self.tokens.input.loc());
+                        //self.tokens.error(ParserErrorType::ExpectedFound(String::from("typing"), token_stringed), self.tokens.input.loc(), self.tokens.input.loc());
                         None
                     }
                 }
@@ -347,7 +347,7 @@ impl Parser {
                                 self.tokens.consume();
                                 let right = self.parse_typing(false, false);
                                 if right.is_none() {
-                                    self.tokens.error(ErrorType::Expected(String::from("typing")), self.tokens.input.loc(), self.tokens.input.loc());
+                                    self.tokens.error(ParserErrorType::Expected("typing"), self.tokens.input.loc(), self.tokens.input.loc());
                                     return Some(typing);
                                 }
                                 Some(ASTTypings::Combine(
@@ -365,7 +365,7 @@ impl Parser {
                                         ASTTypings::Var(v) => ASTModAccessValues::Var(v),
                                         ASTTypings::Mod(m) => ASTModAccessValues::ModAccess(m),
                                         _ => {
-                                            range.err(ErrorType::Unexpected(String::from("explicit impl operator")), &mut self.tokens);
+                                            range.err(ParserErrorType::Unexpected("explicit impl operator"), &mut self.tokens);
                                             return None
                                         }
                                     }
@@ -394,9 +394,9 @@ impl Parser {
                 Some(expression) => res.push(expression),
                 None => continue
             };
-           if !self.is_last_block { self.tokens.skip_or_err(TokenType::Punc(';'), Some(ErrorType::Semicolon), Some(range)); };
+           if !self.is_last_block { self.tokens.skip_or_err(TokenType::Punc(';'), Some(ParserErrorType::Semicolon), Some(range)); };
         }
-        self.tokens.skip_or_err(TokenType::Punc('}'), Some(ErrorType::EndOfBlock), Some(range.end(&self.tokens)));
+        self.tokens.skip_or_err(TokenType::Punc('}'), Some(ParserErrorType::EndOfBlock), Some(range.end(&self.tokens)));
         self.is_last_block = true;
         ASTBlock {
             elements: res,
@@ -412,7 +412,7 @@ impl Parser {
             v
         } else { self.tokens.consume() };
         if next.is_none() { 
-            self.tokens.error_here(ErrorType::Expected(String::from("itentifier")));
+            self.tokens.error_here(ParserErrorType::Expected("itentifier"));
             return (None, None);
         };
         let unwrapped = next.unwrap();
@@ -420,7 +420,7 @@ impl Parser {
             TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range },
             TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
             _ => {
-                self.tokens.error(ErrorType::ExpectedFound(String::from("identifier"), unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
+                self.tokens.error(ParserErrorType::expected_found("identifier", unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
                 return (None, None);
             }
         };
@@ -447,7 +447,7 @@ impl Parser {
                     match ch {
                         ',' => {
                             if !allow_without_val {
-                                tok_start.err(ErrorType::Expected(String::from("value")), &mut self.tokens);
+                                tok_start.err(ParserErrorType::Expected("value"), &mut self.tokens);
                                 continue;
                             }
                             res.push((key.0.unwrap().value, None));
@@ -455,14 +455,14 @@ impl Parser {
                         ':' => {
                             let exp = self.parse_expression();
                             if exp.is_none() { 
-                                tok_start.err(ErrorType::Expected(String::from("expression")), &mut self.tokens);
+                                tok_start.err(ParserErrorType::Expected("expression"), &mut self.tokens);
                                 continue;
                             }
                             res.push((key.0.unwrap().value, exp));
                         },
                         ch if ch == closing_punc => {
                             if !allow_without_val {
-                                tok_start.err(ErrorType::Expected(String::from("typeing")), &mut self.tokens);
+                                tok_start.err(ParserErrorType::Expected("typeing"), &mut self.tokens);
                                 continue;
                             }
                             has_consumed_bracket = true;
@@ -476,7 +476,7 @@ impl Parser {
             };
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
-        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), Some(ErrorType::Expected(closing_punc.to_string())), Some(range.end(&self.tokens))); };
+        if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), None, None); };
         ASTPairList {
             range: range.end(&self.tokens),
             pairs: res
@@ -532,7 +532,7 @@ impl Parser {
             let tok_range = self.tokens.recorder();
             let is_spread = if self.tokens.is_next(TokenType::Op(String::from("..."))) {
                 if !allow_spread {
-                    self.tokens.error(ErrorType::Disallowed(String::from("spread operator")), self.tokens.input.loc_inc(-3, 0), self.tokens.input.loc())
+                    self.tokens.error(ParserErrorType::Disallowed("spread operator"), self.tokens.input.loc_inc(-3, 0), self.tokens.input.loc())
                 }
                 self.tokens.consume();
                 true
@@ -545,7 +545,7 @@ impl Parser {
                             "const" => {
                                 self.tokens.consume();
                                 if modifiers.contains(ASTModifiers::CONST) {
-                                    mod_range.err_start(ErrorType::AlreadyHasModifier(String::from("const")), &mut self.tokens);
+                                    mod_range.err_start(ParserErrorType::AlreadyHasModifier("const"), &mut self.tokens);
                                 };
                                 modifiers.insert(ASTModifiers::CONST);
                                 continue;
@@ -553,7 +553,7 @@ impl Parser {
                             "static" => {
                                 self.tokens.consume();
                                 if modifiers.contains(ASTModifiers::STATIC) {
-                                    mod_range.err_start(ErrorType::AlreadyHasModifier(String::from("static")), &mut self.tokens);
+                                    mod_range.err_start(ParserErrorType::AlreadyHasModifier("static"), &mut self.tokens);
                                 };
                                 modifiers.insert(ASTModifiers::STATIC);
                                 continue;
@@ -561,7 +561,7 @@ impl Parser {
                             "private" => {
                                 self.tokens.consume();
                                 if modifiers.contains(ASTModifiers::PRIVATE) {
-                                    mod_range.err_start(ErrorType::AlreadyHasModifier(String::from("private")), &mut self.tokens);
+                                    mod_range.err_start(ParserErrorType::AlreadyHasModifier("private"), &mut self.tokens);
                                 };
                                 modifiers.insert(ASTModifiers::PRIVATE);
                                 continue;
@@ -575,12 +575,12 @@ impl Parser {
             if key.0.is_none() { continue };
             if self.tokens.is_next(TokenType::Op(String::from("="))) {
                 if !allow_default {
-                    self.tokens.error_here(ErrorType::Disallowed(String::from("default parameter")))
+                    self.tokens.error_here(ParserErrorType::Disallowed("default parameter"))
                 }
                 self.tokens.consume();
                 let default_value = self.parse_expression();
                 if default_value.is_none() { 
-                    self.tokens.error_here(ErrorType::Expected(String::from("expression")));
+                    self.tokens.error_here(ParserErrorType::Expected("expression"));
                 }
                 res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value, modifiers, spread: is_spread});
                 continue;
@@ -590,7 +590,7 @@ impl Parser {
                     match ch {
                         ',' => {
                             if !allow_without_val {
-                                tok_range.err(ErrorType::Expected(String::from("type")), &mut self.tokens);
+                                tok_range.err(ParserErrorType::Expected("type"), &mut self.tokens);
                                 continue;
                             }
                             res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
@@ -599,12 +599,12 @@ impl Parser {
                         ':' => {
                             let exp = self.parse_typing(allow_fn_keyword, true);
                             if exp.is_none() { 
-                                tok_range.err(ErrorType::Expected(String::from("expression")), &mut self.tokens);
+                                tok_range.err(ParserErrorType::Expected("expression"), &mut self.tokens);
                                 continue;
                             }
                             let default_value = if self.tokens.is_next(TokenType::Op(String::from("="))) {
                                 if !allow_default {
-                                    self.tokens.error(ErrorType::Disallowed(String::from("default parameter")), self.tokens.last_loc, self.tokens.input.loc())
+                                    self.tokens.error(ParserErrorType::Disallowed("default parameter"), self.tokens.last_loc, self.tokens.input.loc())
                                 }
                                 self.tokens.consume();
                                 self.parse_expression()
@@ -614,7 +614,7 @@ impl Parser {
                         },
                         ch if ch == closing_punc => {
                             if !allow_without_val {
-                                tok_range.err(ErrorType::Expected(String::from("type")), &mut self.tokens);
+                                tok_range.err(ParserErrorType::Expected("type"), &mut self.tokens);
                                 continue;
                             }
                             has_consumed_bracket = true;
@@ -651,19 +651,18 @@ impl Parser {
             match &typing {
                 ASTTypings::Var(v) => {
                     if v.typings.is_some() {
-                        v.range.err(ErrorType::Unexpected(String::from("token <, generics are not allowed here.")), &mut self.tokens);
+                        v.range.err(ParserErrorType::Unexpected("token <, generics are not allowed here."), &mut self.tokens);
                     }
                 },
                 _ => {
-                    id_range.err(ErrorType::Expected(String::from("generic parameter")), &mut self.tokens);
+                    id_range.err(ParserErrorType::Expected("generic parameter"), &mut self.tokens);
                 }
             }
             }
             res.push(typing);
             is_first = false;
         };
-        let closing_tok_str = closing_tok.to_string();
-        self.tokens.skip_or_err(closing_tok, Some(ErrorType::Expected(closing_tok_str)), Some(range.end(&self.tokens)));
+        self.tokens.skip_or_err(closing_tok, None, None);
         ASTListTyping {
             entries: res,
             range: range.end(&self.tokens)
@@ -677,13 +676,13 @@ impl Parser {
             self.tokens.consume();
             Some(self.parse_typing_list(true, false, TokenType::Op(String::from(">"))))
         } else { None };
-        if self.tokens.skip_or_err(TokenType::Punc('('), Some(ErrorType::Expected(String::from("start of function params"))), None) { return None };
+        if self.tokens.skip_or_err(TokenType::Punc('('), Some(ParserErrorType::Expected("start of function params")), None) { return None };
         let params = Box::from(self.parse_typing_pair_list(true, false, true, false, true, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
             let exp = self.parse_typing(false, true);
             if exp.is_none() { 
-                self.tokens.error(ErrorType::Expected(String::from("return type")), self.tokens.input.loc(), self.tokens.input.loc()); 
+                self.tokens.error(ParserErrorType::Expected("return type"), self.tokens.input.loc(), self.tokens.input.loc()); 
                 return None; 
             };
            Some(Box::from(exp.unwrap()))
@@ -712,36 +711,36 @@ impl Parser {
                 ASTExpression::Bool(b_obj) => Some(ASTMatchArmExpressions::Bool(b_obj)),
                 ASTExpression::Tuple(t_obj) => {
                     if !utils::is_natural_tuple(&t_obj) {
-                        range.err(ErrorType::Expected(String::from("natural tuple literal")), &mut self.tokens);
+                        range.err(ParserErrorType::Expected("natural tuple literal"), &mut self.tokens);
                     }
                     Some(ASTMatchArmExpressions::Tuple(t_obj))
                 },
                 ASTExpression::Iterator(i_obj) => {
                     if !utils::is_natural_iter(&i_obj) {
-                        range.err(ErrorType::Expected(String::from("natural iterator literal")), &mut self.tokens);
+                        range.err(ParserErrorType::Expected("natural iterator literal"), &mut self.tokens);
                     }
                     Some(ASTMatchArmExpressions::Iterator(i_obj))
                 },
                 ASTExpression::Var(v) => {
                     if v.value != "_" {
-                        range.err(ErrorType::Unexpected(String::from("variable name")), &mut self.tokens);
+                        range.err(ParserErrorType::Unexpected("variable name"), &mut self.tokens);
                     };
                     Some(ASTMatchArmExpressions::Rest)
                 },
                 ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
                 ASTExpression::ModAccess(acc) => {
                     if !utils::is_natural_mod_access(&acc) {
-                        range.err(ErrorType::Expected(String::from("natural enum value")), &mut self.tokens);
+                        range.err(ParserErrorType::Expected("natural enum value"), &mut self.tokens);
                     }
                     Some(ASTMatchArmExpressions::Enum(acc))
                 },
                 _ => {
-                    range.err(ErrorType::WrongMatchArmExp, &mut self.tokens);
+                    range.err(ParserErrorType::WrongMatchArmExp, &mut self.tokens);
                     None
                 }
             }
         } else {
-            range.err(ErrorType::Expected(String::from("match arm expression")), &mut self.tokens);
+            range.err(ParserErrorType::Expected("match arm expression"), &mut self.tokens);
             None
         }
     }
@@ -771,7 +770,7 @@ impl Parser {
                                     self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
                                     let exp = self.parse_expression();
                                     if exp.is_none() {
-                                        self.tokens.error_here(ErrorType::Expected(String::from("expression")));
+                                        self.tokens.error_here(ParserErrorType::Expected("expression"));
                                         continue;
                                     };
                                     self.tokens.skip_or_err(TokenType::Punc('}'), None, None);
@@ -786,13 +785,13 @@ impl Parser {
                             }
                         },
                         None => {
-                            token.range.err_start(ErrorType::EndOfStr, &mut self.tokens);
+                            token.range.err_start(ParserErrorType::EndOfStr, &mut self.tokens);
                             return None;
                         }
                     }
                 };
                 if exps.len() == 0 {
-                    token.range.err_start(ErrorType::PointlessTemplate, &mut self.tokens);
+                    token.range.err_start(ParserErrorType::PointlessTemplate, &mut self.tokens);
                     return None;
                 }
                 Some(ASTExpression::TempStr(ASTTempStr {
@@ -830,7 +829,7 @@ impl Parser {
                         ))
                     }
                     _ => {
-                        token.range.err(ErrorType::UnexpectedOp(value), &mut self.tokens);
+                        token.range.err(ParserErrorType::UnexpectedOp(value), &mut self.tokens);
                         None
                     }
                 }
@@ -839,25 +838,25 @@ impl Parser {
                 match val {
                     '(' => {
                         if self.tokens.is_next(TokenType::Punc(')')) {
-                            self.tokens.error_here(ErrorType::Unexpected(String::from("empty expression")));
+                            self.tokens.error_here(ParserErrorType::Unexpected("empty expression"));
                             return None;
                         };
                         let exp = self.parse_expression();
-                        self.tokens.skip_or_err(TokenType::Punc(')'), Some(ErrorType::Expected(String::from("end of wrapped expression"))), None);
+                        self.tokens.skip_or_err(TokenType::Punc(')'), Some(ParserErrorType::Expected("end of wrapped expression")), None);
                         exp   
                     },
                     ';' => None,
                     '{' => Some(ASTExpression::Block(self.parse_block(true))),
                     '[' => {
                         if self.tokens.is_next(TokenType::Punc(']')) {
-                            self.tokens.error_here(ErrorType::Unexpected(String::from("empty tuple")));
+                            self.tokens.error_here(ParserErrorType::Unexpected("empty tuple"));
                             return None;
                         };
                         let expressions = self.parse_expression_list(']');
                         Some(ASTExpression::Tuple(expressions))
                     },
                     _ => {
-                        token.range.err(ErrorType::UnexpectedPunc(val), &mut self.tokens);
+                        token.range.err(ParserErrorType::UnexpectedPunc(val), &mut self.tokens);
                         None
                     }
                 }
@@ -872,7 +871,7 @@ impl Parser {
                             TokenType::Punc('{') => ASTDeclareTypes::StructDeconstruct(self.parse_varname_list('}')),
                             TokenType::Var(v) => ASTDeclareTypes::Var(ASTVar { value: v, range: to_get_name.range  }),
                             _ => {
-                                to_get_name.range.err(ErrorType::ExpectedFound(String::from("identifier or deconstruct pattern"), to_get_name.val.to_string()), &mut self.tokens);
+                                to_get_name.range.err(ParserErrorType::expected_found("identifier or deconstruct pattern", to_get_name.val.to_string()), &mut self.tokens);
                                 return None;
                             }
                         };
@@ -880,7 +879,7 @@ impl Parser {
                             self.tokens.consume();
                             let typing = self.parse_typing(false, true);
                             if typing.is_none() {
-                                self.tokens.error_here(ErrorType::Expected(String::from("typing")));
+                                self.tokens.error_here(ParserErrorType::Expected("typing"));
                             }
                             typing
                         } else { None };
@@ -890,13 +889,13 @@ impl Parser {
                             match exp {
                                 Some(e) => Some(Box::from(e)),
                                 None => {
-                                    self.tokens.error(ErrorType::Expected(String::from("initializor")), token.range.start, equals.range.end);
+                                    self.tokens.error(ParserErrorType::Expected("initializor"), token.range.start, equals.range.end);
                                     None
                                 }
                             }
                         } else { 
                             if is_const {
-                                token.range.err(ErrorType::ConstantWithoutInit, &mut self.tokens)
+                                token.range.err(ParserErrorType::ConstantWithoutInit, &mut self.tokens)
                             }
                             None
                          };
@@ -917,13 +916,13 @@ impl Parser {
                         let condition = if let Some(cond) = self.parse_expression() {
                              Box::from(cond)
                         } else {
-                            token.range.err(ErrorType::Expected(String::from("condition in if expression")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("condition in if expression"), &mut self.tokens);
                              return None;
                         };
                         let then = if let Some(th) = self.parse_expression_or_expression_statement() {
                              Box::from(th)
                          } else {
-                            token.range.err(ErrorType::Expected(String::from("expression that will be executed if the condition is true")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("expression that will be executed if the condition is true"), &mut self.tokens);
                             return None;
                          };
                          let otherwise = if self.tokens.is_next(TokenType::Kw(String::from("else"))) {
@@ -944,20 +943,20 @@ impl Parser {
                     "for" => {
                         let var = self.parse_varname(false, false, false).0;
                         if var.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("identifier")));
+                            self.tokens.error_here(ParserErrorType::Expected("identifier"));
                             return None;
                         };
                         if self.tokens.skip_or_err(TokenType::Kw(String::from("in")), None, None) { return None; };
                         let iterator = self.parse_expression();
                         if iterator.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("iterator")));
+                            self.tokens.error_here(ParserErrorType::Expected("iterator"));
                             return None;
                         }
                         let turn_off_exp_statements = !self.allow_exp_statements;
                         self.allow_exp_statements = true;
                         let body = self.parse_expression_or_expression_statement();
                         if body.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("for...in loop body")));
+                            self.tokens.error_here(ParserErrorType::Expected("for...in loop body"));
                             return None;
                         }
                         if turn_off_exp_statements { self.allow_exp_statements = false; }
@@ -973,14 +972,14 @@ impl Parser {
                     "while" => {
                         let cond = self.parse_expression();
                         if cond.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("while condition")));
+                            self.tokens.error_here(ParserErrorType::Expected("while condition"));
                             return None;
                         }
                         let turn_off_exp_statements = !self.allow_exp_statements;
                         self.allow_exp_statements = true;
                         let body = self.parse_expression_or_expression_statement();
                         if body.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("while body")));
+                            self.tokens.error_here(ParserErrorType::Expected("while body"));
                             return None;
                         }
                         if turn_off_exp_statements { self.allow_exp_statements = false; }
@@ -995,7 +994,7 @@ impl Parser {
                     "match" => {
                         let to_get_matched = self.parse_expression();
                         if to_get_matched.is_none() {
-                            self.tokens.error_here(ErrorType::Expected(String::from("expression to get matched")));
+                            self.tokens.error_here(ParserErrorType::Expected("expression to get matched"));
                             return None;
                         };
                         self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
@@ -1020,7 +1019,7 @@ impl Parser {
 
                             let body = self.parse_expression();
                             if body.is_none() {
-                                match_arm_start.err(ErrorType::Expected(String::from("match arm body")), &mut self.tokens);
+                                match_arm_start.err(ParserErrorType::Expected("match arm body"), &mut self.tokens);
                                 return None;
                             }
                             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
@@ -1043,14 +1042,14 @@ impl Parser {
                         let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false, true) {
                             t
                         } else {
-                            token.range.err(ErrorType::Expected(String::from("struct identifier")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("struct identifier"), &mut self.tokens);
                             return None;
                         };
                         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                             self.tokens.consume();
                             Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
                         } else { None };
-                        self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("struct initializor"))), None);
+                        self.tokens.skip_or_err(TokenType::Punc('{'), Some(ParserErrorType::Expected("struct initializor")), None);
                         Some(ASTExpression::Init(
                             ASTInitializor {
                                 target,
@@ -1068,7 +1067,7 @@ impl Parser {
                         let expression = if let Some(exp) = self.parse_expression() {
                             Box::from(exp)
                         } else {
-                            token.range.err(ErrorType::Expected(String::from("expression")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("expression"), &mut self.tokens);
                             return None;
                         };
                         Some(ASTExpression::Await(
@@ -1080,7 +1079,7 @@ impl Parser {
                         ))
                     }
                     _ => {
-                        token.range.err(ErrorType::ExpectedFound("expression".to_string(), format!("keyword \"{}\"", val)), &mut self.tokens);
+                        token.range.err(ParserErrorType::expected_found("expression", format!("keyword \"{}\"", val)), &mut self.tokens);
                         None
                     }
                 }
@@ -1104,7 +1103,7 @@ impl Parser {
                     "yield" => { 
                         self.tokens.consume();
                         if !self.allow_exp_statements {
-                            range.err(ErrorType::Unexpected(String::from("yield expression")), &mut self.tokens);
+                            range.err(ParserErrorType::Unexpected("yield expression"), &mut self.tokens);
                             return None;
                         }
                         let value = if let Some(exp) = self.parse_expression() {
@@ -1131,10 +1130,10 @@ impl Parser {
                    "struct" => {
                         let name = self.parse_varname(true, true, false);
                         if name.0.is_none() { 
-                            token.range.err(ErrorType::Expected(String::from("struct name")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("struct name"), &mut self.tokens);
                             return None;
                         }
-                        if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of struct fields"))), None) { return None; };
+                        if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ParserErrorType::Expected("start of struct fields")), None) { return None; };
                         Some(ASTStatement::Struct(ASTStruct {
                             name: name.0.unwrap(),
                             typings: name.1,
@@ -1145,10 +1144,10 @@ impl Parser {
                    "enum" => {
                     let name = self.parse_varname(true, true, false);
                     if name.0.is_none() { 
-                        token.range.err(ErrorType::Expected(String::from("struct name")), &mut self.tokens);
+                        token.range.err(ParserErrorType::Expected("struct name"), &mut self.tokens);
                         return None;
                     }
-                    if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ErrorType::Expected(String::from("start of enum variants"))), None) { return None; };
+                    if self.tokens.skip_or_err(TokenType::Punc('{'), Some(ParserErrorType::Expected("start of enum variants")), None) { return None; };
                     Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                     name: name.0.unwrap(),
                     values: self.parse_typing_pair_list(true, false, false, false, false, '}'),
@@ -1159,13 +1158,13 @@ impl Parser {
                    "type" => {
                        let name = self.parse_varname(true, true, false);
                        if name.0.is_none() {
-                        self.tokens.error_here(ErrorType::Expected(String::from("type name")));
+                        self.tokens.error_here(ParserErrorType::Expected("type name"));
                         return None;
                        }
                        if self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None) { return None; };
                        let typing = self.parse_typing(false, false);
                        if typing.is_none() {
-                        self.tokens.error_here(ErrorType::Expected(String::from("typing")));
+                        self.tokens.error_here(ParserErrorType::Expected("typing"));
                         return None;
                        }
                        Some(ASTStatement::Type(
@@ -1179,7 +1178,7 @@ impl Parser {
                    },
                    "main" => {
                        if self.parsed_main {
-                           range.err(ErrorType::ManyEntryPoints, &mut self.tokens);
+                           range.err(ParserErrorType::ManyEntryPoints, &mut self.tokens);
                        };
                        self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
                        let exp = self.parse_block(false);
@@ -1195,13 +1194,13 @@ impl Parser {
                        let varname = self.parse_varname(true, false, false);
                        self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None);
                        if varname.0.is_none() {
-                           range.err(ErrorType::Expected(String::from("identifier")), &mut self.tokens);
+                           range.err(ParserErrorType::Expected("identifier"), &mut self.tokens);
                            return None;
                        }
                        let typings = if let Some(typing) = varname.1 {
                         let len = typing.entries.len();
                         if len == 0 {
-                            token.range.err(ErrorType::Expected(String::from("at least one type")), &mut self.tokens);
+                            token.range.err(ParserErrorType::Expected("at least one type"), &mut self.tokens);
                             None
                         } else {
                            Some(typing) 
@@ -1209,7 +1208,7 @@ impl Parser {
                     } else { None };
                        let exp = self.parse_expression();
                        if exp.is_none() {
-                        range.err(ErrorType::Expected(String::from("initializor")), &mut self.tokens);
+                        range.err(ParserErrorType::Expected("initializor"), &mut self.tokens);
                         return None;
                        }
                        Some(ASTStatement::Static(
@@ -1224,7 +1223,7 @@ impl Parser {
                    "export" => {
                        let value = if let Some(stm) = self.parse_statement() {
                            if matches!(stm, ASTStatement::Main(_)) {
-                               range.err(ErrorType::Unexpected(String::from("main entry")), &mut self.tokens);
+                               range.err(ParserErrorType::Unexpected("main entry"), &mut self.tokens);
                                return None;
                            }
                            Box::from(stm)
@@ -1241,7 +1240,7 @@ impl Parser {
                        let path = if let Some(ASTExpression::Str(string)) = self.parse_expression_part(false) {
                            string
                        } else {
-                        self.tokens.error(ErrorType::Expected(String::from("path string")), range.start, path_start);
+                        self.tokens.error(ParserErrorType::Expected("path string"), range.start, path_start);
                         return None;
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
@@ -1264,14 +1263,14 @@ impl Parser {
                        let partial = if let Some(p) = self.parse_mod_access_or_var_without_var(false, true) {
                            p 
                        } else {
-                           range.err(ErrorType::Expected(String::from("Partial identifier")), &mut self.tokens);
+                           range.err(ParserErrorType::Expected("Partial identifier"), &mut self.tokens);
                            return None;
                        };
                        self.tokens.skip_or_err(TokenType::Kw(String::from("for")), None, None);
                        let target = if let Some(t) = self.parse_mod_access_or_var_without_var(false, true) {
                            t 
                        } else {
-                            range.err(ErrorType::Expected(String::from("Struct or enum identifier")), &mut self.tokens);
+                            range.err(ParserErrorType::Expected("Struct or enum identifier"), &mut self.tokens);
                             return None;
                        };
                        self.tokens.skip_or_err(TokenType::Punc('{'), None, None);
@@ -1286,7 +1285,7 @@ impl Parser {
                        ))
                    },
                    _ => {
-                    token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
+                    token.range.err(ParserErrorType::Expected("statement"), &mut self.tokens);
                     self.tokens.input.skip_line();
                     None
                 },
@@ -1314,7 +1313,7 @@ impl Parser {
                 let target = if let Some(stm) = self.parse_statement() {
                     Box::from(stm)
                 } else {
-                    token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
+                    token.range.err(ParserErrorType::Expected("statement"), &mut self.tokens);
                     return None;
                 };
                 Some(ASTStatement::Meta(
@@ -1326,7 +1325,7 @@ impl Parser {
                 }))
             },
             _ => {
-                token.range.err(ErrorType::Expected(String::from("statement")), &mut self.tokens);
+                token.range.err(ParserErrorType::Expected("statement"), &mut self.tokens);
                 self.tokens.input.skip_line();
                 None
             }

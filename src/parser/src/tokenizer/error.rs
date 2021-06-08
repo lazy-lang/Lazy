@@ -2,12 +2,13 @@
 use super::*;
 use colored::*;
 
-pub enum ErrorType {
+pub enum ParserErrorType {
     EndOfStr,
     DecimalPoint,
     InvalidCharacter(char),
     ExpectedFound(String, String),
-    Expected(String),
+    Expected(&'static str),
+    ExpectedString(String),
     ExpectedDelimiter(char),
     ProperProperty,
     ArrowAccess,
@@ -20,16 +21,23 @@ pub enum ErrorType {
     TooMuchTypes(i8),
     UnexpectedOp(String),
     UnexpectedPunc(char),
-    Unexpected(String),
+    Unexpected(&'static str),
     EndOfIterator,
     ManyEntryPoints,
     WrongMatchArmExp,
-    AlreadyHasModifier(String),
-    Disallowed(String),
-    Custom(String),
-    Confusable(String, String),
+    AlreadyHasModifier(&'static str),
+    Disallowed(&'static str),
+    Custom(&'static str),
+    Confusable(&'static str, &'static str),
     InvalidDigit,
     PointlessTemplate
+}
+
+impl ParserErrorType {
+    pub fn expected_found<T: Into<String>, R: Into<String>>(a: T, b: R) -> ParserErrorType {
+        Self::ExpectedFound(a.into(), b.into())
+    }
+
 }
 
 pub trait ErrorCollector<T> where T: fmt::Display {
@@ -85,36 +93,37 @@ impl<T> Error<T> where T: fmt::Display {
 
 }
 
-impl fmt::Display for ErrorType {
+impl fmt::Display for ParserErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            ErrorType::EndOfStr => write!(f, "Expected end of string"),
-            ErrorType::DecimalPoint =>  write!(f, "Numbers cannot contain more than one decimal point"),
-            ErrorType::ProperProperty =>  write!(f, "Expected a property name"),
-            ErrorType::InvalidCharacter(character) =>  write!(f, "Invalid character {}", character),
-            ErrorType::UnexpectedOp(op) =>  write!(f, "Unexpected operator {}", op),
-            ErrorType::UnexpectedPunc(punc) =>  write!(f, "Unexpected punctuation {}", punc),
-            ErrorType::Semicolon =>  write!(f, "Expected semicolon at the end of the expression"),
-            ErrorType::EndOfBlock =>  write!(f, "Expected end of block"),
-            ErrorType::Expected(val) =>  write!(f, "Expected {}", val),
-            ErrorType::ExpectedFound(val, found) =>  write!(f, "Expected {}, but found {}", val, found),
-            ErrorType::StartOfBlock =>  write!(f, "Expected start of block"),
-            ErrorType::ArrowAccess =>  write!(f, "Arrow access cannot be chained"),
-            ErrorType::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
-            ErrorType::Custom(msg) =>  write!(f, "{}", msg.to_string()),
-            ErrorType::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string()),
-            ErrorType::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount),
-            ErrorType::EmptyCharLiteral => write!(f, "Empty char literal"),
-            ErrorType::ConstantWithoutInit => write!(f, "Constant variables must have an initializor"),
-            ErrorType::NoGenerics => write!(f, "Generics are not allowed here"),
-            ErrorType::EndOfIterator => write!(f, "Expected end of iterator"),
-            ErrorType::Disallowed(string) => write!(f, "{} is not allowed here", string),
-            ErrorType::ManyEntryPoints => write!(f, "Too many entry points"),
-            ErrorType::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals."),
-            ErrorType::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
-            ErrorType::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected),
-            ErrorType::InvalidDigit => write!(f, "Invalid digit"),
-            ErrorType::PointlessTemplate => write!(f, "Pointless template literal")
+            Self::EndOfStr => write!(f, "Expected end of string"),
+            Self::DecimalPoint =>  write!(f, "Numbers cannot contain more than one decimal point"),
+            Self::ProperProperty =>  write!(f, "Expected a property name"),
+            Self::InvalidCharacter(character) =>  write!(f, "Invalid character {}", character),
+            Self::UnexpectedOp(op) =>  write!(f, "Unexpected operator {}", op),
+            Self::UnexpectedPunc(punc) =>  write!(f, "Unexpected punctuation {}", punc),
+            Self::Semicolon =>  write!(f, "Expected semicolon at the end of the expression"),
+            Self::EndOfBlock =>  write!(f, "Expected end of block"),
+            Self::Expected(val) =>  write!(f, "Expected {}", val),
+            Self::ExpectedString(val) => write!(f, "Expected {}", val),
+            Self::ExpectedFound(val, found) =>  write!(f, "Expected {}, but found {}", val, found),
+            Self::StartOfBlock =>  write!(f, "Expected start of block"),
+            Self::ArrowAccess =>  write!(f, "Arrow access cannot be chained"),
+            Self::ExpectedDelimiter(val) =>  write!(f, "Expected delimiter {}", val),
+            Self::Custom(msg) =>  write!(f, "{}", msg.to_string()),
+            Self::Unexpected(msg) => write!(f, "Unexpected {}", msg.to_string()),
+            Self::TooMuchTypes(amount) => write!(f, "Too much typings provided, expected only {}", amount),
+            Self::EmptyCharLiteral => write!(f, "Empty char literal"),
+            Self::ConstantWithoutInit => write!(f, "Constant variables must have an initializor"),
+            Self::NoGenerics => write!(f, "Generics are not allowed here"),
+            Self::EndOfIterator => write!(f, "Expected end of iterator"),
+            Self::Disallowed(string) => write!(f, "{} is not allowed here", string),
+            Self::ManyEntryPoints => write!(f, "Too many entry points"),
+            Self::WrongMatchArmExp => write!(f, "Incorrect match arm expression. Match arms only accept enum variants or literals."),
+            Self::AlreadyHasModifier(string) => write!(f, "The field is already {}, unnecessary {} modifier", string, string),
+            Self::Confusable(confused_with, expected) => write!(f, "Found {}, which is similar to {}", confused_with, expected),
+            Self::InvalidDigit => write!(f, "Invalid digit"),
+            Self::PointlessTemplate => write!(f, "Pointless template literal")
         }
     }
 }
