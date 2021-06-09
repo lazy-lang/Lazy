@@ -1,72 +1,21 @@
-
-#native("./path/to/shared/library")
-
-struct Person<A: B, C: D, E> {
-    name: str
-    age: f32
-    hobby: str?
-
-    age_up: fn(inc: u8 = 1) {
-        self.age += inc;
+struct Error<T: { to_string: () -> str }> {
+    content: T
+    err_type: i32
+    format: fn() -> str {
+        `Error ${self.err_type}: ${self.content}`;
     }
 
 }
 
-#SmartEnum(+, -, 123)
-#SomethingElse
-enum AnimalTypes<A: B, E> {
-    Dog,
-    Cat,
-    Fish,
-    Bird
+struct CustomErrorContent {
+    vars: Vec<str>
+    to_string: fn() -> str {
+        vars.join(", ");
+    }
 }
-
-impl<A: B, E> Something for AnimalTypes<A, E> {
-
-}
-
-struct Animal {
-    name: str
-    age: i8
-    t_type: AnimalTypes
-}
-
-type ThingWithName<A: B> = {name: str}
 
 main {
-    [1, 2, 3, 40];
-    a[1][2][3].abc.3;
-    `Hello \${yield 1}! ${a[1][2][3].abc.3}!`;
-    let me = new Person { name: "Google", age: ..19 };
-    me.hobby?;
-    let {name, age} = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
-
-    let things = new Vec::from<ThingWithName<Generic::A>> {};
-    things.push(me);
-    things.push(my_pet);
-
-    for thing in things {
-        print(thing.name);
-    }
-
-    print(1, 10 << 3,  ~c).abc;
-
-    a.1.2.3.4;
-
-match my_num {
-    Number::Float => print("Found float ", my_num),
-    Number::Int => print("Found integer ", my_num),
-
-    // Specific cases
-    Number::Float(3.14) => print("Found pi!"),
-
-    // Guards
-    Number::Int if my_num > 10 => print("Found integer bigger than 10"),
-
-    // Execute the same body for different expressions
-    Number::Int(3) | Number::Float(3.1) | Number::Int('a') => print("Number is ", my_num),
-
-    // Acts as an "else" - only executed when nothing above gets matched
-    _ => print("Weird...")
-}
+    const my_custom_error_content = new CustomErrorContent { vars: Vec::from("Hello", " ", "World!") };
+    const error = new Error<CustomErrorContent> { content: my_custom_error_content, err_type: 1 };
+    print(error.format()); // "Error 1: Hello World"
 }

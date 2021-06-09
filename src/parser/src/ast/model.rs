@@ -770,7 +770,6 @@ impl fmt::Display for ASTIndexAccess {
 impl fmt::Display for ASTTempStr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut new_str = String::new();
-        println!("{}", self.template.len());
         for (ind, ch) in self.template.chars().enumerate() {
             if let Some(k) = self.values.get(&ind) {
                 new_str.push_str(&format!("${{{}}}", k));
