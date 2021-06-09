@@ -1,7 +1,7 @@
 # Lazy
 
 <p align="center">
-  <img src="https://github.com/lazy-lang/Lazy/blob/main/media/logo.png" style="width: 40%" />
+  <img src="https://github.com/lazy-lang/Lazy/blob/main/media/logo.png" width="300px" />
 </p>
 
 A statically typed programming language which is a mix of **typescript** and **rust**, written in **rust**.
