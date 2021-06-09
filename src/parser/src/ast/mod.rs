@@ -36,7 +36,7 @@ impl Parser {
         match op {
             "=" | "+=" | "-=" | "*=" | "/=" | "%=" => 1,
             "&" | "|" | "^" => 2,
-            ">>" | "<<" | ">>>" => 3,
+            "<<" => 3,
             "||" => 5,
             "&&" => 7,
             "<" | ">" | "<=" | ">=" | "==" | "!=" => 10,
@@ -224,6 +224,7 @@ impl Parser {
             } else { None };
             return ASTModAccessValues::Var(ASTVarTyping { value: start, range: r, typings });
         };
+
         let mut path: Vec<ASTVar> = vec![start];
         let start = self.tokens.recorder();
         while self.tokens.is_next(TokenType::Punc(':')) {
@@ -268,7 +269,7 @@ impl Parser {
         )
     }
 
-    fn parse_typing(&mut self, allow_fn_keyword: bool, allow_optional_after_var: bool) -> Option<ASTTypings> {
+    fn parse_typing(&mut self, allow_fn_keyword: bool, allow_optional_after_var: bool, allow_mod: bool) -> Option<ASTTypings> {
         let range = self.tokens.recorder();
         let maybe_token = self.tokens.peek();
         let t = match maybe_token {
@@ -283,7 +284,7 @@ impl Parser {
                         let params = Box::from(self.parse_typing_pair_list(false, allow_fn_keyword, true, false, false, ')'));
                         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) { 
                             self.tokens.consume(); 
-                            let typing = self.parse_typing(allow_fn_keyword, true);
+                            let typing = self.parse_typing(allow_fn_keyword, true, allow_mod);
                             if typing.is_none() { 
                                 range.err(ParserErrorType::Expected("return type"), &mut self.tokens);
                                 return None
@@ -304,13 +305,21 @@ impl Parser {
                         Some(ASTTypings::Tuple(values))
                     },
                     TokenType::Var(name) => {
-                        let name_copy = name.clone();
                         let tok_range = token.range;
+                        let var = ASTVar { value: name.clone(), range: tok_range };
                         self.tokens.consume();
-                        match self.parse_mod_access_or_var(ASTVar { value: name_copy, range: tok_range}, false, true) {
+                        if allow_mod {
+                        match self.parse_mod_access_or_var(var, false, true) {
                             ASTModAccessValues::ModAccess(acc) => Some(ASTTypings::Mod(acc)),
                             ASTModAccessValues::Var(v) => Some(ASTTypings::Var(v))
                         }
+                    } else {
+                        let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
+                        self.tokens.consume();
+                        Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">"))))
+                        } else { None };
+                        Some(ASTTypings::Var(ASTVarTyping { value: var, range: tok_range, typings }))
+                    }
                     },
                     TokenType::Kw(kw) => {
                         if !allow_fn_keyword {
@@ -326,8 +335,6 @@ impl Parser {
                         }
                     }
                     _ => {
-                        //let token_stringed = token.val.to_string();
-                        //self.tokens.error(ParserErrorType::ExpectedFound(String::from("typing"), token_stringed), self.tokens.input.loc(), self.tokens.input.loc());
                         None
                     }
                 }
@@ -345,7 +352,7 @@ impl Parser {
                             },
                             "+" => {
                                 self.tokens.consume();
-                                let right = self.parse_typing(false, false);
+                                let right = self.parse_typing(false, false, allow_mod);
                                 if right.is_none() {
                                     self.tokens.error(ParserErrorType::Expected("typing"), self.tokens.input.loc(), self.tokens.input.loc());
                                     return Some(typing);
@@ -597,7 +604,7 @@ impl Parser {
                             modifiers.clear();
                         },
                         ':' => {
-                            let exp = self.parse_typing(allow_fn_keyword, true);
+                            let exp = self.parse_typing(allow_fn_keyword, true, true);
                             if exp.is_none() { 
                                 tok_range.err(ParserErrorType::Expected("expression"), &mut self.tokens);
                                 continue;
@@ -635,7 +642,7 @@ impl Parser {
         }
     }
 
-    fn parse_typing_list(&mut self, only_varnames: bool, allow_fn_keyword: bool, closing_tok: TokenType) -> ASTListTyping {
+    fn parse_typing_list(&mut self, only_varnames_and_bounds: bool, allow_fn_keyword: bool, closing_tok: TokenType) -> ASTListTyping {
         let range = self.tokens.recorder();
         let mut res: Vec<ASTTypings> = vec![];
         let mut is_first = true;
@@ -644,14 +651,32 @@ impl Parser {
                 self.tokens.skip_or_err(TokenType::Punc(','), None, None);
             };
             let id_range = self.tokens.recorder();
-            let maybe_typing = self.parse_typing(allow_fn_keyword, false);
+            let maybe_typing = self.parse_typing(allow_fn_keyword, false, !only_varnames_and_bounds);
             if maybe_typing.is_none() { break; };
             let typing = maybe_typing.unwrap();
-            if only_varnames {
+            if only_varnames_and_bounds {
             match &typing {
                 ASTTypings::Var(v) => {
                     if v.typings.is_some() {
                         v.range.err(ParserErrorType::Unexpected("token <, generics are not allowed here."), &mut self.tokens);
+                    }
+                    if self.tokens.is_next(TokenType::Punc(':')) {
+                        self.tokens.consume();
+                        let bound = if let Some(b) = self.parse_typing(false, false, true) {
+                            Box::from(b)
+                        } else {
+                            self.tokens.error_here(ParserErrorType::Expected("typing"));
+                            continue;
+                        };
+                        res.push(ASTTypings::Bound(
+                            ASTBoundTyping {
+                                name: ASTVar { value: v.value.value.clone(), range: v.range },
+                                bound,
+                                range: range.end(&self.tokens)
+                            }
+                        ));
+                        is_first = false;
+                        continue;
                     }
                 },
                 _ => {
@@ -680,7 +705,7 @@ impl Parser {
         let params = Box::from(self.parse_typing_pair_list(true, false, true, false, true, ')'));
         let return_type = if self.tokens.is_next(TokenType::Op(String::from("->"))) {
             self.tokens.consume();
-            let exp = self.parse_typing(false, true);
+            let exp = self.parse_typing(false, true, true);
             if exp.is_none() { 
                 self.tokens.error(ParserErrorType::Expected("return type"), self.tokens.input.loc(), self.tokens.input.loc()); 
                 return None; 
@@ -877,7 +902,7 @@ impl Parser {
                         };
                         let typings = if self.tokens.is_next(TokenType::Punc(':')) {
                             self.tokens.consume();
-                            let typing = self.parse_typing(false, true);
+                            let typing = self.parse_typing(false, true, true);
                             if typing.is_none() {
                                 self.tokens.error_here(ParserErrorType::Expected("typing"));
                             }
@@ -1162,7 +1187,7 @@ impl Parser {
                         return None;
                        }
                        if self.tokens.skip_or_err(TokenType::Op(String::from("=")), None, None) { return None; };
-                       let typing = self.parse_typing(false, false);
+                       let typing = self.parse_typing(false, false, true);
                        if typing.is_none() {
                         self.tokens.error_here(ParserErrorType::Expected("typing"));
                         return None;

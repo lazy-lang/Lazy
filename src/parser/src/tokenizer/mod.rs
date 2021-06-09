@@ -311,8 +311,8 @@ impl Tokenizer {
                 self.error(ParserErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
                 break;
             }
-            // Operators which cannot be folled by other operators
-            if match_str!(op.as_str(), "?") { break; };
+            // Operators which cannot be followed by other operators
+            if match_str!(op.as_str(), "?", ">") { break; };
             let ch = self.input.peek(0).unwrap();
             if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '~', '^') { op.push(self.input.consume().unwrap()) }
             else { break; };
@@ -425,13 +425,9 @@ impl Tokenizer {
         match self.peek() {
             Some(tok) => {
                 match tok.val {
-                    TokenType::Punc(punc) => {
-                        if puncs.contains(&punc) { 
-                            self.consume();
-                            return Some(punc);
-                         };
-                        self.error(ParserErrorType::expected_found(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), punc.to_string()), location.start, location.end);
-                        None
+                    TokenType::Punc(punc) if puncs.contains(&punc) => {
+                        self.consume();
+                        Some(punc)
                     },
                     _ => {
                         let tstr = tok.val.to_string();

@@ -1,9 +1,8 @@
 [package]
-name = "lazy"
+name = "type_checker"
 version = "0.1.0"
 authors = ["GoogleFeud <volen.sl666@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-parser = { path = "./src/parser" }
-type_checker = { path = "./src/type_checker" }
+parser = { path = "../parser" }

@@ -339,7 +339,6 @@ pub struct ASTPairTypingItem {
     pub modifiers: ASTModifiers
 }
 
-// {key: typing_name},
 pub struct ASTPairListTyping {
     pub pairs: Vec<ASTPairTypingItem>,
     pub range: Range
@@ -362,6 +361,12 @@ pub struct ASTCombineTyping {
     pub range: Range
 }
 
+pub struct ASTBoundTyping {
+    pub name: ASTVar,
+    pub bound: Box<ASTTypings>,
+    pub range: Range
+}
+
 pub enum ASTTypings {
     Var(ASTVarTyping),
     Mod(ASTModAccess),
@@ -370,7 +375,8 @@ pub enum ASTTypings {
     Optional(Box<ASTTypings>),
     Tuple(ASTListTyping),
     Combine(ASTCombineTyping),
-    ExplicitImpl(ASTModAccessValues)
+    ExplicitImpl(ASTModAccessValues),
+    Bound(ASTBoundTyping)
 }
 
 impl fmt::Display for ASTVarTyping {
@@ -458,7 +464,8 @@ impl fmt::Display for ASTTypings {
             Self::Function(func) => func.fmt(f),
             Self::Combine(c) => c.fmt(f),
             Self::Mod(m) => m.fmt(f),
-            Self::ExplicitImpl(im) => write!(f, "{}!", im)
+            Self::ExplicitImpl(im) => write!(f, "{}!", im),
+            Self::Bound(b) => b.fmt(f)
         }
     }
 }
@@ -772,5 +779,11 @@ impl fmt::Display for ASTTempStr {
             };
         }
         write!(f, "`{}`", new_str)
+   }
+}
+
+impl fmt::Display for ASTBoundTyping {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.name, self.bound)
    }
 }

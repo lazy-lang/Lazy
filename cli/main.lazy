@@ -1,12 +1,12 @@
 
 #native("./path/to/shared/library")
 
-struct Person {
+struct Person<A: B, C: D, E> {
     name: str
     age: f32
     hobby: str?
 
-    age_up: fn(inc: [i32]) {
+    age_up: fn(inc: u8 = 1) {
         self.age += inc;
     }
 
@@ -14,11 +14,15 @@ struct Person {
 
 #SmartEnum(+, -, 123)
 #SomethingElse
-enum AnimalTypes {
+enum AnimalTypes<A: B, E> {
     Dog,
     Cat,
     Fish,
     Bird
+}
+
+impl<A: B, E> Something for AnimalTypes<A, E> {
+
 }
 
 struct Animal {
@@ -27,7 +31,7 @@ struct Animal {
     t_type: AnimalTypes
 }
 
-type ThingWithName = {name: str}
+type ThingWithName<A: B> = {name: str}
 
 main {
     [1, 2, 3, 40];
@@ -37,7 +41,7 @@ main {
     me.hobby?;
     let {name, age} = new Animal { name: "Baby", age: 1, t_type: AnimalTypes::Bird };
 
-    let things = new Vec<ThingWithName> {};
+    let things = new Vec::from<ThingWithName<Generic::A>> {};
     things.push(me);
     things.push(my_pet);
 
@@ -45,7 +49,7 @@ main {
         print(thing.name);
     }
 
-    print(1 >>> 10 << 3,  ~c).abc;
+    print(1, 10 << 3,  ~c).abc;
 
     a.1.2.3.4;
 
