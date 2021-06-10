@@ -4,7 +4,7 @@ pub mod error;
 pub mod range_recorder;
 use error::*;
 use range_recorder::*;
-use super::input_parser::{LoC, InputParser};
+use super::input_parser::{InputParser};
 
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -48,37 +48,25 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Copy)]
-pub struct Range {
-    pub start: LoC,
-    pub end: LoC
+pub trait RangeErrors {
+    fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>);
+    fn err_start(&self, err: ParserErrorType, tokens: &mut Tokenizer);
+    fn end(&self, tokens: &Tokenizer) -> Range;
 }
 
-impl std::clone::Clone for Range {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl fmt::Display for Range {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}:{} - {}:{})", self.start.line, self.start.col, self.end.line, self.end.col)
-    }
-}
-
-impl Range {
+impl RangeErrors for Range {
     #[inline]
-    pub fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>) {
+    fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>) {
         tokens.error(err, self.start, self.end)
     }
 
     #[inline]
-    pub fn err_start<'a>(&self, err: ParserErrorType, tokens: &mut Tokenizer) {
+    fn err_start<'a>(&self, err: ParserErrorType, tokens: &mut Tokenizer) {
         tokens.error(err, self.start, tokens.input.loc())
     }
 
     #[inline]
-    pub fn end(&self, tokens: &Tokenizer) -> Range {
+    fn end(&self, tokens: &Tokenizer) -> Range {
         Range {
             start: self.start,
             end: tokens.input.loc()
@@ -294,7 +282,7 @@ impl Tokenizer {
         else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
 
         let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
-        Token { val: token_type, range: Range {start, end: self.input.loc()} }
+        Token { val: token_type, range: Range {start, end: self.input.loc() } }
     }
 
     fn parse_punc(&mut self) -> Token {
@@ -389,7 +377,7 @@ impl Tokenizer {
 
     #[inline]
     pub fn error_here(&mut self, e_type: ParserErrorType) {
-        self.errors.push(Error { e_type, range: Range {start: self.input.loc(), end: self.input.loc() } });
+        self.errors.push(Error::new(e_type, Range {start: self.input.loc(), end: self.input.loc() }));
     }
 
     pub fn is_next(&mut self, tok: TokenType) -> bool {
@@ -468,6 +456,6 @@ impl error::ErrorCollector<ParserErrorType> for Tokenizer {
 
     #[inline]
     fn error(&mut self, e_type: ParserErrorType, start: LoC, end: LoC) {
-        self.errors.push(Error { e_type, range: Range {start, end} });
+        self.errors.push(Error::new(e_type, Range {start, end}));
     }
 }

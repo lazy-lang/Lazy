@@ -1,7 +1,7 @@
 
-use super::tokenizer::{Tokenizer, TokenType, Range};
+use super::tokenizer::{Tokenizer, TokenType, RangeErrors};
 use super::tokenizer::error::{ParserErrorType, ErrorCollector};
-use super::input_parser::LoC;
+pub use errors::{LoC};
 pub mod model;
 pub mod utils;
 use model::*;
@@ -538,10 +538,10 @@ impl Parser {
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_range = self.tokens.recorder();
             let is_spread = if self.tokens.is_next(TokenType::Op(String::from("..."))) {
-                if !allow_spread {
-                    self.tokens.error(ParserErrorType::Disallowed("spread operator"), self.tokens.input.loc_inc(-3, 0), self.tokens.input.loc())
-                }
                 self.tokens.consume();
+                if !allow_spread {
+                    tok_range.err(ParserErrorType::Disallowed("spread operator"), &mut self.tokens);
+                }
                 true
             } else { false };
             if allow_modifiers {
@@ -658,14 +658,14 @@ impl Parser {
             match &typing {
                 ASTTypings::Var(v) => {
                     if v.typings.is_some() {
-                        v.range.err(ParserErrorType::Unexpected("token <, generics are not allowed here."), &mut self.tokens);
+                        v.range.err(ParserErrorType::NoGenerics, &mut self.tokens);
                     }
                     if self.tokens.is_next(TokenType::Punc(':')) {
                         self.tokens.consume();
                         let bound = if let Some(b) = self.parse_typing(false, false, true) {
                             Box::from(b)
                         } else {
-                            self.tokens.error_here(ParserErrorType::Expected("typing"));
+                            self.tokens.error_here(ParserErrorType::Expected("typing bound"));
                             continue;
                         };
                         res.push(ASTTypings::Bound(
@@ -930,7 +930,7 @@ impl Parser {
                                 is_const,
                                 typings,
                                 value,
-                                range: Range { start: token.range.start, end: self.tokens.input.loc() }
+                                range: token.range.end(&self.tokens)
                             }
                         ))
                         },

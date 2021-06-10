@@ -5,6 +5,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::time::{Instant};
 use lazy::parser::ast::{Parser};
+use lazy::errors::builder::{ErrorFormatter};
 
 fn get_extention_validity(filename: &str) -> Option<&str> {
     Path::new(filename)
@@ -33,11 +34,12 @@ fn main() {
     .get_matches();
 
 if let Some(exe_file) = matches.value_of("run") {
-    if Path::new(&exe_file).exists(){
-        if get_extention_validity(&exe_file) == Some("lazy"){
+    if Path::new(&exe_file).exists() {
+        if get_extention_validity(&exe_file) == Some("lazy") {
             let source = fs::read_to_string(&exe_file)
             .expect("Something went wrong reading the file");
-            let vectored: Vec<_> = source.lines().collect();
+            let mut files = ErrorFormatter::new();
+            files.add(exe_file.to_string(), &source);
             let mut p = Parser::new(&source.replace("\r\n", "\n"));
             let before = Instant::now();
             let res = p.parse();
@@ -48,7 +50,7 @@ if let Some(exe_file) = matches.value_of("run") {
                 println!("{}", ast)
             };
             for error in &p.tokens.errors {
-                println!("{}", error.format(&vectored));
+                println!("{}", files.print_err(exe_file.to_string(), &error).unwrap());
             }
         }
         else{

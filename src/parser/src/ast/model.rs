@@ -1,6 +1,7 @@
 
 use std::fmt;
-use super::{Range, TokenType};
+pub use errors::{Range};
+use super::{TokenType};
 pub use std::collections::hash_map::HashMap;
 
 // A string literalz

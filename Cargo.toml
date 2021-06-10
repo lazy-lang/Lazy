@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 parser = { path = "./src/parser" }
+errors = { path = "./src/errors" }
 type_checker = { path = "./src/type_checker" }

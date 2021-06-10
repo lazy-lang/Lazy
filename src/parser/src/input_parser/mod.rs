@@ -1,38 +1,11 @@
 
+use errors::{LoC};
 
 pub struct InputParser {
     code: Vec<char>,
-    pub line: i32,
-    pub col: i32,
+    pub line: usize,
+    pub col: usize,
     pos: usize
-}
-
-#[derive(Copy)]
-#[derive(Default)]
-pub struct LoC {
-    pub line: i32,
-    pub col: i32
-}
-
-impl std::clone::Clone for LoC {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl std::fmt::Display for LoC {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}:{})", self.line, self.col)
-    }
-}
-
-impl LoC {
-    pub fn inc(&self, line: i32, col: i32) -> LoC {
-        let mut clone = *self;
-        clone.line += line;
-        clone.col += col;
-        clone
-    }
 }
 
 impl InputParser {
@@ -81,11 +54,7 @@ impl InputParser {
     }
 
     pub fn loc(&self) -> LoC {
-        LoC { line: self.line, col: self.col }
-    }
-
-    pub fn loc_inc(&self, col: i32, line: i32) -> LoC {
-        LoC { line: self.line + line, col: self.col + col }
+        LoC { line: self.line, col: self.col, pos: self.pos }
     }
     
 }
