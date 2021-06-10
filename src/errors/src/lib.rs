@@ -40,12 +40,47 @@ impl fmt::Display for Range {
     }
 }
 
-pub struct ErrorLabel(String, Range);
+pub enum ErrorLabelVariants {
+    Primary,
+    Secondary
+}
 
-// These errors are used only for the sterr output
+pub struct ErrorLabel {
+    msg: String,
+    range: Range,
+    variant: ErrorLabelVariants
+}
+
+impl ErrorLabel {
+    
+    pub fn new<T: Into<String>>(msg: T, range: Range) -> Self {
+        ErrorLabel {
+            msg: msg.into(),
+            range,
+            variant: ErrorLabelVariants::Secondary
+        }
+    }
+
+    pub fn new_primary<T: Into<String>>(msg: T, range: Range) -> Self {
+        ErrorLabel {
+            msg: msg.into(),
+            range,
+            variant: ErrorLabelVariants::Primary
+        }
+    }
+
+}
+
+/* These errors are used only for the sterr output
+
+    Error labels must:
+    - Be between the main error range
+*/
+
 pub struct Error<T> where T: fmt::Display  {
     pub range: Range,
     pub msg: T,
+    pub highlighted: bool,
     pub labels: Option<Vec<ErrorLabel>>
 }
 
@@ -55,17 +90,25 @@ impl<T> Error<T> where T: fmt::Display {
         Error {
             msg,
             range: range,
-            labels: None
+            labels: None,
+            highlighted: true,
         }
     }
 
-    pub fn new_with_labels(msg: T, range: Range, labels: Vec<ErrorLabel>) -> Error<T> {
+    pub fn new_with_labels(msg: T, range: Range, labels: Vec<ErrorLabel>, highlighted: bool) -> Error<T> {
         Error {
             msg,
             range: range,
-            labels: Some(labels)
+            labels: Some(labels),
+            highlighted
         }
     }
 
 }
+
+pub trait ErrorCollector<T> where T: fmt::Display {
+    fn error(&mut self, e_type: T, start: LoC, end: LoC);
+    fn error_lbl(&mut self, e_type: T, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool);
+}
+
 

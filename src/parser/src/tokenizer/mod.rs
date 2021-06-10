@@ -69,7 +69,7 @@ impl RangeErrors for Range {
     fn end(&self, tokens: &Tokenizer) -> Range {
         Range {
             start: self.start,
-            end: tokens.input.loc()
+            end: tokens.last_loc
         }
     }
 }
@@ -377,9 +377,14 @@ impl Tokenizer {
 
     #[inline]
     pub fn error_here(&mut self, e_type: ParserErrorType) {
-        self.errors.push(Error::new(e_type, Range {start: self.input.loc(), end: self.input.loc() }));
+        self.errors.push(Error::new(e_type, Range {start: self.last_loc, end: self.last_loc }));
     }
 
+    #[inline]
+    pub fn range_here(&self) -> Range {
+        Range {start: self.last_loc, end: self.last_loc }
+    }
+ 
     pub fn is_next(&mut self, tok: TokenType) -> bool {
         let next = self.peek();
         match next {
@@ -388,13 +393,12 @@ impl Tokenizer {
         }
     }
 
-    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<ParserErrorType>, loc: Option<Range>) -> bool {
-        let location = loc.unwrap_or(Range { start: self.last_loc, end: self.last_loc});
+    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<Error<ParserErrorType>>) -> bool {
         match self.peek() {
             Some(token) => {
                 if token.val != tok {
                     let other = token.val.to_string();
-                    self.error(err.unwrap_or_else(|| ParserErrorType::expected_found(tok.to_string(), other)), location.start, location.end);
+                    self.errors.push(err.unwrap_or(Error::new(ParserErrorType::expected_found(tok.to_string(), other), Range { start: self.last_loc, end: self.last_loc })));
                     true
                 } else {
                     self.consume();
@@ -402,7 +406,7 @@ impl Tokenizer {
                 }
             },
             None => {
-                self.error(err.unwrap_or_else(|| ParserErrorType::ExpectedString(tok.to_string())), location.start, location.end);
+                self.errors.push(err.unwrap_or(Error::new(ParserErrorType::ExpectedString(tok.to_string()), Range { start: self.last_loc, end: self.last_loc })));
                 true
             }
         }
@@ -457,5 +461,9 @@ impl error::ErrorCollector<ParserErrorType> for Tokenizer {
     #[inline]
     fn error(&mut self, e_type: ParserErrorType, start: LoC, end: LoC) {
         self.errors.push(Error::new(e_type, Range {start, end}));
+    }
+
+    fn error_lbl(&mut self, e_type: ParserErrorType, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool) {
+        self.errors.push(Error::new_with_labels(e_type, Range { start, end }, labels, highlight));
     }
 }

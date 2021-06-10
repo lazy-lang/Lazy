@@ -1,6 +1,5 @@
 
-
-struct Error<T: { to_string: () -> str }, A<C>> {
+struct Error<T: { to_string: () -> str }, A: B> {
     content: T
     err_type: i32
     format: fn() -> str {
@@ -11,12 +10,18 @@ struct Error<T: { to_string: () -> str }, A<C>> {
 
 struct CustomErrorContent {
     vars: Vec<str>
-    to_string: fn() -> str {
+    to_string: fn() -> str::A {
         vars.join(", ");
     }
 }
 
 main {
+    3..=5;
+    ..5;
+    ...5;
+    3 +
+    3;
+    ;
     const my_custom_error_content =  new CustomErrorContent { vars: Vec::from("Hello", " ", "World!") };
     const error = new Error<CustomErrorContent> { content: my_custom_error_content, err_type: 1 };
     print(error.format()); // "Error 1: Hello World"

@@ -40,10 +40,6 @@ impl ParserErrorType {
 
 }
 
-pub trait ErrorCollector<T> where T: fmt::Display {
-    fn error(&mut self, e_type: T, start: LoC, end: LoC);
-}
-
 impl fmt::Display for ParserErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
