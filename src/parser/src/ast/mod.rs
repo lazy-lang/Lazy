@@ -96,7 +96,7 @@ impl Parser {
                     "." => {
                         self.tokens.consume();
                         let val = token.unwrap();
-                        let target = self.parse_varname(true, false, !matches!(val, ASTExpression::Int(_) | ASTExpression::Float(_)));
+                        let target = self.parse_varname(true, false, !matches!(val, ASTExpression::Int(_) | ASTExpression::Float(_)), true);
                         if target.0.is_none() { 
                             recorder.err(ParserErrorType::ProperProperty, &mut self.tokens);
                             return None;
@@ -204,7 +204,7 @@ impl Parser {
     }
 
     pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool, allow_typings: bool) -> Option<ASTModAccessValues> {
-        let name = self.parse_varname(false, false, false).0;
+        let name = self.parse_varname(false, false, false, false).0;
         if let Some(v) = name {
             Some(self.parse_mod_access_or_var(v, allow_exp_end, allow_typings))
         } else {
@@ -234,10 +234,9 @@ impl Parser {
             ], true)));
             if let Some(tok) = self.tokens.consume() {
                 match tok.val {
-                    TokenType::Var(v) => {
-                        path.push(ASTVar { value: v, range: tok.range });
-                    },
-                    _ => {
+                    TokenType::Var(v) => path.push(ASTVar { value: v, range: tok.range }),
+                    TokenType::Kw(v) => path.push(ASTVar { value: v, range: tok.range}),
+                    _ => { 
                         if !allow_exp_end {
                             self.tokens.error_here(ParserErrorType::Unexpected("expression"));
                             break;
@@ -415,13 +414,10 @@ impl Parser {
         }
     }
 
-    fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool) -> (Option<ASTVar>, Option<ASTListTyping>) {
-        let next = if allow_ints {
-            self.tokens.is_last_num_as_str = true;
-            let v = self.tokens.consume();
-            self.tokens.is_last_num_as_str = false;
-            v
-        } else { self.tokens.consume() };
+    fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool, allow_keywords: bool) -> (Option<ASTVar>, Option<ASTListTyping>) {
+        if allow_ints { self.tokens.is_last_num_as_str = true };
+        let next = self.tokens.consume();
+        if allow_ints { self.tokens.is_last_num_as_str = false };
         if next.is_none() { 
             self.tokens.error_here(ParserErrorType::Expected("itentifier"));
             return (None, None);
@@ -429,6 +425,7 @@ impl Parser {
         let unwrapped = next.unwrap();
         let var = match unwrapped.val {
             TokenType::Var(v) => ASTVar { value: v, range: unwrapped.range },
+            TokenType::Kw(kw) if allow_keywords => ASTVar { value: kw.to_string(), range: unwrapped.range },
             TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
             _ => {
                 self.tokens.error(ParserErrorType::expected_found("identifier", unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
@@ -451,7 +448,7 @@ impl Parser {
         let mut has_consumed_bracket = false;
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.recorder();
-            let key = self.parse_varname(false, false, false);
+            let key = self.parse_varname(false, false, false, true);
             if key.0.is_none() { continue; };
             match self.tokens.expect_punc(&[',', ':', closing_punc], Some(tok_start.end(&self.tokens))) {
                 Some(ch) => {
@@ -522,7 +519,7 @@ impl Parser {
             if !is_first {
                 self.tokens.skip_or_err(TokenType::Punc(','), None);
             };
-            let exp = self.parse_varname(false, false, false).0;
+            let exp = self.parse_varname(false, false, false, true).0;
             if exp.is_none() { break; };
             values.push(exp.unwrap());
             is_first = false;
@@ -582,7 +579,7 @@ impl Parser {
                     }
                 }
             };
-            let key = self.parse_varname(false, false, false);
+            let key = self.parse_varname(false, false, false, true);
             if key.0.is_none() { continue };
             if self.tokens.is_next(TokenType::Op(String::from("="))) {
                 if !allow_default {
@@ -970,7 +967,7 @@ impl Parser {
                         ))
                     },
                     "for" => {
-                        let var = self.parse_varname(false, false, false).0;
+                        let var = self.parse_varname(false, false, false, false).0;
                         if var.is_none() {
                             self.tokens.error_here(ParserErrorType::Expected("identifier"));
                             return None;
@@ -1157,7 +1154,7 @@ impl Parser {
             TokenType::Kw(keyword) => {
                 match keyword.as_str() {
                    "struct" => {
-                        let name = self.parse_varname(true, true, false);
+                        let name = self.parse_varname(true, true, false, false);
                         if name.0.is_none() { 
                             token.range.err(ParserErrorType::Expected("struct name"), &mut self.tokens);
                             return None;
@@ -1171,7 +1168,7 @@ impl Parser {
                         }))
                    }
                    "enum" => {
-                    let name = self.parse_varname(true, true, false);
+                    let name = self.parse_varname(true, true, false, false);
                     if name.0.is_none() { 
                         token.range.err(ParserErrorType::Expected("struct name"), &mut self.tokens);
                         return None;
@@ -1185,7 +1182,7 @@ impl Parser {
                     }))
                    },
                    "type" => {
-                       let name = self.parse_varname(true, true, false);
+                       let name = self.parse_varname(true, true, false, false);
                        if name.0.is_none() {
                         self.tokens.error_here(ParserErrorType::Expected("type name"));
                         return None;
@@ -1220,7 +1217,7 @@ impl Parser {
                        ))
                    },
                    "static" => {
-                       let varname = self.parse_varname(true, false, false);
+                       let varname = self.parse_varname(true, false, false, false);
                        self.tokens.skip_or_err(TokenType::Op(String::from("=")), None);
                        if varname.0.is_none() {
                            range.err(ParserErrorType::Expected("identifier"), &mut self.tokens);
@@ -1274,7 +1271,7 @@ impl Parser {
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
                            self.tokens.consume();
-                           self.parse_varname(false, false, false).0
+                           self.parse_varname(false, false, false, false).0
                        } else { None };
                        Some(ASTStatement::Import(
                            ASTImport {
@@ -1324,7 +1321,7 @@ impl Parser {
                 None
             },
             TokenType::Punc('#') => {
-                let name = self.parse_varname(false, false, false).0?.value;
+                let name = self.parse_varname(false, false, false, true).0?.value;
                 let mut args: Vec<TokenType> = vec![];
                 if self.tokens.is_next(TokenType::Punc('(')) {
                     self.tokens.consume();

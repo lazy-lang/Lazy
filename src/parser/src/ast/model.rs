@@ -557,8 +557,9 @@ impl fmt::Display for ASTDotAccess {
 impl fmt::Display for ASTPairList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut string = String::new();
-        for pair in &self.pairs {
-            string.push_str(&format!("{}: {}", pair.0, if pair.1.is_some() { pair.1.as_ref().unwrap().to_string() } else { String::from("{}") }));
+        for ind in 0..self.pairs.len() {
+            let pair = &self.pairs[ind];
+            string.push_str(&format!("{}: {}{}", pair.0, if pair.1.is_some() { pair.1.as_ref().unwrap().to_string() } else { String::from("{}") }, if ind == self.pairs.len() - 1 { "" } else { ", " }));
         };
         write!(f, "{{ {} }}", string)
    }

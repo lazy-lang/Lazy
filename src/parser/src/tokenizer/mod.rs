@@ -335,7 +335,7 @@ impl Tokenizer {
                 self.input.consume();
                 Some(Token {
                 val: TokenType::TempStrStart,
-                range: Range { start: self.input.loc(), end: self.input.loc() }
+                range: self.range_here()
                 })
             },
             '0'..='9' => Some(self.parse_num()),
@@ -377,7 +377,7 @@ impl Tokenizer {
 
     #[inline]
     pub fn error_here(&mut self, e_type: ParserErrorType) {
-        self.errors.push(Error::new(e_type, Range {start: self.last_loc, end: self.last_loc }));
+        self.errors.push(Error::new(e_type, self.range_here()));
     }
 
     #[inline]

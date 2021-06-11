@@ -18,7 +18,7 @@ impl RangeRecorder {
     pub fn end(&self, tok: &Tokenizer) -> Range {
         Range {
             start: self.start,
-            end: tok.input.loc()
+            end: tok.last_loc
         }
     }
 
@@ -32,12 +32,12 @@ impl RangeRecorder {
 
     #[inline]
     pub fn err(&self, err: ParserErrorType, tok: &mut Tokenizer) {
-        tok.error(err, self.start, tok.input.loc())
+        tok.error(err, self.start, tok.last_loc)
     }
 
     #[inline]
     pub fn err_lbl(&self, e_type: ParserErrorType, labels: Vec<ErrorLabel>, highlight: bool, tok: &mut Tokenizer) {
-        tok.error_lbl(e_type, self.start, tok.input.loc(), labels, highlight)
+        tok.error_lbl(e_type, self.start, tok.last_loc, labels, highlight)
     }
     
 }
