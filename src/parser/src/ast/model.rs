@@ -225,7 +225,8 @@ pub enum ASTMatchArmExpressions {
     Tuple(ASTExpressionList),
     None(Range),
     Rest,
-    Enum(ASTModAccess)
+    Enum(ASTModAccess),
+    EnumVar(ASTModAccess)
 }
 
 pub struct ASTMatchArm {
@@ -695,7 +696,7 @@ impl fmt::Display for ASTMatchArmExpressions {
             Self::Int(int) => int.fmt(f),
             Self::Float(fl) => fl.fmt(f),
             Self::Iterator(iter) => iter.fmt(f),
-            Self::Enum(en) => en.fmt(f),
+            Self::Enum(en) | Self::EnumVar(en) => en.fmt(f),
             Self::Tuple(t) => write!(f, "[{}]", t),
             Self::Bool(b) => b.fmt(f),
             Self::None(_) => write!(f, "none"),

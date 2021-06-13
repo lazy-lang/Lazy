@@ -31,4 +31,9 @@ main {
     const my_custom_error_content =  new CustomErrorContent { vars: Vec::from("Hello", " ", "World!") };
     const error = new Error<CustomErrorContent> { content: my_custom_error_content, type: 1 };
     print(error.type, A::type); // "Error 1: Hello World"
+
+    match self {
+        Test::A(var) => print(var),
+        Test::C(variable) => variable + 1
+    }
 }

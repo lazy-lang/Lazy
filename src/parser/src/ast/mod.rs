@@ -755,6 +755,11 @@ impl Parser {
                 },
                 ASTExpression::None(r) => Some(ASTMatchArmExpressions::None(r)),
                 ASTExpression::ModAccess(acc) => {
+                    if let Some(init) = &acc.init {
+                        if init.expressions.len() == 1 && matches!(&init.expressions[0], ASTExpression::Var(_)) {
+                            return Some(ASTMatchArmExpressions::EnumVar(acc));
+                        }
+                    } 
                     if !utils::is_natural_mod_access(&acc) {
                         range.err(ParserErrorType::Expected("natural enum value"), &mut self.tokens);
                     }
