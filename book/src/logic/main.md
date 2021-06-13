@@ -36,17 +36,17 @@ The `match` expression is exactly the same as Rust's `match`.
 let my_num = Number:Float(3.14);
 
 match my_num {
-    Number::Float => print("Found float ", my_num),
-    Number::Int => print("Found integer ", my_num),
+    Number::Float(num) => print("Found float ", num),
+    Number::Int(num) => print("Found integer ", num),
 
     // Specific cases
     Number::Float(3.14) => print("Found pi!"),
 
     // Guards
-    Number::Int if my_num > 10 => print("Found integer bigger than 10),
+    Number::Int(num) if num > 10 => print("Found integer bigger than 10"),
 
     // Execute the same body for different expressions
-    Number::Int(3) | Number::Float(3.1) => print("Number is ", my_num),
+    Number::Int(3) | Number::Int(5) => print("Number is either 3 or 5"),
 
     // Acts as an "else" - only executed when nothing above gets matched
     _ => print("Weird...")

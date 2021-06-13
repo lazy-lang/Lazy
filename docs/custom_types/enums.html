@@ -207,10 +207,15 @@ main {
 if char_token == TokenTypes::Char('a') {
     // Also works!
 }
+
+if let char_token = TokenTypes::Char('c') {
+    // Also works!
+}
 </code></pre>
 <h3 id="match-unwrapping"><a class="header" href="#match-unwrapping">match unwrapping</a></h3>
 <pre><code>match char_token {
-    TokenTypes::Char =&gt; {
+    TokenTypes::Char(ch) =&gt; {
+        print(ch);
         // char_token is unwrapped here
     },
     _ =&gt; {
@@ -235,7 +240,7 @@ type Unwrap&lt;T&gt; = {
 impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
     unwrap: fn() -&gt; T {
         match self {
-            Option::Some =&gt; self,
+            Option::Some(val) =&gt; val,
             Option::None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
         }
     }
@@ -246,7 +251,7 @@ impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
 
     unwrap_or: fn(v: T) -&gt; T {
         match self {
-            Option::Some =&gt; self,
+            Option::Some(val) =&gt; val,
             Option::None =&gt; v
         }
     }

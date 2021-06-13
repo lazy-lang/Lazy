@@ -440,10 +440,15 @@ main {
 if char_token == TokenTypes::Char('a') {
     // Also works!
 }
+
+if let char_token = TokenTypes::Char('c') {
+    // Also works!
+}
 </code></pre>
 <h3 id="match-unwrapping"><a class="header" href="#match-unwrapping">match unwrapping</a></h3>
 <pre><code>match char_token {
-    TokenTypes::Char =&gt; {
+    TokenTypes::Char(ch) =&gt; {
+        print(ch);
         // char_token is unwrapped here
     },
     _ =&gt; {
@@ -468,7 +473,7 @@ type Unwrap&lt;T&gt; = {
 impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
     unwrap: fn() -&gt; T {
         match self {
-            Option::Some =&gt; self,
+            Option::Some(val) =&gt; val,
             Option::None =&gt; error(&quot;Tried to unwrap an empty option!&quot;)
         }
     }
@@ -479,7 +484,7 @@ impl&lt;T&gt; Unwrap&lt;T&gt; for Option&lt;T&gt; {
 
     unwrap_or: fn(v: T) -&gt; T {
         match self {
-            Option::Some =&gt; self,
+            Option::Some(val) =&gt; val,
             Option::None =&gt; v
         }
     }
@@ -866,17 +871,17 @@ print(my_num == 0) // true
 <pre><code>let my_num = Number:Float(3.14);
 
 match my_num {
-    Number::Float =&gt; print(&quot;Found float &quot;, my_num),
-    Number::Int =&gt; print(&quot;Found integer &quot;, my_num),
+    Number::Float(num) =&gt; print(&quot;Found float &quot;, num),
+    Number::Int(num) =&gt; print(&quot;Found integer &quot;, num),
 
     // Specific cases
     Number::Float(3.14) =&gt; print(&quot;Found pi!&quot;),
 
     // Guards
-    Number::Int if my_num &gt; 10 =&gt; print(&quot;Found integer bigger than 10),
+    Number::Int(num) if num &gt; 10 =&gt; print(&quot;Found integer bigger than 10&quot;),
 
     // Execute the same body for different expressions
-    Number::Int(3) | Number::Float(3.1) =&gt; print(&quot;Number is &quot;, my_num),
+    Number::Int(3) | Number::Int(5) =&gt; print(&quot;Number is either 3 or 5&quot;),
 
     // Acts as an &quot;else&quot; - only executed when nothing above gets matched
     _ =&gt; print(&quot;Weird...&quot;)
