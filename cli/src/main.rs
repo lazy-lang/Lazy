@@ -6,6 +6,7 @@ use std::fs;
 use std::time::{Instant};
 use lazy::parser::ast::{Parser};
 use lazy::errors::builder::{ErrorFormatter};
+use lazy::semantic_analyzer::LazyAnalyzer;
 
 fn get_extention_validity(filename: &str) -> Option<&str> {
     Path::new(filename)
@@ -46,10 +47,15 @@ if let Some(exe_file) = matches.value_of("run") {
             if matches.is_present("time"){
                 println!("Parsing took {} nanoseconds", before.elapsed().as_nanos());
             }
+            let mut analyzer = LazyAnalyzer::new();
             for ast in res {
+                analyzer.register_type(&ast);
                 println!("{}", ast)
             };
             for error in &p.tokens.errors {
+                println!("{}", files.print_err(exe_file.to_string(), &error).unwrap());
+            }
+            for error in &analyzer.errors {
                 println!("{}", files.print_err(exe_file.to_string(), &error).unwrap());
             }
         }

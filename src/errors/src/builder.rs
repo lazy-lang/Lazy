@@ -38,7 +38,7 @@ impl<'a> ErrorFormatter<'a> {
             if ind == err.range.start.line {
                 let mut cols = format!("{} {}   ", " ".repeat(space_to_border - 1), cyan_wall);
                 for col in 0..=line_text.len() {
-                    if col >= err.range.start.col && col <= err.range.end.col { cols.push_str(&format!("{}", "^".red())); }
+                    if col >= err.range.start.col && col < err.range.end.col { cols.push_str(&format!("{}", "^".red())); }
                     else { cols.push(' '); }
                 }
                 cols.push('\n');

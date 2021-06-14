@@ -1,8 +1,9 @@
 [package]
-name = "type_checker"
+name = "semantic_analyzer"
 version = "0.1.0"
 authors = ["GoogleFeud <volen.sl666@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 parser = { path = "../parser" }
+errors = { path = "../errors" }

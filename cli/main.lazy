@@ -9,6 +9,8 @@ struct Error<T: { to_string: () -> str }, A: B> {
 
 }
 
+struct Error {};
+
 struct CustomErrorContent {
     vars: Vec<str>
     to_string: fn() -> str::A {
@@ -36,4 +38,6 @@ main {
         Test::A(var) => print(var),
         Test::C(variable) => variable + 1
     }
+
+    if let char_token = TokenTypes::Char('c') char_token + 1;
 }
