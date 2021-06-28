@@ -50,6 +50,7 @@ impl fmt::Display for TokenType {
 
 pub trait RangeErrors {
     fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>);
+    fn err_nc<T: fmt::Display>(&self, err: T) -> Error<T>;
     fn err_start(&self, err: ParserErrorType, tokens: &mut Tokenizer);
     fn end(&self, tokens: &Tokenizer) -> Range;
 }
@@ -70,6 +71,15 @@ impl RangeErrors for Range {
         Range {
             start: self.start,
             end: tokens.last_loc
+        }
+    }
+
+    fn err_nc<T: fmt::Display>(&self, err: T) -> Error<T> {
+        Error {
+            msg: err,
+            range: Range { start: self.start, end: self.end },
+            labels: None,
+            highlighted: false
         }
     }
 }

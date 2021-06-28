@@ -22,7 +22,7 @@ impl std::fmt::Display for LoC {
     }
 }
 
-#[derive(Copy)]
+#[derive(Copy, Default)]
 pub struct Range {
     pub start: LoC,
     pub end: LoC
@@ -111,4 +111,11 @@ pub trait ErrorCollector<T> where T: fmt::Display {
     fn error_lbl(&mut self, e_type: T, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool);
 }
 
-
+impl<T> fmt::Debug for Error<T> where T: fmt::Display {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Error")
+         .field("msg", &self.msg.to_string())
+         .field("range", &self.range.to_string())
+         .finish()
+    }
+}

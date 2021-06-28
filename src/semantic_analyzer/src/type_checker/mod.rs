@@ -14,6 +14,16 @@ pub struct StructStruct<'a> {
     pub generics: Vec<VarTyping>
 }
 
+impl<'a> StructStruct<'a> {
+    fn init(&self, generics: Vec<TypeInstance<'a>>, nullable: bool) -> StructInstance {
+        StructInstance {
+            generics,
+            nullable,
+            structure: self
+        }
+    }
+}
+
 pub struct StructInstance<'a> {
     pub structure: &'a StructStruct<'a>,
     pub generics: Vec<TypeInstance<'a>>,

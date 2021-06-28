@@ -13,6 +13,7 @@ pub struct LazyAnalyzer<'a> {
     pub errors: Vec<Error<TypeErrors>>
 }
 
+
 impl<'a> LazyAnalyzer<'a> {
 
     pub fn new() -> Self {
@@ -38,6 +39,39 @@ impl<'a> LazyAnalyzer<'a> {
             }
             _ => {}
         }
+    }
+    
+    pub fn validate_type(&self, ast: &ASTTypings) -> Result<TypeInstance, Error<TypeErrors>> {
+        match ast {
+            ASTTypings::Var(var) => {
+                if self.scope.has_generic(&var.value.value) {
+                    return Ok(TypeInstance::Generic(var.value.value.clone()))
+                };
+                if let Some(type_dec) = self.types.get(&var.value.value) {
+                    match type_dec {
+                        TypeDeclaration::Struct(structure) => {
+
+                        }
+                        _ => {}
+                    }
+                    Err(var.range.err_nc(TypeErrors::NotImplemented))
+                } else {
+                    Err(var.range.err_nc(TypeErrors::TypeDoesntExist(var.value.value.clone())))
+                }
+            },
+            _ => Err(Error::new(TypeErrors::NotImplemented, Range::default()))
+        }
+    }
+
+    pub fn resolve_generics(&mut self, generics: &ASTListTyping) -> Vec<TypeInstance> {
+        let mut res: Vec<TypeInstance> = vec![];
+        for typing in &generics.entries {
+            let inst = self.validate_type(typing);
+            if inst.is_ok() {
+                res.push(inst.unwrap());
+            }
+        }
+        res
     }
 }
 
