@@ -62,13 +62,12 @@ impl Parser {
                     return Some(left_tok)
                 }
                 if other_prec > prec {
-                    let err_start = value.range.start;
-                    let err_end = value.range.end;
+                    let err_range = value.range.clone();
                     self.tokens.consume();
                     let exp = self.parse_expression_part(false);
                     let right = self.parse_binary(exp, other_prec);
                     if right.is_none() { 
-                        self.tokens.error(ParserErrorType::UnexpectedOp(opval), err_start, err_end);
+                        self.tokens.error(ParserErrorType::UnexpectedOp(opval), err_range);
                         return Some(left_tok)
                      };
                     return self.parse_binary(Some(ASTExpression::Binary(ASTBinary {
@@ -324,7 +323,7 @@ impl Parser {
                     },
                     TokenType::Kw(kw) => {
                         if !allow_fn_keyword {
-                            self.tokens.error_lbl(ParserErrorType::Unexpected("keyword fn"), self.tokens.last_loc, self.tokens.input.loc(), vec![
+                            self.tokens.error_lbl_here(ParserErrorType::Unexpected("keyword fn"), vec![
                                 ErrorLabel::new("Only function signatures are allowed here. Remove the `fn` and the function body, if there is one.", self.tokens.range_here())
                             ], true);
                             return None;
@@ -357,7 +356,7 @@ impl Parser {
                                 self.tokens.consume();
                                 let right = self.parse_typing(false, false, allow_mod);
                                 if right.is_none() {
-                                    self.tokens.error(ParserErrorType::Expected("typing"), self.tokens.input.loc(), self.tokens.input.loc());
+                                    self.tokens.error_here(ParserErrorType::Expected("typing"));
                                     return Some(typing);
                                 }
                                 Some(ASTTypings::Combine(
@@ -428,7 +427,7 @@ impl Parser {
             TokenType::Kw(kw) if allow_keywords => ASTVar { value: kw.to_string(), range: unwrapped.range },
             TokenType::Int(i) if allow_ints => ASTVar { value: i.to_string(), range: unwrapped.range },
             _ => {
-                self.tokens.error(ParserErrorType::expected_found("identifier", unwrapped.val.to_string()), unwrapped.range.start, unwrapped.range.end);
+                self.tokens.error(ParserErrorType::expected_found("identifier", unwrapped.val.to_string()), unwrapped.range);
                 return (None, None);
             }
         };
@@ -612,7 +611,7 @@ impl Parser {
                             }
                             let default_value = if self.tokens.is_next(TokenType::Op(String::from("="))) {
                                 if !allow_default {
-                                    self.tokens.error(ParserErrorType::Disallowed("default parameter"), self.tokens.last_loc, self.tokens.input.loc())
+                                    self.tokens.error(ParserErrorType::Disallowed("default parameter"), Range { start: self.tokens.last_loc, end: self.tokens.input.loc() })
                                 }
                                 self.tokens.consume();
                                 self.parse_expression()
@@ -708,7 +707,7 @@ impl Parser {
             self.tokens.consume();
             let exp = self.parse_typing(false, true, true);
             if exp.is_none() { 
-                self.tokens.error(ParserErrorType::Expected("return type"), self.tokens.input.loc(), self.tokens.input.loc()); 
+                self.tokens.error_here(ParserErrorType::Expected("return type")); 
                 return None; 
             };
            Some(Box::from(exp.unwrap()))
@@ -915,12 +914,12 @@ impl Parser {
                             typing
                         } else { None };
                         let value = if self.tokens.is_next(TokenType::Op("=".to_string())) {
-                            let equals = self.tokens.consume().unwrap(); // Skip =
+                            self.tokens.consume().unwrap(); // Skip =
                             let exp = self.parse_expression();
                             match exp {
                                 Some(e) => Some(Box::from(e)),
                                 None => {
-                                    self.tokens.error(ParserErrorType::Expected("initializor"), token.range.start, equals.range.end);
+                                    self.tokens.error(ParserErrorType::Expected("initializor"), token.range);
                                     None
                                 }
                             }
@@ -1271,7 +1270,7 @@ impl Parser {
                        let path = if let Some(ASTExpression::Str(string)) = self.parse_expression_part(false) {
                            string
                        } else {
-                        self.tokens.error(ParserErrorType::Expected("path string"), range.start, path_start);
+                        self.tokens.error(ParserErrorType::Expected("path string"), range.end_with(path_start));
                         return None;
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {

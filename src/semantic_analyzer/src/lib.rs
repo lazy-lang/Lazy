@@ -77,12 +77,12 @@ impl<'a> LazyAnalyzer<'a> {
 
 impl<'a> ErrorCollector<TypeErrors> for LazyAnalyzer<'a> {
 
-    fn error(&mut self, err: TypeErrors, start: LoC, end: LoC) {
-        self.errors.push(Error::new(err, Range { start, end }));
+    fn error(&mut self, err: TypeErrors, range: Range) {
+        self.errors.push(Error::new(err, range));
     }
 
-    fn error_lbl(&mut self, err: TypeErrors, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool) {
-        self.errors.push(Error::new_with_labels(err, Range { start, end }, labels, highlight))
+    fn error_lbl(&mut self, err: TypeErrors, range: Range, labels: Vec<ErrorLabel>, highlight: bool) {
+        self.errors.push(Error::new_with_labels(err, range, labels, highlight))
     }
 
 }

@@ -58,12 +58,12 @@ pub trait RangeErrors {
 impl RangeErrors for Range {
     #[inline]
     fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>) {
-        tokens.error(err, self.start, self.end)
+        tokens.error(err, self.clone())
     }
 
     #[inline]
     fn err_start<'a>(&self, err: ParserErrorType, tokens: &mut Tokenizer) {
-        tokens.error(err, self.start, tokens.input.loc())
+        tokens.error(err, self.clone())
     }
 
     #[inline]
@@ -130,8 +130,7 @@ impl Tokenizer {
                     str.push(character);
                 },
                 None => {
-                    let loc = self.input.loc();
-                    self.error(ParserErrorType::EndOfStr, start, loc);
+                    self.error(ParserErrorType::EndOfStr, Range { start, end: self.last_loc });
                     break;
                 }
             }
@@ -146,13 +145,13 @@ impl Tokenizer {
         let val = match maybe_ch {
             Some(ch) => ch,
             None => {
-                self.error(ParserErrorType::EmptyCharLiteral, self.input.loc(), self.input.loc());
+                self.error(ParserErrorType::EmptyCharLiteral, self.range_here());
                 '_'
             }
         };
         let next = self.input.consume();
         if next == None || next.unwrap() != '\'' {
-            self.error(ParserErrorType::Expected("character literal may only contain one codepoint"), start, self.input.loc());
+            self.error(ParserErrorType::Expected("character literal may only contain one codepoint"), Range { start, end: self.last_loc });
         }
         Token { val: TokenType::Char(val), range: Range { start, end: self.input.loc() }}
     }
@@ -196,11 +195,11 @@ impl Tokenizer {
                 '1'..='9' => {
                     match num_type {
                         NumberType::Binary if ch > '1' => {
-                            self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            self.error(ParserErrorType::InvalidDigit, self.range_here());
                             num_type = NumberType::None;
                         },
                         NumberType::Octal if ch > '7' => {
-                            self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                            self.error(ParserErrorType::InvalidDigit, self.range_here());
                             num_type = NumberType::None;
                         },
                         _ => {}
@@ -211,7 +210,7 @@ impl Tokenizer {
                     if num_type == NumberType::Hex {
                         num.push(self.input.consume().unwrap())
                     } else {
-                        self.error(ParserErrorType::InvalidDigit, self.input.loc(), self.input.loc());
+                        self.error(ParserErrorType::InvalidDigit, self.range_here());
                         break;
                     }
                 },
@@ -224,7 +223,7 @@ impl Tokenizer {
                     }
                     if dot {
                         self.input.consume();
-                        self.error(ParserErrorType::DecimalPoint, start, self.input.loc()); 
+                        self.error(ParserErrorType::DecimalPoint, Range {start, end: self.input.loc()}); 
                         break;
                      };
                     self.input.consume();
@@ -306,7 +305,7 @@ impl Tokenizer {
         while !self.input.is_eof() {
             // Invalid operators
             if match_str!(op.as_str(), "<>") {
-                self.error(ParserErrorType::UnexpectedOp(op.clone()), start, self.input.loc());
+                self.error(ParserErrorType::UnexpectedOp(op.clone()), Range { start, end: self.input.loc()});
                 break;
             }
             // Operators which cannot be followed by other operators
@@ -360,10 +359,10 @@ impl Tokenizer {
                 let loc = self.input.loc();
                 self.input.consume();
                 if let Some(confused_err) = Self::is_confusable(ch) {
-                    self.error(confused_err, loc, loc);
+                    self.error(confused_err, loc.to_range());
                     return None;
                 };
-                self.error(ParserErrorType::InvalidCharacter(ch), loc, loc);
+                self.error(ParserErrorType::InvalidCharacter(ch), loc.to_range());
                 None
             } 
         }
@@ -388,6 +387,11 @@ impl Tokenizer {
     #[inline]
     pub fn error_here(&mut self, e_type: ParserErrorType) {
         self.errors.push(Error::new(e_type, self.range_here()));
+    }
+
+    #[inline]
+    pub fn error_lbl_here(&mut self, e_type: ParserErrorType, labels: Vec<ErrorLabel>, highlight: bool) {
+        self.errors.push(Error::new_with_labels(e_type, self.range_here(), labels, highlight));
     }
 
     #[inline]
@@ -433,13 +437,13 @@ impl Tokenizer {
                     },
                     _ => {
                         let tstr = tok.val.to_string();
-                        self.error(ParserErrorType::expected_found(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr), location.start, location.end);
+                        self.error(ParserErrorType::expected_found(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), tstr), location);
                         None
                     }
                 }
             },
             None => {
-                self.error(ParserErrorType::ExpectedString(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location.start, location.end);
+                self.error(ParserErrorType::ExpectedString(format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))), location);
                 None
             }
         }
@@ -469,11 +473,12 @@ impl Tokenizer {
 impl error::ErrorCollector<ParserErrorType> for Tokenizer {
 
     #[inline]
-    fn error(&mut self, e_type: ParserErrorType, start: LoC, end: LoC) {
-        self.errors.push(Error::new(e_type, Range {start, end}));
+    fn error(&mut self, e_type: ParserErrorType, range: Range) {
+        self.errors.push(Error::new(e_type, range));
     }
 
-    fn error_lbl(&mut self, e_type: ParserErrorType, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool) {
-        self.errors.push(Error::new_with_labels(e_type, Range { start, end }, labels, highlight));
+    #[inline]
+    fn error_lbl(&mut self, e_type: ParserErrorType, range: Range, labels: Vec<ErrorLabel>, highlight: bool) {
+        self.errors.push(Error::new_with_labels(e_type, range, labels, highlight));
     }
 }

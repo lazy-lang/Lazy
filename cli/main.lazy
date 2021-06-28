@@ -1,5 +1,5 @@
 
-struct Error<T: { to_string: () -> str }, A: B> {
+struct Error<T: { to_string: fn() -> str }, A> {
     content: T
     type: i32
     format: fn() -> str {

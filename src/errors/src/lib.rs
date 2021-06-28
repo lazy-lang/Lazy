@@ -22,6 +22,13 @@ impl std::fmt::Display for LoC {
     }
 }
 
+impl LoC {
+
+    pub fn to_range(&self) -> Range {
+        Range { start: self.clone(), end: self.clone()}
+    }
+}
+
 #[derive(Copy, Default)]
 pub struct Range {
     pub start: LoC,
@@ -107,8 +114,8 @@ impl<T> Error<T> where T: fmt::Display {
 }
 
 pub trait ErrorCollector<T> where T: fmt::Display {
-    fn error(&mut self, e_type: T, start: LoC, end: LoC);
-    fn error_lbl(&mut self, e_type: T, start: LoC, end: LoC, labels: Vec<ErrorLabel>, highlight: bool);
+    fn error(&mut self, e_type: T, range: Range);
+    fn error_lbl(&mut self, e_type: T, range: Range, labels: Vec<ErrorLabel>, highlight: bool);
 }
 
 impl<T> fmt::Debug for Error<T> where T: fmt::Display {
