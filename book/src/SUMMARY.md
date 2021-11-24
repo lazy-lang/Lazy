@@ -16,4 +16,3 @@
 - [Loops](./loops/main.md)
 - [Promises](./promises/main.md)
 - [Modules](./modules/main.md)
-- [Native Modules](./native/main.md)

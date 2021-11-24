@@ -35,7 +35,7 @@ export static create_song = fn(lyrics: str, genre: SongGenre) -> Song {
 ## Importing
 
 ```
-import "./path/to/songs"
+import { create_song } from "./path/to/songs"
 
 main {
     let bloodmoney = create_song("what do you believe in?", SongGenre::Metal);
@@ -45,8 +45,9 @@ main {
 ### `as` binding
 
 ```
-import "./path/to/songs" as Songs;
-
+import * from "./path/to/songs" as Songs;
+import { create_song as create_a_song } from "./path/to/songs";
+ 
 main {
     let bloodmoney = Songs::create_song("what do you believe in?", Songs::SongGenre::Metal);
 }
