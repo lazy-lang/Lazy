@@ -290,7 +290,7 @@ impl Tokenizer {
         else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
         else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
 
-        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
+        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in", "from") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
         Token { val: token_type, range: Range {start, end: self.input.loc() } }
     }
 
@@ -311,7 +311,7 @@ impl Tokenizer {
             // Operators which cannot be followed by other operators
             if match_str!(op.as_str(), "?", ">") { break; };
             let ch = self.input.peek(0).unwrap();
-            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '~', '^') { op.push(self.input.consume().unwrap()) }
+            if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '~', '^', '*', '/') { op.push(self.input.consume().unwrap()) }
             else { break; };
         };
         Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
@@ -352,7 +352,7 @@ impl Tokenizer {
                 self.input.consume();
                 self._next()
             },
-            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' | '~' | '^' => Some(self.parse_op()),
+            '+' | '-' | '>' | '<' | '=' | '!' | '%' | '|' | '&' | '.' | '?' | '~' | '^' | '*' | '/' => Some(self.parse_op()),
             ',' | ':' | ';' | '{' | '}' | '[' | ']' | '(' | ')' | '#' => Some(self.parse_punc()),
             'a'..='z' | 'A'..='Z' | '_' => Some(self.parse_ident()),
             ch => {

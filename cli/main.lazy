@@ -1,5 +1,9 @@
 
-struct Error<T: { to_string: fn() -> str }, A> {
+import { thing as thing2, thing2 as thing3, thing4 } from "hello" as thing; 
+import * from "ree"
+import * from "aaaa" as thing444;
+
+struct Error<T: { to_string: () -> str }, A> {
     content: T
     type: i32
     format: fn() -> str {
@@ -9,10 +13,8 @@ struct Error<T: { to_string: fn() -> str }, A> {
 
 }
 
-struct Error {};
-
 struct CustomErrorContent {
-    vars: Vec<str>
+    vars: Vec<str>!
     to_string: fn() -> str::A {
         vars.join(", ");
     }

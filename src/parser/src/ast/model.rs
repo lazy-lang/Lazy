@@ -247,9 +247,21 @@ pub struct ASTExport {
     pub range: Range
 }
 
+pub struct ASTImportItem {
+    pub name: String,
+    pub r#as: Option<ASTVar>,
+    pub range: Range
+}
+
+pub enum ASTImportThing {
+    All,
+    Items(Vec<ASTImportItem>)
+}
+
 pub struct ASTImport {
     pub path: ASTStr,
-    pub _as: Option<ASTVar>,
+    pub thing: ASTImportThing,
+    pub r#as: Option<ASTVar>,
     pub range: Range
 }
 
@@ -718,9 +730,18 @@ impl fmt::Display for ASTExport {
    }
 }
 
+impl fmt::Display for ASTImportThing {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ASTImportThing::All => writeln!(f, "*"),
+            ASTImportThing::Items(items) => writeln!(f, "{{ {} }}", items.iter().map(|i| format!("{}{}", i.name, if let Some(ass) = &i.r#as { ass.to_string() } else { String::new() })).collect::<Vec<String>>().join(", "))
+        }
+   }
+}
+
 impl fmt::Display for ASTImport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "import {}{}", self.path, if self._as.is_some() { format!(" as {}", self._as.as_ref().unwrap() )} else { String::from("") })
+        writeln!(f, "import {}{}{}", self.thing, self.path, if let Some(ass) = &self.r#as { ass.to_string() } else { String::new() })
    }
 }
 

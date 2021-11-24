@@ -1267,6 +1267,34 @@ impl Parser {
                    },
                    "import" => {
                        let path_start = self.tokens.input.loc();
+                       let item = if self.tokens.is_next(TokenType::Punc('{')) {
+                            self.tokens.consume();
+                            let mut items: Vec<ASTImportItem> = vec![];
+                            while self.tokens.peek()?.val != TokenType::Punc('}') {
+                                let text = self.parse_varname(false, false, false, false).0?;
+                                if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
+                                    self.tokens.consume();
+                                    let alias = self.parse_varname(false, false, false, false).0?;
+                                    let alias_range = alias.range.end;
+                                    items.push(ASTImportItem { name: text.value, r#as: Some(alias), range: Range { start: text.range.start, end: alias_range } });
+                                } else {
+                                    items.push(ASTImportItem { name: text.value, range: text.range, r#as: None })
+                                }
+                                if self.tokens.is_next(TokenType::Punc('}')) {
+                                    self.tokens.consume();
+                                    break;
+                                }
+                                self.tokens.skip_or_err(TokenType::Punc(','), Some(Error::new(ParserErrorType::ExpectedDelimiter(','), self.tokens.range_here())));
+                            }
+                            ASTImportThing::Items(items)
+                        } else if self.tokens.is_next(TokenType::Op(String::from("*"))) {
+                            self.tokens.consume();
+                            ASTImportThing::All
+                        } else {
+                            self.tokens.error_here(ParserErrorType::Expected("either an import deconstructor or a star (*)"));
+                            return None;
+                        };
+                        if self.tokens.skip_or_err(TokenType::Kw(String::from("from")), Some(Error::new(ParserErrorType::Expected("keyword 'from'"), self.tokens.range_here()))) { return None };
                        let path = if let Some(ASTExpression::Str(string)) = self.parse_expression_part(false) {
                            string
                        } else {
@@ -1280,7 +1308,8 @@ impl Parser {
                        Some(ASTStatement::Import(
                            ASTImport {
                                path,
-                               _as: as_binding,
+                               thing: item,
+                               r#as: as_binding,
                                range: range.end(&self.tokens)
                            }
                        ))
