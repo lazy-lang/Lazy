@@ -1,0 +1,8 @@
+[package]
+name = "file_host"
+version = "0.1.0"
+authors = ["GoogleFeud <volen.sl666@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+errors = { path = "../errors" }

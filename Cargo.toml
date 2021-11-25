@@ -7,4 +7,5 @@ edition = "2018"
 [dependencies]
 parser = { path = "./src/parser" }
 errors = { path = "./src/errors" }
+file_host = { path = "./src/file_host" }
 semantic_analyzer = { path = "./src/semantic_analyzer" }
