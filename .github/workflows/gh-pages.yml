@@ -1,10 +1,11 @@
 name: github pages
 
 on:
+  pull_request:
+  workflow_dispatch:
   push:
     branches:
-      - book
-  pull_request:
+      - main
 
 jobs:
   deploy:
@@ -19,9 +20,8 @@ jobs:
 
       - run: mdbook build ./book
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          branch: gh-pages
+          folder: docs
