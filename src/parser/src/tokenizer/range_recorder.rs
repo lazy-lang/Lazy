@@ -36,8 +36,8 @@ impl RangeRecorder {
     }
 
     #[inline]
-    pub fn err_lbl(&self, e_type: ParserErrorType, labels: Vec<ErrorLabel>, highlight: bool, tok: &mut Tokenizer) {
-        tok.error_lbl(e_type, Range { start: self.start, end: tok.last_loc }, labels, highlight)
+    pub fn err_lbl(&self, e_type: ParserErrorType, labels: Vec<ErrorLabel>, tok: &mut Tokenizer) {
+        tok.error_lbl(e_type, Range { start: self.start, end: tok.last_loc }, labels)
     }
     
 }

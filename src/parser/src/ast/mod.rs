@@ -6,6 +6,7 @@ pub mod model;
 pub mod utils;
 use model::*;
 
+pub type ParserResult = Vec<ASTStatement>;
 
 pub struct Parser {
     pub tokens: Tokenizer,
@@ -230,7 +231,7 @@ impl Parser {
             self.tokens.consume();
             self.tokens.skip_or_err(TokenType::Punc(':'), Some(Error::new_with_labels(ParserErrorType::Expected("Another colon (:)"), self.tokens.range_here(), vec![
                 ErrorLabel::new("Add another colon to make the mod access expression (Module::Item)", self.tokens.range_here())
-            ], true)));
+            ])));
             if let Some(tok) = self.tokens.consume() {
                 match tok.val {
                     TokenType::Var(v) => path.push(ASTVar { value: v, range: tok.range }),
@@ -325,7 +326,7 @@ impl Parser {
                         if !allow_fn_keyword {
                             self.tokens.error_lbl_here(ParserErrorType::Unexpected("keyword fn"), vec![
                                 ErrorLabel::new("Only function signatures are allowed here. Remove the `fn` and the function body, if there is one.", self.tokens.range_here())
-                            ], true);
+                            ]);
                             return None;
                         }
                         match kw.as_str() {
@@ -366,20 +367,7 @@ impl Parser {
                                         range: range.end(&self.tokens)
                                     }
                                 ))
-                            },
-                            "!" => {
-                                self.tokens.consume();
-                                Some(ASTTypings::ExplicitImpl(
-                                    match typing {
-                                        ASTTypings::Var(v) => ASTModAccessValues::Var(v),
-                                        ASTTypings::Mod(m) => ASTModAccessValues::ModAccess(m),
-                                        _ => {
-                                            range.err(ParserErrorType::Unexpected("explicit impl operator"), &mut self.tokens);
-                                            return None
-                                        }
-                                    }
-                                ))
-                            },
+                            }
                             _ => { Some(typing) }
                         }
                     },
@@ -1180,7 +1168,7 @@ impl Parser {
                     if self.tokens.skip_or_err(TokenType::Punc('{'), Some(Error::new(ParserErrorType::Expected("start of enum variants"), self.tokens.range_here()))) { return None; };
                     Some(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
                     name: name.0.unwrap(),
-                    values: self.parse_typing_pair_list(true, false, false, false, false, '}'),
+                    values: self.parse_typing_pair_list(true, false, false, false, true, '}'),
                     typings: name.1,
                     range: range.end(&self.tokens)
                     }))
@@ -1391,7 +1379,7 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Vec<ASTStatement> {
+    pub fn parse(&mut self) -> ParserResult {
         let mut res = vec![];
         while !self.tokens.input.is_eof() {
             let parsed_statement = self.parse_statement();

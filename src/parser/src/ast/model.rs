@@ -389,7 +389,6 @@ pub enum ASTTypings {
     Optional(Box<ASTTypings>),
     Tuple(ASTListTyping),
     Combine(ASTCombineTyping),
-    ExplicitImpl(ASTModAccessValues),
     Bound(ASTBoundTyping)
 }
 
@@ -478,7 +477,6 @@ impl fmt::Display for ASTTypings {
             Self::Function(func) => func.fmt(f),
             Self::Combine(c) => c.fmt(f),
             Self::Mod(m) => m.fmt(f),
-            Self::ExplicitImpl(im) => write!(f, "{}!", im),
             Self::Bound(b) => b.fmt(f)
         }
     }

@@ -1,6 +1,8 @@
-
 pub mod builder;
+pub mod diagnostics;
 use std::fmt;
+
+use diagnostics;
 
 #[derive(Copy)]
 #[derive(Default)]
@@ -84,45 +86,76 @@ impl ErrorLabel {
     - Be between the main error range
 */
 
-pub struct Error<T> where T: fmt::Display  {
+pub struct Error {
     pub range: Range,
-    pub msg: T,
+    pub msg: String,
     pub highlighted: bool,
-    pub labels: Option<Vec<ErrorLabel>>
+    pub labels: Vec<ErrorLabel>
 }
 
-impl<T> Error<T> where T: fmt::Display {
+impl Error {
 
-    pub fn new(msg: T, range: Range) -> Error<T> {
+    pub fn new(msg: String, range: Range) -> Error {
         Error {
             msg,
             range: range,
-            labels: None,
-            highlighted: true,
+            labels: vec![],
+            highlighted: true
         }
     }
 
-    pub fn new_with_labels(msg: T, range: Range, labels: Vec<ErrorLabel>, highlighted: bool) -> Error<T> {
+    pub fn new_with_labels(msg: String, range: Range, labels: Vec<ErrorLabel>) -> Error {
         Error {
             msg,
             range: range,
-            labels: Some(labels),
-            highlighted
+            labels,
+            highlighted: true
         }
     }
 
 }
 
-pub trait ErrorCollector<T> where T: fmt::Display {
-    fn error(&mut self, e_type: T, range: Range);
-    fn error_lbl(&mut self, e_type: T, range: Range, labels: Vec<ErrorLabel>, highlight: bool);
-}
-
-impl<T> fmt::Debug for Error<T> where T: fmt::Display {
+impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Error")
          .field("msg", &self.msg.to_string())
          .field("range", &self.range.to_string())
          .finish()
     }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Error: {}", self.msg.to_string())
+    }
+}
+
+impl std::error::Error for Error {}
+
+pub type LazyResult<T> = Result<T, Error>;
+pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
+
+macro_rules! err {
+    ($diagnostic: expr, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
+        {
+            let dia_str = diagnostic::format_diagnostic($diagnostic, vec![$($vars),*]);
+            let labels = vec![$(
+                ErrorLabel {
+                    msg: $label_text,
+                    variant: ErrorLabelVariants::Secondary,
+                    range: $label_range
+                }
+            ),*];
+            Error {
+                msg: dia_str,
+                highlighted: true,
+                range: $range,
+                labels
+            }
+        }
+    }
+}
+
+fn a() {
+    err!(Diagnostics::UNEXPECTED_OP, 1..4, "0");
 }

@@ -50,7 +50,6 @@ impl fmt::Display for TokenType {
 
 pub trait RangeErrors {
     fn err<T: fmt::Display>(&self, err: T, tokens: &mut dyn ErrorCollector<T>);
-    fn err_nc<T: fmt::Display>(&self, err: T) -> Error<T>;
     fn err_start(&self, err: ParserErrorType, tokens: &mut Tokenizer);
     fn end(&self, tokens: &Tokenizer) -> Range;
 }
@@ -74,14 +73,6 @@ impl RangeErrors for Range {
         }
     }
 
-    fn err_nc<T: fmt::Display>(&self, err: T) -> Error<T> {
-        Error {
-            msg: err,
-            range: Range { start: self.start, end: self.end },
-            labels: None,
-            highlighted: false
-        }
-    }
 }
 
 macro_rules! match_str {
@@ -390,8 +381,8 @@ impl Tokenizer {
     }
 
     #[inline]
-    pub fn error_lbl_here(&mut self, e_type: ParserErrorType, labels: Vec<ErrorLabel>, highlight: bool) {
-        self.errors.push(Error::new_with_labels(e_type, self.range_here(), labels, highlight));
+    pub fn error_lbl_here(&mut self, e_type: ParserErrorType, labels: Vec<ErrorLabel>) {
+        self.errors.push(Error::new_with_labels(e_type, self.range_here(), labels));
     }
 
     #[inline]
@@ -478,7 +469,7 @@ impl error::ErrorCollector<ParserErrorType> for Tokenizer {
     }
 
     #[inline]
-    fn error_lbl(&mut self, e_type: ParserErrorType, range: Range, labels: Vec<ErrorLabel>, highlight: bool) {
-        self.errors.push(Error::new_with_labels(e_type, range, labels, highlight));
+    fn error_lbl(&mut self, e_type: ParserErrorType, range: Range, labels: Vec<ErrorLabel>) {
+        self.errors.push(Error::new_with_labels(e_type, range, labels));
     }
 }
