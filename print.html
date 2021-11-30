@@ -693,49 +693,6 @@ main {
     vec_of_nums.total_len(); // Error!
 }
 </code></pre>
-<h2 id="require-impl"><a class="header" href="#require-impl">Require <code>impl</code></a></h2>
-<p>Sometimes, the creator of a partial may want it to be explicitly implemented via the <code>impl</code> keyword. Place a <code>!</code> after the partial type in order to make sure that the provided struct fits the partial:</p>
-<pre><code>type Add&lt;Other, Output&gt; = {
-    add: (other: Other) -&gt; Output
-}
-
-static add = fn&lt;Other, Output&gt;(a: Add&lt;Other, Output&gt;!, b: Other) -&gt; Output {
-    a.add(b);
-}
-
-struct Token {
-    value: char,
-
-    static create: fn(value: char) -&gt; Token {
-        new Token { value };
-    }
-
-    add: fn(other: Token) -&gt; Token {
-       new Token { value: self.value + other.value };
-    }
-}
-
-main {
-    let tok1 = Token::create('a');
-    let tok2 = Token::create('b');
-    add&lt;Token, Token&gt;(tok1, tok2); // Invalid, because &quot;Token&quot; doesn't explicitly fit `Add`!
-}
-</code></pre>
-<p>Correct implementation:</p>
-<pre><code>struct Token {
-    value: char
-}
-
-impl Add&lt;Token, Token&gt; for Token {
-    add: fn(other: Token) -&gt; Token {
-        new Token { value: self.value + other.value };
-    }
-}
-
-main {
-    add&lt;Token, Token&gt;(Token::create('a'), Token::create('b')); // &quot;ab&quot;
-}
-</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="generic-bounds"><a class="header" href="#generic-bounds">Generic bounds</a></h1>
 <p>In <code>struct</code>s, <code>enum</code>s and <code>type</code>s, generic parameters can be <strong>bounded</strong>. That means that only a type which satisfies the specified partial can be passed as a generic parameter.</p>
 <pre><code>struct Error&lt;
