@@ -1,52 +1,30 @@
 
 use crate::{module::Module, symbol::Symbol};
 use std::collections::HashMap;
-use errors::{ErrorCollector, Error, builder::ErrorFormatter};
+use errors::{builder::ErrorFormatter, LazyMultiResult};
 
 
-pub trait FileHost: ErrorCollector<String> + ErrorFormatter {
-    fn create(&mut self, path: &str) -> Option<&Module>;
+pub trait FileHost: ErrorFormatter {
+    fn create(&mut self, path: &str) -> LazyMultiResult<&Module>;
     fn get(&self, path: &str) -> Option<&Module>;
-    fn get_or_create(&mut self, path: &str) -> Option<&Module>;
+    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<&Module>;
     fn get_unique_id(&mut self) -> u32;
     fn insert_symbol(&mut self, sym: Symbol);
     fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
 }
 
 pub struct VirtualFileHost {
-    pub errors: Vec<Error<String>>,
     pub id_counter: u32,
     pub symbols: HashMap<u32, Symbol>,
     pub files: HashMap<String, Module>,
+    pub file_contents: HashMap<String, String>,
     pub file_cache: HashMap<String, String>
-}
-
-impl ErrorCollector<String> for VirtualFileHost {
-
-    fn error(&mut self, e_type: String, range: errors::Range) {
-        self.errors.push(Error {
-            range,
-            msg: e_type,
-            highlighted: true,
-            labels: None
-        })
-    }
-
-    fn error_lbl(&mut self, e_type: String, range: errors::Range, labels: Vec<errors::ErrorLabel>) {
-        self.errors.push(Error {
-            range,
-            msg: e_type,
-            highlighted: true,
-            labels: Some(labels)
-        })
-    }
-
 }
 
 impl ErrorFormatter for VirtualFileHost {
 
     fn get_file_contents(&self, file: &str) -> Option<&str> {
-        Some(&self.files.get(file)?.content)
+        Some(&self.file_contents.get(file)?)
     }
 }
 
@@ -56,11 +34,11 @@ impl FileHost for VirtualFileHost {
         self.files.get(path)
     }
 
-    fn get_or_create(&mut self, path: &str) -> Option<&Module> {
+    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<&Module> {
         if let Some(file_contents) = self.file_cache.remove(path) {
             self.create_virtual(path, file_contents)
         } else {
-            self.files.get(path)
+            Ok(self.files.get(path).unwrap())
         }
     }
 
@@ -69,7 +47,7 @@ impl FileHost for VirtualFileHost {
         self.id_counter
     }
 
-    fn create(&mut self, _path: &str) -> Option<&Module> {
+    fn create(&mut self, _path: &str) -> LazyMultiResult<&Module> {
         panic!("'create' method doesn't exist for virtual file hosts! Use the 'create_virtual' method instead.")
     }
 
@@ -88,9 +66,9 @@ impl VirtualFileHost {
     pub fn new() -> Self {
         VirtualFileHost {
             id_counter: 0,
-            errors: Vec::new(),
             symbols: HashMap::new(),
             files: HashMap::new(),
+            file_contents: HashMap::new(),
             file_cache: HashMap::new()
         }
     }
@@ -99,14 +77,10 @@ impl VirtualFileHost {
         self.file_cache.insert(path.to_string(), content);
     }
 
-    pub fn create_virtual(&mut self, path: &str, content: String) -> Option<&Module> {
-        let module = if let Ok(module) = Module::from_str(self, path, content) {
-            module
-        } else {
-            self.error
-        };
-        let module = Module::from_str(self, path, content);
+    pub fn create_virtual(&mut self, path: &str, content: String) -> LazyMultiResult<&Module> {
+        self.file_contents.insert(path.to_string(), content.clone());
+        let module = Module::from_str(self, path, &content)?;
         self.files.insert(path.to_string(), module);
-        self.files.get(path)
+        Ok(self.files.get(path).unwrap())
     }
 }

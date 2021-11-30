@@ -4,8 +4,8 @@ use std::path::Path;
 use std::ffi::OsStr;
 use std::fs;
 use std::time::{Instant};
-use lazy::parser::ast::{Parser};
-use lazy::errors::builder::{ErrorFormatter};
+use lazy::semantic_analyzer::{file_host::VirtualFileHost};
+use lazy::errors::builder::ErrorFormatter;
 
 fn get_extention_validity(filename: &str) -> Option<&str> {
     Path::new(filename)
@@ -38,16 +38,21 @@ if let Some(exe_file) = matches.value_of("run") {
         if get_extention_validity(&exe_file) == Some("lazy") {
             let source = fs::read_to_string(&exe_file)
             .expect("Something went wrong reading the file");
-            let mut files = ErrorFormatter::new();
-            files.add(exe_file.to_string(), &source);
-            let mut p = Parser::new(&source.replace("\r\n", "\n"));
             let before = Instant::now();
-            let res = p.parse();
-            if matches.is_present("time"){
+            let mut files = VirtualFileHost::new();
+            let module = files.create_virtual("main", source.replace("\r\n", "\n"));
+            if matches.is_present("time") {
                 println!("Parsing took {} nanoseconds", before.elapsed().as_nanos());
             }
-            for error in &p.tokens.errors {
-                println!("{}", files.print_err(exe_file.to_string(), &error).unwrap());
+            match module {
+                Err(errors) => {
+                    for error in errors {
+                        println!("{}", files.format_err(&error, "main").unwrap());
+                    }
+                },
+                Ok(module) => {
+                    println!("Successfully parsed and analyzed module!");
+                }
             }
         }
         else{

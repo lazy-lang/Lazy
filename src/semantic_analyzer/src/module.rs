@@ -1,52 +1,56 @@
 use std::collections::HashMap;
 use crate::{file_host::{FileHost}, symbol::{Symbol}};
-use parser::{ast::{Parser, model::{ASTImportThing, ASTStatement}}, tokenizer::error::ParserErrorType};
-use errors::Error;
+use parser::{ast::{Parser, model::{ASTImportThing, ASTStatement}}};
+use errors::*;
+use diagnostics::*;
 
 pub struct Module {
     pub local: HashMap<String, u32>,
     pub exported: HashMap<String, u32>,
-    pub filename: String,
-    pub content: String
+    pub filename: String
 }
 
 impl Module {
     
-    pub fn from_str<T: FileHost>(host: &mut T, filename: &str, content: String) -> Result<Self, Vec<Error<ParserErrorType>>> {
+    pub fn from_str<T: FileHost>(host: &mut T, filename: &str, content: &str) -> LazyMultiResult<Self> {
         let mut temp_syms: HashMap<String, Symbol> = HashMap::new();
         let mut local: HashMap<String, u32> = HashMap::new();
         let mut exported: HashMap<String, u32> = HashMap::new();
         let mut parser =  Parser::new(&content);
-        let ast = parser.parse();
+        let (ast, mut errs) = parser.parse();
+        if !errs.is_empty() || !parser.tokens.errors.is_empty() {
+            let mut new_vec: Vec<Error> = vec![];
+            new_vec.append(&mut parser.tokens.errors);
+            new_vec.append(&mut errs);
+            return Err(new_vec);
+        }
         if !parser.tokens.errors.is_empty() {
             return Err(parser.tokens.errors);
         }
+        let mut errors: Vec<Error> = vec![];
         for statement in ast {
             match statement {
                 ASTStatement::Import(decl) => {
-                    let imported_from = host.get_or_create(&decl.path.value);
-                    if let Some(module_res) = imported_from {
-                        let module = module_res;
-                        match decl.thing {
-                            ASTImportThing::All => {
-                                for (name, id) in module.exported.iter() {
-                                    local.insert(name.clone(), id.clone());
-                                }
+                    let module = host.get_or_create(&decl.path.value)?;
+                    match decl.thing {
+                        ASTImportThing::All => {
+                            for (name, id) in module.exported.iter() {
+                                local.insert(name.clone(), id.clone());
                             }
-                            ASTImportThing::Items(item_list) => {
-                                for item in item_list {
-                                    let item_name = item.name.clone();
-                                    let item_id = if let Some(id) = module.exported.get(&item_name) { id } 
-                                    else {
-                                        host.error(format!("Type {} not found in module \"{}\"", item_name, decl.path), item.range);
-                                    };
-                                    let name = if let Some(alias) = item.r#as {
-                                        alias.value 
-                                    } else {
-                                        item.name
-                                    };
-                                    local.insert(name, item_id.clone());
-                                }
+                        }
+                        ASTImportThing::Items(item_list) => {
+                            for item in item_list {
+                                let item_name = item.name.clone();
+                                let item_id = if let Some(id) = module.exported.get(&item_name) { id } else {
+                                    errors.push(err!(TYPE_NOT_FOUND_FROM_MOD, item.range, &item_name, &decl.path.to_string()));
+                                    &0
+                                };
+                                let name = if let Some(alias) = item.r#as {
+                                    alias.value 
+                                } else {
+                                    item.name
+                                };
+                                local.insert(name, item_id.clone());
                             }
                         }
                     }
@@ -88,7 +92,7 @@ impl Module {
                 _ => {}
             };
         }
-        Ok(Self { local, exported, filename: filename.to_string(), content })
+        Ok(Self { local, exported, filename: filename.to_string() })
     }
 
 }

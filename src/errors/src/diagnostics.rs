@@ -131,6 +131,10 @@ impl Diagnostics {
         UNEXPECTED_EOF,
         1028,
         "Unexpected end of file."
+    ], [
+        TYPE_NOT_FOUND_FROM_MOD,
+        2001,
+        "Type $ not found from module $"
     ]
 );
 

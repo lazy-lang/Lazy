@@ -64,9 +64,9 @@ pub enum ErrorLabelVariants {
 }
 
 pub struct ErrorLabel {
-    msg: String,
-    range: Range,
-    variant: ErrorLabelVariants
+    pub msg: String,
+    pub range: Range,
+    pub variant: ErrorLabelVariants
 }
 
 impl ErrorLabel {

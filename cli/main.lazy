@@ -1,24 +1,23 @@
-
-import { thing as thing2, thing2 as thing3, thing4 } from "hello" as thing; 
-import * from "ree"
+import { thing as thing2, thing2 as thing3, thing4 } from "hello" as thing;
+import * from "ree";
 import * from "aaaa" as thing444;
 
 struct Error<T: { to_string: () -> str }, A> {
     content: T
     type: i32
     format: fn() -> str {
-        `Error ${self.err_type}: ${self.content}`;
+    //    `Error ${self.err_type}: ${self.content}`;
     }
     new: fn() new Error {}
 
-}
+};
 
 struct CustomErrorContent {
     vars: Vec<str>!
     to_string: fn() -> str::A {
         vars.join(", ");
     }
-}
+};
 
 enum Something {
     A,
@@ -26,7 +25,7 @@ enum Something {
     const,
     let,
     type
-}
+};
 
 main {
     3..=5;
@@ -42,4 +41,4 @@ main {
     }
 
     if let char_token = TokenTypes::Char('c') char_token + 1;
-}
+};

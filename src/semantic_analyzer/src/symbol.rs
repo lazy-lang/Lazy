@@ -1,5 +1,5 @@
 
-pub use parser::ast::{ParserResult, model::*};
+pub use parser::ast::{model::*};
 
 pub enum SymbolKind {
     Struct{
