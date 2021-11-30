@@ -2,7 +2,7 @@ pub mod builder;
 pub mod diagnostics;
 use std::fmt;
 
-use diagnostics;
+use diagnostics::*;
 
 #[derive(Copy)]
 #[derive(Default)]
@@ -138,7 +138,7 @@ pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
 macro_rules! err {
     ($diagnostic: expr, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
         {
-            let dia_str = diagnostic::format_diagnostic($diagnostic, vec![$($vars),*]);
+            let dia_str = format_diagnostic($diagnostic, vec![$($vars),*]);
             let labels = vec![$(
                 ErrorLabel {
                     msg: $label_text,
@@ -157,5 +157,5 @@ macro_rules! err {
 }
 
 fn a() {
-    err!(Diagnostics::UNEXPECTED_OP, 1..4, "0");
+    err!(Diagnostics::UNEXPECTED_OP, "0", 1..4;);
 }
