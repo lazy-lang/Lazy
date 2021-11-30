@@ -115,11 +115,28 @@ impl Diagnostics {
         POINTLESS_TEMPLATE,
         1024,
         "Pointless template literls. Use normal string literals instead."
-    ]);
+    ], [
+        ONE_CHAR_ENDPOINT,
+        1025,
+        "Expected character to contain only one codepoint."
+    ], [
+        EXPECTED,
+        1026,
+        "Expected $."
+    ], [
+        UNEXPECTED,
+        1027,
+        "Unexpected $."
+    ], [
+        UNEXPECTED_EOF,
+        1028,
+        "Unexpected end of file."
+    ]
+);
 
 }
 
-pub fn format_diagnostic(diagnostic: &Diagnostic, vars: Vec<String>) -> String {
+pub fn format_diagnostic(diagnostic: &Diagnostic, vars: Vec<&str>) -> String {
     let msg = diagnostic.message;
     if vars.is_empty() { return msg.to_string() };
     let mut ind: usize = 0;

@@ -73,10 +73,3 @@ pub fn is_natural_val(ast: &ASTExpression) -> bool {
         _ => false
     }
 }
-
-pub fn get_range_or(ast: &Option<ASTExpression>, default: LoC) -> Range {
-     match ast {
-         Some(exp) => full_expression_range(&exp),
-         None => Range { start: default, end: default }
-     }
- }

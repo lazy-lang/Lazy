@@ -2,8 +2,6 @@ pub mod builder;
 pub mod diagnostics;
 use std::fmt;
 
-use diagnostics::*;
-
 #[derive(Copy)]
 #[derive(Default)]
 pub struct LoC {
@@ -29,6 +27,10 @@ impl LoC {
     pub fn to_range(&self) -> Range {
         Range { start: self.clone(), end: self.clone()}
     }
+
+    pub fn end(self, other: &LoC) -> Range {
+        Range { start: self, end: other.clone() }
+    }
 }
 
 #[derive(Copy, Default)]
@@ -46,6 +48,13 @@ impl std::clone::Clone for Range {
 impl fmt::Display for Range {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}:{} - {}:{})", self.start.line, self.start.col, self.end.line, self.end.col)
+    }
+}
+
+impl Range {
+
+    pub fn end_with(self, end: &LoC) -> Range {
+        Range { start: self.start, end: end.clone() }
     }
 }
 
@@ -135,27 +144,43 @@ impl std::error::Error for Error {}
 pub type LazyResult<T> = Result<T, Error>;
 pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
 
+#[macro_export]
 macro_rules! err {
-    ($diagnostic: expr, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
-        {
-            let dia_str = format_diagnostic($diagnostic, vec![$($vars),*]);
-            let labels = vec![$(
-                ErrorLabel {
-                    msg: $label_text,
-                    variant: ErrorLabelVariants::Secondary,
-                    range: $label_range
-                }
-            ),*];
+    ($diagnostic: ident, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
             Error {
-                msg: dia_str,
+                msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
                 highlighted: true,
                 range: $range,
-                labels
+                labels: vec![$(
+                    ErrorLabel {
+                        msg: String::from($label_text),
+                        variant: ErrorLabelVariants::Secondary,
+                        range: $label_range
+                    }
+                ),*]
             }
+    };
+    ($diagnostic: ident, $range: expr, $($vars: expr),*) => {
+        Error {
+            msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
+            highlighted: true,
+            range: $range,
+            labels: vec![]
+        }
+    };
+    ($diagnostic: ident, $range: expr) => {
+        Error {
+            msg: Diagnostics::$diagnostic.message.to_string(),
+            highlighted: true,
+            range: $range,
+            labels: vec![]
         }
     }
 }
 
-fn a() {
-    err!(Diagnostics::UNEXPECTED_OP, "0", 1..4;);
+#[macro_export]
+macro_rules! dia {
+    ($diagnostic: ident, $($vars: expr),*) => {
+        format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*])
+    } 
 }
