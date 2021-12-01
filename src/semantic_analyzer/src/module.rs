@@ -59,23 +59,40 @@ impl Module {
                     }
                 }
                 ASTStatement::EnumDeclaration(decl) => {
-                    if let Some(_) = temp_syms.insert(decl.name.value.to_string(), Symbol::empty(host.get_unique_id(), decl.name.value.to_string(), ASTStatement::EnumDeclaration(decl))) {
-
+                    let name = &decl.name.value;
+                    if temp_syms.contains_key(name) || local.contains_key(name) {
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        continue;
                     }
+                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::EnumDeclaration(decl)));
                 },
                 ASTStatement::Struct(decl) => {
-                    temp_syms.insert(decl.name.value.to_string(), Symbol::empty(host.get_unique_id(), decl.name.value.to_string(), ASTStatement::Struct(decl)));
+                    let name = &decl.name.value;
+                    if temp_syms.contains_key(name) || local.contains_key(name) {
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        continue;
+                    }
+                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Struct(decl)));
                 },
                 ASTStatement::Type(decl) => {
-                    temp_syms.insert(decl.name.to_string(), Symbol::empty(host.get_unique_id(), decl.name.to_string(), ASTStatement::Type(decl)));
+                    let name = &decl.name.value;
+                    if temp_syms.contains_key(name) || local.contains_key(name) {
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        continue;
+                    }
+                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Type(decl)));
                 },
                 ASTStatement::Export(decl) => {
                     match *decl.value {
                         ASTStatement::EnumDeclaration(decl) => {
+                            let name = &decl.name.value;
+                            if temp_syms.contains_key(name) || local.contains_key(name) {
+                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                                continue;
+                            }
                             let id = host.get_unique_id();
-                            let name = decl.name.value.to_string();
                             exported.insert(name.to_string(), id);
-                            temp_syms.insert(name.to_string(), Symbol::empty(id, name, ASTStatement::EnumDeclaration(decl)));
+                            temp_syms.insert(name.to_string(), Symbol::empty(id, name.to_string(), ASTStatement::EnumDeclaration(decl)));
                         },
                         ASTStatement::Struct(decl) => {
                             let id = host.get_unique_id();
@@ -84,10 +101,14 @@ impl Module {
                             temp_syms.insert(name.to_string(), Symbol::empty(id, name, ASTStatement::Struct(decl)));
                         },
                         ASTStatement::Type(decl) => {
+                            let name = &decl.name.value;
+                            if temp_syms.contains_key(name) || local.contains_key(name) {
+                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                                continue;
+                            }
                             let id = host.get_unique_id();
-                            let name = decl.name.to_string();
                             exported.insert(name.to_string(), id);
-                            temp_syms.insert(name.to_string(), Symbol::empty(id, name, ASTStatement::Type(decl)));
+                            temp_syms.insert(name.to_string(), Symbol::empty(id, name.to_string(), ASTStatement::Type(decl)));
                         },
                         _ => {}
                     }

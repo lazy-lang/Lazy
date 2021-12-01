@@ -139,6 +139,10 @@ impl Diagnostics {
         MOD_NOT_FOUND,
         2002,
         "Cannot find module \"$\"."
+    ], [
+        DUPLICATE_IDENT,
+        2003,
+        "Identifier \"$\" is already defined."
     ]
 );
 

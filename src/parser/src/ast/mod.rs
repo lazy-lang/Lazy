@@ -1090,7 +1090,7 @@ impl Parser {
                        let typing = self.parse_typing(false, false, true)?;
                        Ok(ASTStatement::Type(
                            ASTType {
-                               name: name.0.unwrap().value,
+                               name: name.0.unwrap(),
                                typings: name.1,
                                value: typing,
                                range: range.end(&self.tokens.last_loc)

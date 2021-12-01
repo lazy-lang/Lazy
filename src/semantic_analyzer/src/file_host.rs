@@ -2,7 +2,7 @@
 use crate::{module::Module, symbol::Symbol};
 use std::collections::HashMap;
 use errors::{builder::ErrorFormatter, LazyMultiResult};
-
+use std::fs;
 
 pub trait FileHost: ErrorFormatter {
     fn create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>>;
@@ -64,7 +64,7 @@ impl FileHost for VirtualFileHost {
 impl VirtualFileHost {
 
     pub fn new() -> Self {
-        VirtualFileHost {
+        Self {
             id_counter: 0,
             symbols: HashMap::new(),
             files: HashMap::new(),
@@ -82,5 +82,73 @@ impl VirtualFileHost {
         let module = Module::from_str(self, path, &content)?;
         self.files.insert(path.to_string(), module);
         Ok(self.files.get(path))
+    }
+}
+
+pub struct FSFileHost {
+    pub id_counter: u32,
+    pub symbols: HashMap<u32, Symbol>,
+    pub files: HashMap<String, Module>,
+    pub file_contents: HashMap<String, String>
+}
+
+impl ErrorFormatter for FSFileHost {
+
+    fn get_file_contents(&self, file: &str) -> Option<&str> {
+        Some(&self.file_contents.get(file)?)
+    }
+}
+
+impl FileHost for FSFileHost {
+
+    fn get_unique_id(&mut self) -> u32 {
+        self.id_counter += 1;
+        self.id_counter
+    }
+
+    fn get_symbol(&self, name: &u32) -> Option<&Symbol> {
+        self.symbols.get(name)
+    }
+
+    fn insert_symbol(&mut self, sym: Symbol) {
+        self.symbols.insert(sym.id, sym);
+    }
+
+    fn get(&self, path: &str) -> Option<&Module> {
+        self.files.get(path)
+    }
+
+    fn create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>> {
+        if let Ok(text) = fs::read_to_string(path) {
+            let modified_text = text.replace("\r\n", "\n");
+            let module = Module::from_str(self, path, &modified_text);
+            self.file_contents.insert(path.to_string(), modified_text);
+            let module = module?;
+            self.files.insert(path.to_string(), module);
+            Ok(self.files.get(path))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>> {
+        if self.files.contains_key(path) {
+            Ok(self.files.get(path))
+        } else {
+            self.create(path)
+        }
+    }
+
+}
+
+impl FSFileHost {
+
+    pub fn new() -> Self {
+        Self {
+            id_counter: 0,
+            symbols: HashMap::new(),
+            files: HashMap::new(),
+            file_contents: HashMap::new()
+        }
     }
 }

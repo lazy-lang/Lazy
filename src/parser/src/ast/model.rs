@@ -189,7 +189,7 @@ pub struct ASTWhile {
 }
 
 pub struct ASTType {
-    pub name: String,
+    pub name: ASTVar,
     pub typings: Option<ASTListTyping>,
     pub value: ASTTypings,
     pub range: Range
