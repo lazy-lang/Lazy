@@ -1,44 +1,37 @@
-import { thing as thing2, thing2 as thing3, thing4 } from "hello" as thing;
-import * from "ree";
-import * from "aaaa" as thing444;
+struct Animal {
+    name: str
+    age: i8
 
-struct Error<T: { to_string: () -> str }, A> {
-    content: T
-    type: i32
-    format: fn() -> str {
-    //    `Error ${self.err_type}: ${self.content}`;
-    }
-    new: fn() new Error {}
+    make_noise: fn(noise: str?) print(noise || "*quiet*")
+}
 
-};
+struct Human {
+    name: str
+    age: i8
+    job: str
 
-struct CustomErrorContent {
-    vars: Vec<str>!
-    to_string: fn() -> str::A {
-        vars.join(", ");
-    }
-};
+    make_noise: fn() print("Hello World")
+}
 
-enum Something {
-    A,
-    B,
-    const,
-    let,
-    type
-};
+type WithName = { name: str }
+
+// Requires the type to have a "make_noise" method - we don't care about params or return value in this case
+type MakesNoise = { make_noise: () }
 
 main {
-    3..=5;
-    ..5;
-    ...5;
-    const my_custom_error_content =  new CustomErrorContent { vars: Vec::from("Hello", " ", "World!") };
-    const error = new Error<CustomErrorContent> { content: my_custom_error_content, type: 1 };
-    print(error.type, A::type); // "Error 1: Hello World"
+    let me = new Human{name: "Google", job: "Programmer", age: 19};
+    let some_animal = new Animal{name: "Perry", age: 2};
 
-    match self {
-        Test::A(var) => print(var),
-        Test::C(variable) => variable + 1
+    let stuff_that_makes_noise = Vec::create<MakesNoise>();
+    stuff_that_makes_noise.push(me);
+    stuff_that_makes_noise.push(some_animal);
+
+    stuff_that_makes_noise[0]?.make_noise(); // "Hello World"
+    stuff_that_makes_noise[1]?.make_noise(); // *quiet*
+}
+
+static println = fn(...strs?: Stringable?) {
+    for string in strs {
+        print(string?.to_string() + "\n");
     }
-
-    if let char_token = TokenTypes::Char('c') char_token + 1;
-};
+}

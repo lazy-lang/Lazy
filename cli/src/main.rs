@@ -50,7 +50,7 @@ if let Some(exe_file) = matches.value_of("run") {
                         println!("{}", files.format_err(&error, "main").unwrap());
                     }
                 },
-                Ok(module) => {
+                Ok(_module) => {
                     println!("Successfully parsed and analyzed module!");
                 }
             }
