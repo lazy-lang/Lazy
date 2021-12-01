@@ -81,8 +81,8 @@ impl Tokenizer {
     }
 
     fn parse_str(&mut self, end_char: char) -> Token {
-        self.input.consume(); // Consume the starting "
         let start = self.input.loc();
+        self.input.consume(); // Consume the starting "
         let mut str = String::new();
         loop {
             match self.input.consume() {
@@ -375,25 +375,23 @@ impl Tokenizer {
         }
     }
 
-    pub fn expect_punc(&mut self, puncs: &[char], loc: Option<Range>) -> Option<char> {
-        let location = loc.unwrap_or(Range { start: self.input.loc(), end: self.input.loc()});
+    pub fn expect_punc(&mut self, puncs: &[char], loc: Option<Range>) -> LazyResult<char> {
+        let location = loc.unwrap_or(Range { start: self.last_loc.clone(), end: self.last_loc.clone() });
         match self.peek() {
             Some(tok) => {
                 match tok.val {
                     TokenType::Punc(punc) if puncs.contains(&punc) => {
                         self.consume();
-                        Some(punc)
+                        Ok(punc)
                     },
                     _ => {
                         let tstr = tok.val.to_string();
-                        self.errors.push(err!(EXPECTED_FOUND, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), &tstr;));
-                        None
+                        Err(err!(EXPECTED_FOUND, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), &tstr))
                     }
                 }
             },
             None => {
-                self.errors.push(err!(EXPECTED, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "));));
-                None
+                Err(err!(EXPECTED, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))))
             }
         }
     }

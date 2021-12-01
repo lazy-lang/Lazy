@@ -114,7 +114,7 @@ impl Diagnostics {
     ], [
         POINTLESS_TEMPLATE,
         1024,
-        "Pointless template literls. Use normal string literals instead."
+        "Pointless template literals. Use normal string literals instead."
     ], [
         ONE_CHAR_ENDPOINT,
         1025,
@@ -134,7 +134,11 @@ impl Diagnostics {
     ], [
         TYPE_NOT_FOUND_FROM_MOD,
         2001,
-        "Type $ not found from module $"
+        "Type $ not found from module $."
+    ], [
+        MOD_NOT_FOUND,
+        2002,
+        "Cannot find module \"$\"."
     ]
 );
 

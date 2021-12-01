@@ -34,7 +34,7 @@ fn main() {
     .get_matches();
 
 if let Some(exe_file) = matches.value_of("run") {
-    if Path::new(&exe_file).exists() {
+    if Path::new(exe_file).exists() {
         if get_extention_validity(&exe_file) == Some("lazy") {
             let source = fs::read_to_string(&exe_file)
             .expect("Something went wrong reading the file");

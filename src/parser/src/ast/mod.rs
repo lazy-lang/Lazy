@@ -402,34 +402,29 @@ impl Parser {
             let tok_start = self.tokens.input.loc();
             let key = self.parse_varname(false, false, false, true)?;
             if key.0.is_none() { continue; };
-            match self.tokens.expect_punc(&[',', ':', closing_punc], Some(tok_start.end(&self.tokens.last_loc))) {
-                Some(ch) => {
-                    match ch {
-                        ',' => {
-                            if !allow_without_val {
-                                return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "value";));
-                            }
-                            res.push((key.0.unwrap().value, None));
-                        },
-                        ':' => {
-                            let exp = if let Some(exp) = self.parse_expression()? { Some(exp) } else {
-                                return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "expression"));
-                            };
-                            res.push((key.0.unwrap().value, exp));
-                        },
-                        ch if ch == closing_punc => {
-                            if !allow_without_val {
-                                return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "typing";));
-                            }
-                            has_consumed_bracket = true;
-                            res.push((key.0.unwrap().value, None));
-                            break;
-                        },
-                        _ => {}
+            match self.tokens.expect_punc(&[',', ':', closing_punc], Some(tok_start.end(&self.tokens.last_loc)))? {
+                ',' => {
+                    if !allow_without_val {
+                        return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "value";));
                     }
+                    res.push((key.0.unwrap().value, None));
                 },
-                None => continue
-            };
+                ':' => {
+                    let exp = if let Some(exp) = self.parse_expression()? { Some(exp) } else {
+                        return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "expression"));
+                    };
+                    res.push((key.0.unwrap().value, exp));
+                },
+                ch if ch == closing_punc => {
+                    if !allow_without_val {
+                        return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), "typing";));
+                    }
+                    has_consumed_bracket = true;
+                    res.push((key.0.unwrap().value, None));
+                    break;
+                },
+                _ => {}
+                }
             if self.tokens.is_next(TokenType::Punc(',')) { self.tokens.consume(); };
         };
         if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), None)?; };
@@ -541,45 +536,40 @@ impl Parser {
                 res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value, modifiers, spread: is_spread});
                 continue;
             }
-            match self.tokens.expect_punc(&[',', ':', '?', closing_punc], Some(tok_range.end(&self.tokens.last_loc))) {
-                Some(ch) => {
-                    match ch {
-                        ',' => {
-                            if !allow_without_val {
-                                return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), "type"));
-                            }
-                            res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
-                            modifiers.clear();
-                        },
-                        ':' => {
-                            let exp = self.parse_typing(allow_fn_keyword, true, true)?;
-                            let default_value = if self.tokens.is_next(TokenType::Op(String::from("="))) {
-                                if !allow_default {
-                                    return Err(err!(DISALLOWED, Range { start: self.tokens.last_loc, end: self.tokens.input.loc() }, "default parameter"));
-                                }
-                                self.tokens.consume();
-                                Some(if let Some(exp) = self.parse_expression()? { exp } else {
-                                    return Err(err!(EXPECTED, self.tokens.range_here(), "expression"));
-                                })
-                            } else { None };
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: Some(exp), default_value, modifiers, spread: is_spread});
-                            modifiers.clear();
-                        },
-                        ch if ch == closing_punc => {
-                            if !allow_without_val {
-                                return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), "type"));
-                            }
-                            has_consumed_bracket = true;
-                            res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
-                            modifiers.clear();
-                            break;
-                        },
-                        _ => {}
+            match self.tokens.expect_punc(&[',', ':', closing_punc], None)? {
+                ',' => {
+                    if !allow_without_val {
+                        return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), "type"));
                     }
+                    res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
+                    modifiers.clear();
                 },
-                None => continue
-            };
+                ':' => {
+                    let exp = self.parse_typing(allow_fn_keyword, true, true)?;
+                    let default_value = if self.tokens.is_next(TokenType::Op(String::from("="))) {
+                        if !allow_default {
+                            return Err(err!(DISALLOWED, Range { start: self.tokens.last_loc, end: self.tokens.input.loc() }, "default parameter"));
+                        }
+                        self.tokens.consume();
+                        Some(if let Some(exp) = self.parse_expression()? { exp } else {
+                            return Err(err!(EXPECTED, self.tokens.range_here(), "expression"));
+                        })
+                    } else { None };
+                    res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: Some(exp), default_value, modifiers, spread: is_spread});
+                    modifiers.clear();
+                },
+                ch if ch == closing_punc => {
+                    if !allow_without_val {
+                        return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), "type"));
+                    }
+                    has_consumed_bracket = true;
+                    res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
+                    modifiers.clear();
+                    break;
+                },
+                _ => {}
         };
+    }
         if !has_consumed_bracket { self.tokens.skip_or_err(TokenType::Punc(closing_punc), None)?; };
         Ok(ASTPairListTyping {
             range: range.end(&self.tokens.last_loc),
@@ -1029,7 +1019,7 @@ impl Parser {
 
     fn parse_expression_or_expression_statement(&mut self) -> LazyResult<Option<ASTExpression>> {
         let range = self.tokens.input.loc();
-        let thing = if let Some(t) = self.tokens.consume() {
+        let thing = if let Some(t) = self.tokens.peek() {
             t 
         } else {
             return Err(err!(UNEXPECTED_EOF, self.tokens.range_here()));
@@ -1278,12 +1268,7 @@ impl Parser {
         let mut errors: Vec<Error> = vec![];
         while !self.tokens.input.is_eof() {
             match self.parse_statement() {
-                Ok(stmt) => {
-                    res.push(stmt);
-                    if let Err(err) = self.tokens.skip_or_err(TokenType::Punc(';'), None) {
-                        errors.push(err);
-                    }
-                },
+                Ok(stmt) => res.push(stmt),
                 Err(error) => errors.push(error)
             }
         }

@@ -31,7 +31,10 @@ impl Module {
         for statement in ast {
             match statement {
                 ASTStatement::Import(decl) => {
-                    let module = host.get_or_create(&decl.path.value)?;
+                    let module = if let Some(m) = host.get_or_create(&decl.path.value)? { m } else {
+                        errors.push(err!(MOD_NOT_FOUND, decl.path.range, &decl.path.value));
+                        continue;
+                    };
                     match decl.thing {
                         ASTImportThing::All => {
                             for (name, id) in module.exported.iter() {
@@ -92,7 +95,11 @@ impl Module {
                 _ => {}
             };
         }
-        Ok(Self { local, exported, filename: filename.to_string() })
+        if !errors.is_empty() {
+            Err(errors)
+        } else {
+            Ok(Self { local, exported, filename: filename.to_string() })
+        }
     }
 
 }

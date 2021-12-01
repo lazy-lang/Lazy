@@ -12,9 +12,9 @@ Any struct with a "next" function is a valid iterator!
 
 ```
 struct RangeIter {
-    min: i32,
-    max: i32,
-    progress: i32,
+    min: i32
+    max: i32
+    progress: i32
 
     next: () -> i32? {
         if self.progress == self.max none 
@@ -55,17 +55,17 @@ The `spread` syntax has a special meaning in function parameters:
 ```
 type Stringable = { to_string: () -> str };
 
-const print = fn(...strs?: Stringable) {
+const print = fn(...strs: Stringable?) {
     // code
 }
 ```
 
-The `...strs:` syntax means that the function can receive an unlimited amount of values with the `Stringable` type. The `strs` value itself is either a `Vector` which contains `Stringable`, or `none` (Because of the `?` after the param name).
+The `...strs:` syntax means that the function can receive an unlimited amount of values with the `Stringable` type. The `strs` value itself is either a `Vector` which contains `Stringable`, or `none`..
 
 ```
 const println = fn(...strs: Stringable?) {
-    for string in strs? {
-        print(string.to_string() + "\n");
+    for string in strs {
+        print(string?.to_string() + "\n");
     }
 }
 

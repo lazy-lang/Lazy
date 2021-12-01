@@ -125,11 +125,11 @@ if my_struct != none {
 Operator overloading is done via partials. 
 
 ```
-import "std/ops" as Ops
+import * from "std/ops" as Ops
 
 struct Person {
-    first_name: str,
-    middle_name: str,
+    first_name: str
+    middle_name: str
     last_name: str
 }
 
@@ -144,6 +144,6 @@ impl Ops::Add<Person, str> for Person {
 main {
     const me = new Person {first_name: "Google", middle_name: "Something", last_name: "Feud"};
     const you = new Person {first_name: "Taylor", middle_name: "Alison", last_name: "Swift"};
-    me + you; // Google Alison Swift
+    print(me + you); // Google Alison Swift
 }
 ```

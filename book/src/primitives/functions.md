@@ -30,7 +30,7 @@ If a return type is not provided, the function will always return `none`.
 
 ```
 const add(num1: i32, num2: i32, num3: i32?) -> i32 {
-    num1 + num2 + {if num3 num3 else 0};
+    num1 + num2 + (num3 || 0);
 }
 ```
 

@@ -5,9 +5,9 @@ use errors::{builder::ErrorFormatter, LazyMultiResult};
 
 
 pub trait FileHost: ErrorFormatter {
-    fn create(&mut self, path: &str) -> LazyMultiResult<&Module>;
+    fn create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>>;
     fn get(&self, path: &str) -> Option<&Module>;
-    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<&Module>;
+    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>>;
     fn get_unique_id(&mut self) -> u32;
     fn insert_symbol(&mut self, sym: Symbol);
     fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
@@ -34,11 +34,11 @@ impl FileHost for VirtualFileHost {
         self.files.get(path)
     }
 
-    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<&Module> {
+    fn get_or_create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>> {
         if let Some(file_contents) = self.file_cache.remove(path) {
             self.create_virtual(path, file_contents)
         } else {
-            Ok(self.files.get(path).unwrap())
+            Ok(self.files.get(path))
         }
     }
 
@@ -47,7 +47,7 @@ impl FileHost for VirtualFileHost {
         self.id_counter
     }
 
-    fn create(&mut self, _path: &str) -> LazyMultiResult<&Module> {
+    fn create(&mut self, _path: &str) -> LazyMultiResult<Option<&Module>> {
         panic!("'create' method doesn't exist for virtual file hosts! Use the 'create_virtual' method instead.")
     }
 
@@ -77,10 +77,10 @@ impl VirtualFileHost {
         self.file_cache.insert(path.to_string(), content);
     }
 
-    pub fn create_virtual(&mut self, path: &str, content: String) -> LazyMultiResult<&Module> {
+    pub fn create_virtual(&mut self, path: &str, content: String) -> LazyMultiResult<Option<&Module>> {
         self.file_contents.insert(path.to_string(), content.clone());
         let module = Module::from_str(self, path, &content)?;
         self.files.insert(path.to_string(), module);
-        Ok(self.files.get(path).unwrap())
+        Ok(self.files.get(path))
     }
 }
