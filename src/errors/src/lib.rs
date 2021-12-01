@@ -99,26 +99,29 @@ pub struct Error {
     pub range: Range,
     pub msg: String,
     pub highlighted: bool,
+    pub filename: String,
     pub labels: Vec<ErrorLabel>
 }
 
 impl Error {
 
-    pub fn new(msg: String, range: Range) -> Error {
+    pub fn new(msg: String, range: Range, filename: String) -> Error {
         Error {
             msg,
             range: range,
             labels: vec![],
-            highlighted: true
+            highlighted: true,
+            filename
         }
     }
 
-    pub fn new_with_labels(msg: String, range: Range, labels: Vec<ErrorLabel>) -> Error {
+    pub fn new_with_labels(msg: String, range: Range, filename: String, labels: Vec<ErrorLabel>) -> Error {
         Error {
             msg,
             range: range,
             labels,
-            highlighted: true
+            highlighted: true,
+            filename
         }
     }
 
@@ -146,11 +149,12 @@ pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
 
 #[macro_export]
 macro_rules! err {
-    ($diagnostic: ident, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
+    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
             Error {
                 msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
                 highlighted: true,
                 range: $range,
+                filename: $filename.to_string(),
                 labels: vec![$(
                     ErrorLabel {
                         msg: String::from($label_text),
@@ -160,18 +164,20 @@ macro_rules! err {
                 ),*]
             }
     };
-    ($diagnostic: ident, $range: expr, $($vars: expr),*) => {
+    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*) => {
         Error {
             msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
             highlighted: true,
+            filename: $filename.to_string(),
             range: $range,
             labels: vec![]
         }
     };
-    ($diagnostic: ident, $range: expr) => {
+    ($diagnostic: ident, $range: expr, $filename: expr) => {
         Error {
             msg: Diagnostics::$diagnostic.message.to_string(),
             highlighted: true,
+            filename: $filename.to_string(),
             range: $range,
             labels: vec![]
         }

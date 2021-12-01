@@ -16,7 +16,7 @@ impl Module {
         let mut temp_syms: HashMap<String, Symbol> = HashMap::new();
         let mut local: HashMap<String, u32> = HashMap::new();
         let mut exported: HashMap<String, u32> = HashMap::new();
-        let mut parser =  Parser::new(&content);
+        let mut parser =  Parser::new(&content, filename.to_string());
         let (ast, mut errs) = parser.parse();
         if !errs.is_empty() || !parser.tokens.errors.is_empty() {
             let mut new_vec: Vec<Error> = vec![];
@@ -32,7 +32,7 @@ impl Module {
             match statement {
                 ASTStatement::Import(decl) => {
                     let module = if let Some(m) = host.get_or_create(&decl.path.value)? { m } else {
-                        errors.push(err!(MOD_NOT_FOUND, decl.path.range, &decl.path.value));
+                        errors.push(err!(MOD_NOT_FOUND, decl.path.range, &filename, &decl.path.value));
                         continue;
                     };
                     match decl.thing {
@@ -45,7 +45,7 @@ impl Module {
                             for item in item_list {
                                 let item_name = item.name.clone();
                                 let item_id = if let Some(id) = module.exported.get(&item_name) { id } else {
-                                    errors.push(err!(TYPE_NOT_FOUND_FROM_MOD, item.range, &item_name, &decl.path.to_string()));
+                                    errors.push(err!(TYPE_NOT_FOUND_FROM_MOD, item.range, &item_name, &filename, &decl.path.to_string()));
                                     &0
                                 };
                                 let name = if let Some(alias) = item.r#as {
@@ -61,7 +61,7 @@ impl Module {
                 ASTStatement::EnumDeclaration(decl) => {
                     let name = &decl.name.value;
                     if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
                         continue;
                     }
                     temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::EnumDeclaration(decl)));
@@ -69,7 +69,7 @@ impl Module {
                 ASTStatement::Struct(decl) => {
                     let name = &decl.name.value;
                     if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
                         continue;
                     }
                     temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Struct(decl)));
@@ -77,7 +77,7 @@ impl Module {
                 ASTStatement::Type(decl) => {
                     let name = &decl.name.value;
                     if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
                         continue;
                     }
                     temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Type(decl)));
@@ -87,7 +87,7 @@ impl Module {
                         ASTStatement::EnumDeclaration(decl) => {
                             let name = &decl.name.value;
                             if temp_syms.contains_key(name) || local.contains_key(name) {
-                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
                                 continue;
                             }
                             let id = host.get_unique_id();

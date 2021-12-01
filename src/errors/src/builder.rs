@@ -9,10 +9,10 @@ fn get_digits_in_num(num: usize) -> usize {
 pub trait ErrorFormatter {
     fn get_file_contents(&self, file: &str) -> Option<&str>;
 
-    fn format_err(&self, err: &Error, filename: &str) -> Option<String> {
+    fn format_err(&self, err: &Error) -> Option<String> {
         let space_to_border = get_digits_in_num(err.range.end.line) + 1; // + 1 because of the padding between the number and the border
-        let mut res = format!("{}{} {} {}: {}\n", " ".repeat(space_to_border), "┎──".cyan(), filename, err.range, err.msg.to_string().red());
-        let file_contents = self.get_file_contents(filename)?;
+        let mut res = format!("{}{} {} {}: {}\n", " ".repeat(space_to_border), "┎──".cyan(), err.filename, err.range, err.msg.to_string().red());
+        let file_contents = self.get_file_contents(&err.filename)?;
         let mut lines = file_contents.lines();
         let cyan_wall = "┃".cyan();
         for ind in err.range.start.line..=err.range.end.line {
