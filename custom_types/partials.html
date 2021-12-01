@@ -141,7 +141,7 @@
     name: str,
     age: i8,
 
-    make_noise: fn(noise?: str) print(noise || &quot;*quiet*&quot;)
+    make_noise: fn(noise: str?) print(noise || &quot;*quiet*&quot;)
 }
 
 struct Human {
@@ -152,7 +152,7 @@ struct Human {
     make_noise: fn() print(&quot;Hello World&quot;)
 }
 
-type WithName = { name: str };
+type WithName = { name: str }
 
 main {
     // The function will only have access to the name field
@@ -189,7 +189,7 @@ main {
     let me = new Human{name: &quot;Google&quot;, job: &quot;Programmer&quot;, age: 19};
     let some_animal = new Animal{name: &quot;Perry&quot;, age: 2};
 
-    let stuff_that_makes_noise = new Vec&lt;MakesNoise&gt;{};
+    let stuff_that_makes_noise = Vec::create&lt;MakesNoise&gt;();
     stuff_that_makes_noise.push(me);
     stuff_that_makes_noise.push(some_animal);
 

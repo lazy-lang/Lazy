@@ -223,11 +223,11 @@ me.name = &quot;Pedro&quot;; // Error!
 </code></pre>
 <h2 id="operator-overloading"><a class="header" href="#operator-overloading">Operator overloading</a></h2>
 <p>Operator overloading is done via partials. </p>
-<pre><code>import &quot;std/ops&quot; as Ops
+<pre><code>import * from &quot;std/ops&quot; as Ops
 
 struct Person {
-    first_name: str,
-    middle_name: str,
+    first_name: str
+    middle_name: str
     last_name: str
 }
 
@@ -242,7 +242,7 @@ impl Ops::Add&lt;Person, str&gt; for Person {
 main {
     const me = new Person {first_name: &quot;Google&quot;, middle_name: &quot;Something&quot;, last_name: &quot;Feud&quot;};
     const you = new Person {first_name: &quot;Taylor&quot;, middle_name: &quot;Alison&quot;, last_name: &quot;Swift&quot;};
-    me + you; // Google Alison Swift
+    print(me + you); // Google Alison Swift
 }
 </code></pre>
 

@@ -152,7 +152,7 @@ enum Number {
 let enum_field = Number::Int(15);
 
 // if &quot;enum_field&quot; is of type `Number::Float`, return the unwrapped float inside it, otherwise return 0.
-let my_num = if enum_field == Number:Float enum_field else 0;
+let my_num = if let Number::Float(num) = enum_field enum_field else 0;
 
 print(my_num == 0) // true
 </code></pre>
