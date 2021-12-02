@@ -16,3 +16,4 @@
 - [Loops](./loops/main.md)
 - [Promises](./promises/main.md)
 - [Modules](./modules/main.md)
+- [Metaprogramming](./metaprogramming/main.md)

@@ -92,11 +92,7 @@ impl Parser {
                 match val.as_str() {
                     "." => {
                         self.tokens.consume();
-                        let target = if let Some(t) = self.parse_varname(true, false, !matches!(token, ASTExpression::Int(_) | ASTExpression::Float(_)), true)?.0 {
-                            t
-                        } else {
-                            return Err(err!(EXPECTED, start.end(&self.tokens.last_loc), self.tokens.filename, "identifier"));
-                        };
+                        let target = self.parse_varname(true, false, !matches!(token, ASTExpression::Int(_) | ASTExpression::Float(_)), true)?.0;
                         self.parse_suffix(ASTExpression::DotAccess(
                             ASTDotAccess {
                                 target: target,
@@ -177,11 +173,7 @@ impl Parser {
     }
 
     pub fn parse_mod_access_or_var_without_var(&mut self, allow_exp_end: bool, allow_typings: bool) -> LazyResult<ASTModAccessValues> {
-        let name = if let Some(n) = self.parse_varname(false, false, false, false)?.0 {
-            n 
-        } else {
-            return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "identifier"));
-        };
+        let name = self.parse_varname(false, false, false, false)?.0;
         self.parse_mod_access_or_var(name, allow_exp_end, allow_typings)
     }
 
@@ -367,7 +359,7 @@ impl Parser {
         })
     }
 
-    fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool, allow_keywords: bool) -> LazyResult<(Option<ASTVar>, Option<ASTListTyping>)> {
+    fn parse_varname(&mut self, allow_generics: bool, only_varnames_as_generics: bool, allow_ints: bool, allow_keywords: bool) -> LazyResult<(ASTVar, Option<ASTListTyping>)> {
         if allow_ints { self.tokens.is_last_num_as_str = true };
         let next = self.tokens.consume();
         if allow_ints { self.tokens.is_last_num_as_str = false };
@@ -386,12 +378,12 @@ impl Parser {
         };
         if self.tokens.is_next(TokenType::Op(String::from("<"))) {
             if !allow_generics {
-                return Ok((Some(var), None));
+                return Ok((var, None));
             }
             self.tokens.consume();
-            return Ok((Some(var), Some(self.parse_typing_list(only_varnames_as_generics, false, TokenType::Op(String::from(">")))?)));
+            return Ok((var, Some(self.parse_typing_list(only_varnames_as_generics, false, TokenType::Op(String::from(">")))?)));
         }
-        Ok((Some(var), None))
+        Ok((var, None))
     }
 
     fn parse_pair_list(&mut self, allow_without_val: bool, closing_punc: char) -> LazyResult<ASTPairList> {
@@ -400,27 +392,26 @@ impl Parser {
         let mut has_consumed_bracket = false;
         while !self.tokens.is_next(TokenType::Punc(closing_punc)) {
             let tok_start = self.tokens.input.loc();
-            let key = self.parse_varname(false, false, false, true)?;
-            if key.0.is_none() { continue; };
+            let key = self.parse_varname(false, false, false, true)?.0;
             match self.tokens.expect_punc(&[',', ':', closing_punc], Some(tok_start.end(&self.tokens.last_loc)))? {
                 ',' => {
                     if !allow_without_val {
                         return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), self.tokens.filename, "value"));
                     }
-                    res.push((key.0.unwrap().value, None));
+                    res.push((key.value, None));
                 },
                 ':' => {
                     let exp = if let Some(exp) = self.parse_expression()? { Some(exp) } else {
                         return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), self.tokens.filename, "expression"));
                     };
-                    res.push((key.0.unwrap().value, exp));
+                    res.push((key.value, exp));
                 },
                 ch if ch == closing_punc => {
                     if !allow_without_val {
                         return Err(err!(EXPECTED, tok_start.end(&self.tokens.last_loc), self.tokens.filename, "typing"));
                     }
                     has_consumed_bracket = true;
-                    res.push((key.0.unwrap().value, None));
+                    res.push((key.value, None));
                     break;
                 },
                 _ => {}
@@ -464,8 +455,7 @@ impl Parser {
                 self.tokens.skip_or_err(TokenType::Punc(','), None)?;
             };
             let exp = self.parse_varname(false, false, false, true)?.0;
-            if exp.is_none() { break; };
-            values.push(exp.unwrap());
+            values.push(exp);
             is_first = false;
         };
         self.tokens.skip_or_err(TokenType::Punc(closing_punc), None)?;
@@ -523,8 +513,7 @@ impl Parser {
                     }
                 }
             };
-            let key = self.parse_varname(false, false, false, true)?;
-            if key.0.is_none() { continue };
+            let key = self.parse_varname(false, false, false, true)?.0;
             if self.tokens.is_next(TokenType::Op(String::from("="))) {
                 if !allow_default {
                     return Err(err!(DISALLOWED, self.tokens.range_here(), self.tokens.filename, "default parameter"));
@@ -533,7 +522,7 @@ impl Parser {
                 let default_value = if let Some(exp) = self.parse_expression()? { Some(exp) } else {
                     return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "expression"));
                 };
-                res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value, modifiers, spread: is_spread});
+                res.push(ASTPairTypingItem {name: key.value, value: None, default_value, modifiers, spread: is_spread});
                 continue;
             }
             match self.tokens.expect_punc(&[',', ':', closing_punc], None)? {
@@ -541,7 +530,7 @@ impl Parser {
                     if !allow_without_val {
                         return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), self.tokens.filename, "type"));
                     }
-                    res.push(ASTPairTypingItem {name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
+                    res.push(ASTPairTypingItem {name: key.value, value: None, default_value: None, modifiers, spread: is_spread});
                     modifiers.clear();
                 },
                 ':' => {
@@ -555,7 +544,7 @@ impl Parser {
                             return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "expression"));
                         })
                     } else { None };
-                    res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: Some(exp), default_value, modifiers, spread: is_spread});
+                    res.push(ASTPairTypingItem { name: key.value, value: Some(exp), default_value, modifiers, spread: is_spread});
                     modifiers.clear();
                 },
                 ch if ch == closing_punc => {
@@ -563,7 +552,7 @@ impl Parser {
                         return Err(err!(EXPECTED, tok_range.end(&self.tokens.last_loc), self.tokens.filename, "type"));
                     }
                     has_consumed_bracket = true;
-                    res.push(ASTPairTypingItem { name: key.0.unwrap().value, value: None, default_value: None, modifiers, spread: is_spread});
+                    res.push(ASTPairTypingItem { name: key.value, value: None, default_value: None, modifiers, spread: is_spread});
                     modifiers.clear();
                     break;
                 },
@@ -882,9 +871,6 @@ impl Parser {
                     },
                     "for" => {
                         let var = self.parse_varname(false, false, false, false)?.0;
-                        if var.is_none() {
-                            return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "identifier"));
-                        };
                         self.tokens.skip_or_err(TokenType::Kw(String::from("in")), None)?;
                         let iterator = if let Some(exp) = self.parse_expression()? { Box::from(exp) } else {
                             return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "expression"));
@@ -897,7 +883,7 @@ impl Parser {
                         if turn_off_exp_statements { self.allow_exp_statements = false; }
                         return Ok(Some(ASTExpression::ForIn(
                             ASTForIn {
-                                var: var.unwrap(),
+                                var,
                                 iterable: iterator,
                                 body,
                                 range: token.range.end_with(&self.tokens.last_loc)
@@ -1057,12 +1043,9 @@ impl Parser {
                 match keyword.as_str() {
                    "struct" => {
                         let name = self.parse_varname(true, true, false, false)?;
-                        if name.0.is_none() { 
-                            return Err(err!(EXPECTED, token.range, self.tokens.filename, "struct name"));
-                        }
                         self.tokens.skip_or_err(TokenType::Punc('{'), Some(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "start of struct fields")))?;
                         Ok(ASTStatement::Struct(ASTStruct {
-                            name: name.0.unwrap(),
+                            name: name.0,
                             typings: name.1,
                             fields: self.parse_typing_pair_list(false, true, false, true, false, '}')?,
                             range: range.end(&self.tokens.last_loc)
@@ -1070,12 +1053,9 @@ impl Parser {
                    }
                    "enum" => {
                     let name = self.parse_varname(true, true, false, false)?;
-                    if name.0.is_none() { 
-                        return Err(err!(EXPECTED, token.range, self.tokens.filename, "enum name"));
-                    }
                     self.tokens.skip_or_err(TokenType::Punc('{'), Some(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "start of enum fields")))?;
                     Ok(ASTStatement::EnumDeclaration(ASTEnumDeclaration {
-                    name: name.0.unwrap(),
+                    name: name.0,
                     values: self.parse_typing_pair_list(true, false, false, false, true, '}')?,
                     typings: name.1,
                     range: range.end(&self.tokens.last_loc)
@@ -1083,14 +1063,11 @@ impl Parser {
                    },
                    "type" => {
                        let name = self.parse_varname(true, true, false, false)?;
-                       if name.0.is_none() {
-                         return Err(err!(EXPECTED, token.range, self.tokens.filename, "type name"));
-                       }
                        self.tokens.skip_or_err(TokenType::Op(String::from("=")), None)?;
                        let typing = self.parse_typing(false, false, true)?;
                        Ok(ASTStatement::Type(
                            ASTType {
-                               name: name.0.unwrap(),
+                               name: name.0,
                                typings: name.1,
                                value: typing,
                                range: range.end(&self.tokens.last_loc)
@@ -1114,9 +1091,6 @@ impl Parser {
                    "static" => {
                        let varname = self.parse_varname(true, false, false, false)?;
                        self.tokens.skip_or_err(TokenType::Op(String::from("=")), None)?;
-                       if varname.0.is_none() {
-                            return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "identifier"));
-                       }
                        let typings = if let Some(typing) = varname.1 {
                         let len = typing.entries.len();
                         if len == 0 || len > 1 {
@@ -1132,7 +1106,7 @@ impl Parser {
                        Ok(ASTStatement::Static(
                            Box::from(ASTStatic {
                                typings,
-                               var: varname.0.unwrap(),
+                               var: varname.0,
                                value: exp.unwrap(),
                                range: range.end(&self.tokens.last_loc)
                            })
@@ -1157,14 +1131,10 @@ impl Parser {
                             let mut items: Vec<ASTImportItem> = vec![];
                             let mut tok = self.tokens.peek();
                             while matches!(tok, Some(_)) && tok.unwrap().val != TokenType::Punc('}') {
-                                let text = if let Some(t) = self.parse_varname(false, false, false, false)?.0 { t } else {
-                                    return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "an identifier"));
-                                };
+                                let text = self.parse_varname(false, false, false, false)?.0;
                                 if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
                                     self.tokens.consume();
-                                    let alias = if let Some(t) = self.parse_varname(false, false, false, false)?.0 { t } else {
-                                        return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "an identifier"));
-                                    };
+                                    let alias = self.parse_varname(false, false, false, false)?.0;
                                     let alias_range = alias.range.end;
                                     items.push(ASTImportItem { name: text.value, r#as: Some(alias), range: Range { start: text.range.start, end: alias_range } });
                                 } else {
@@ -1192,7 +1162,7 @@ impl Parser {
                        };
                        let as_binding = if self.tokens.is_next(TokenType::Kw(String::from("as"))) {
                            self.tokens.consume();
-                           self.parse_varname(false, false, false, false)?.0
+                           Some(self.parse_varname(false, false, false, false)?.0)
                        } else { None };
                        Ok(ASTStatement::Import(
                            ASTImport {
@@ -1229,9 +1199,7 @@ impl Parser {
                 }
             },
             TokenType::Punc('#') => {
-                let name = if let Some(t) = self.parse_varname(false, false, false, true)?.0 { t.value } else {
-                    return Err(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "meta name"))
-                };
+                let name = self.parse_varname(false, false, false, true)?.0;
                 let mut args: Vec<TokenType> = vec![];
                 if self.tokens.is_next(TokenType::Punc('(')) {
                     self.tokens.consume();

@@ -280,7 +280,7 @@ pub struct ASTImpl {
 }
 
 pub struct ASTMeta {
-    pub name: String,
+    pub name: ASTVar,
     pub args: Vec<TokenType>,
     pub target: Box<ASTStatement>,
     pub range: Range
