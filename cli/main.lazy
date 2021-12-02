@@ -1,4 +1,4 @@
-import * from "./b.lazy"
+import * from "./b/c.lazy"
 
 struct Animal {
     name: str

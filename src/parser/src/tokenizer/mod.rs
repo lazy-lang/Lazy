@@ -311,7 +311,7 @@ impl Tokenizer {
                 })
             },
             '0'..='9' => Some(self.parse_num()),
-            ' ' | '\n' | '\t' => {
+            ' ' | '\n' | '\t' | '\r' => {
                 self.input.consume();
                 self._next()
             },

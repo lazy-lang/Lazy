@@ -1,6 +1,11 @@
 
 pub use parser::ast::{model::*};
 
+pub trait SymbolCollector {
+    fn insert_symbol(&mut self, sym: Symbol);
+    fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
+}
+
 pub enum SymbolKind {
     Struct{
         properties: Vec<(String, SymbolLike)>,
@@ -25,6 +30,16 @@ pub enum SymbolLike {
     Ref(u32)
 }
 
+impl SymbolLike {
+
+    pub fn to_symbol<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a Symbol {
+        match self {
+            Self::Instance(inst) => collector.get_symbol(&inst.id).unwrap(),
+            Self::Ref(r) => collector.get_symbol(r).unwrap()
+        }
+    }
+}
+
 pub struct Symbol {
     pub name: String,
     pub id: u32,
@@ -38,9 +53,12 @@ pub struct SymbolInstance {
     pub type_params: Vec<SymbolLike>
 }
 
-pub struct SymbolAlias {
-    pub name: String,
-    pub id: u32
+impl SymbolInstance {
+
+    pub fn to_symbol<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a Symbol {
+        return collector.get_symbol(&self.id).unwrap()
+    }
+
 }
 
 impl Symbol {

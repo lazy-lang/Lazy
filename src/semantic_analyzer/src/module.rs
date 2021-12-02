@@ -3,6 +3,7 @@ use crate::{file_host::{FileHost}, symbol::{Symbol}};
 use parser::{ast::{Parser, model::{ASTImportThing, ASTStatement}}};
 use errors::*;
 use diagnostics::*;
+use crate::path::file_dir_and_join;
 
 pub struct Module {
     pub local: HashMap<String, u32>,
@@ -31,7 +32,8 @@ impl Module {
         for statement in ast {
             match statement {
                 ASTStatement::Import(decl) => {
-                    let module = if let Some(m) = host.get_or_create(&decl.path.value)? { m } else {
+                    let path_to_mod = file_dir_and_join(filename, &decl.path.value);
+                    let module = if let Some(m) = host.get_or_create(&path_to_mod)? { m } else {
                         errors.push(err!(MOD_NOT_FOUND, decl.path.range, &filename, &decl.path.value));
                         continue;
                     };
@@ -45,7 +47,7 @@ impl Module {
                             for item in item_list {
                                 let item_name = item.name.clone();
                                 let item_id = if let Some(id) = module.exported.get(&item_name) { id } else {
-                                    errors.push(err!(TYPE_NOT_FOUND_FROM_MOD, item.range, &item_name, &filename, &decl.path.to_string()));
+                                    errors.push(err!(TYPE_NOT_FOUND_FROM_MOD, item.range, &filename, &item_name, &decl.path.to_string()));
                                     &0
                                 };
                                 let name = if let Some(alias) = item.r#as {
@@ -103,7 +105,7 @@ impl Module {
                         ASTStatement::Type(decl) => {
                             let name = &decl.name.value;
                             if temp_syms.contains_key(name) || local.contains_key(name) {
-                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, name));
+                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
                                 continue;
                             }
                             let id = host.get_unique_id();

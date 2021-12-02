@@ -1,16 +1,15 @@
 
-use crate::{module::Module, symbol::Symbol};
+use crate::{module::Module, symbol::{Symbol, SymbolCollector}};
 use std::collections::HashMap;
 use errors::{builder::ErrorFormatter, LazyMultiResult};
 use std::fs;
+use crate::path::full_path;
 
 pub trait FileHost: ErrorFormatter {
     fn create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>>;
     fn get(&self, path: &str) -> Option<&Module>;
     fn get_or_create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>>;
     fn get_unique_id(&mut self) -> u32;
-    fn insert_symbol(&mut self, sym: Symbol);
-    fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
 }
 
 pub struct VirtualFileHost {
@@ -18,7 +17,7 @@ pub struct VirtualFileHost {
     pub symbols: HashMap<u32, Symbol>,
     pub files: HashMap<String, Module>,
     pub file_contents: HashMap<String, String>,
-    pub file_cache: HashMap<String, String>
+    pub file_cache: HashMap<String, String>,
 }
 
 impl ErrorFormatter for VirtualFileHost {
@@ -51,6 +50,9 @@ impl FileHost for VirtualFileHost {
         panic!("'create' method doesn't exist for virtual file hosts! Use the 'create_virtual' method instead.")
     }
 
+}
+
+impl SymbolCollector for VirtualFileHost {
     fn insert_symbol(&mut self, sym: Symbol) {
         self.symbols.insert(sym.id, sym);
     }
@@ -58,7 +60,6 @@ impl FileHost for VirtualFileHost {
     fn get_symbol(&self, sym: &u32) -> Option<&Symbol> {
         self.symbols.get(sym)
     }
-
 }
 
 impl VirtualFileHost {
@@ -89,7 +90,7 @@ pub struct FSFileHost {
     pub id_counter: u32,
     pub symbols: HashMap<u32, Symbol>,
     pub files: HashMap<String, Module>,
-    pub file_contents: HashMap<String, String>
+    pub file_contents: HashMap<String, String>,
 }
 
 impl ErrorFormatter for FSFileHost {
@@ -106,26 +107,19 @@ impl FileHost for FSFileHost {
         self.id_counter
     }
 
-    fn get_symbol(&self, name: &u32) -> Option<&Symbol> {
-        self.symbols.get(name)
-    }
-
-    fn insert_symbol(&mut self, sym: Symbol) {
-        self.symbols.insert(sym.id, sym);
-    }
-
     fn get(&self, path: &str) -> Option<&Module> {
         self.files.get(path)
     }
 
     fn create(&mut self, path: &str) -> LazyMultiResult<Option<&Module>> {
-        if let Ok(text) = fs::read_to_string(path) {
-            let modified_text = text.replace("\r\n", "\n");
-            let module = Module::from_str(self, path, &modified_text);
-            self.file_contents.insert(path.to_string(), modified_text);
+        let mut full_path = full_path(path);
+        if !full_path.ends_with(".lazy") { full_path += ".lazy" };
+        if let Ok(text) = fs::read_to_string(&full_path) {
+            let module = Module::from_str(self, &full_path, &text);
+            self.file_contents.insert(full_path.to_string(), text);
             let module = module?;
-            self.files.insert(path.to_string(), module);
-            Ok(self.files.get(path))
+            self.files.insert(full_path.clone(), module);
+            Ok(self.files.get(&full_path))
         } else {
             Ok(None)
         }
@@ -137,6 +131,18 @@ impl FileHost for FSFileHost {
         } else {
             self.create(path)
         }
+    }
+
+}
+
+impl SymbolCollector for FSFileHost {
+    
+    fn get_symbol(&self, name: &u32) -> Option<&Symbol> {
+        self.symbols.get(name)
+    }
+
+    fn insert_symbol(&mut self, sym: Symbol) {
+        self.symbols.insert(sym.id, sym);
     }
 
 }

@@ -143,6 +143,10 @@ impl Diagnostics {
         DUPLICATE_IDENT,
         2003,
         "Identifier \"$\" is already defined."
+    ], [
+        FILE_RECURSION,
+        2004,
+        "Detected recursive importing. Module \"$\" requires \"$\" and vice-versa."
     ]
 );
 
