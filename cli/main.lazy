@@ -1,6 +1,6 @@
 import * from "./b/c.lazy"
 
-struct Animal {
+struct Animal<T> {
     name: str
     age: i8
 
