@@ -9,9 +9,7 @@ pub fn join_paths(path1: &str, path2: &str, remove_filename: bool) -> String {
         match comp {
             Component::Normal(p) => path1buf.push(p),
             Component::ParentDir => { path1buf.pop(); },
-            Component::CurDir => {}
-            Component::Prefix(_) => {},
-            Component::RootDir => {}
+            Component::CurDir | Component::Prefix(_) | Component::RootDir => {}
         }
     };
     path1buf.display().to_string()

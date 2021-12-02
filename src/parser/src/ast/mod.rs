@@ -194,10 +194,7 @@ impl Parser {
         let start = self.tokens.input.loc();
         while self.tokens.is_next(TokenType::Punc(':')) {
             self.tokens.consume();
-            self.tokens.skip_or_err(TokenType::Punc(':'), Some(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "Another colon (:)"; [
-                "Add another colon to make the mod access expression (Module::Item)",
-                self.tokens.range_here()
-            ])))?;
+            self.tokens.skip_or_err(TokenType::Punc(':'), Some(err!(EXPECTED, self.tokens.range_here(), self.tokens.filename, "Another colon (:)"; ["Add another colon to make the mod access expression (Module::Item)"])))?;
             if let Some(tok) = self.tokens.consume() {
                 match tok.val {
                     TokenType::Var(v) => path.push(ASTVar { value: v, range: tok.range }),
@@ -285,10 +282,7 @@ impl Parser {
                     },
                     TokenType::Kw(kw) => {
                         if !allow_fn_keyword {
-                            return Err(err!(UNEXPECTED, self.tokens.range_here(), self.tokens.filename, "keyword fn"; [
-                                "Only function signatures are allowed here. Remove the `fn` and the function body, if there is one.",
-                                self.tokens.range_here()
-                            ]));
+                            return Err(err!(UNEXPECTED, self.tokens.range_here(), self.tokens.filename, "keyword fn"; ["Only function signatures are allowed here. Remove the `fn` and the function body, if there is one."]));
                         }
                         match kw.as_str() {
                             "fn" => {

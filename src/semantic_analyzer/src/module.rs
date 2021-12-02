@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::{file_host::{FileHost}, symbol::{Symbol}};
+use crate::{file_host::{FileHost}, symbol::{Symbol, SymbolCollector}};
 use parser::{ast::{Parser, model::{ASTImportThing, ASTStatement}}};
 use errors::*;
 use diagnostics::*;
@@ -13,7 +13,7 @@ pub struct Module {
 
 impl Module {
     
-    pub fn from_str<T: FileHost>(host: &mut T, filename: &str, content: &str) -> LazyMultiResult<Self> {
+    pub fn from_str<T: FileHost + SymbolCollector>(host: &mut T, filename: &str, content: &str) -> LazyMultiResult<Self> {
         let mut temp_syms: HashMap<String, Symbol> = HashMap::new();
         let mut local: HashMap<String, u32> = HashMap::new();
         let mut exported: HashMap<String, u32> = HashMap::new();
@@ -30,7 +30,7 @@ impl Module {
         }
         let mut errors: Vec<Error> = vec![];
         for statement in ast {
-            match statement {
+            if let Some((name, range, is_exported, decl)) = match statement {
                 ASTStatement::Import(decl) => {
                     let path_to_mod = file_dir_and_join(filename, &decl.path.value);
                     let module = if let Some(m) = host.get_or_create(&path_to_mod)? { m } else {
@@ -59,64 +59,29 @@ impl Module {
                             }
                         }
                     }
+                    None
                 }
-                ASTStatement::EnumDeclaration(decl) => {
-                    let name = &decl.name.value;
-                    if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
-                        continue;
-                    }
-                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::EnumDeclaration(decl)));
-                },
-                ASTStatement::Struct(decl) => {
-                    let name = &decl.name.value;
-                    if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
-                        continue;
-                    }
-                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Struct(decl)));
-                },
-                ASTStatement::Type(decl) => {
-                    let name = &decl.name.value;
-                    if temp_syms.contains_key(name) || local.contains_key(name) {
-                        errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
-                        continue;
-                    }
-                    temp_syms.insert(name.to_string(), Symbol::empty(host.get_unique_id(), name.to_string(), ASTStatement::Type(decl)));
-                },
+                ASTStatement::EnumDeclaration(decl) => Some((decl.name.value.clone(), decl.name.range, false, ASTStatement::EnumDeclaration(decl))),
+                ASTStatement::Struct(decl) => Some((decl.name.value.clone(), decl.name.range, false, ASTStatement::Struct(decl))),
+                ASTStatement::Type(decl) => Some((decl.name.value.clone(), decl.name.range, false, ASTStatement::Type(decl))),
                 ASTStatement::Export(decl) => {
                     match *decl.value {
-                        ASTStatement::EnumDeclaration(decl) => {
-                            let name = &decl.name.value;
-                            if temp_syms.contains_key(name) || local.contains_key(name) {
-                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
-                                continue;
-                            }
-                            let id = host.get_unique_id();
-                            exported.insert(name.to_string(), id);
-                            temp_syms.insert(name.to_string(), Symbol::empty(id, name.to_string(), ASTStatement::EnumDeclaration(decl)));
-                        },
-                        ASTStatement::Struct(decl) => {
-                            let id = host.get_unique_id();
-                            let name = decl.name.value.to_string();
-                            exported.insert(name.to_string(), id);
-                            temp_syms.insert(name.to_string(), Symbol::empty(id, name, ASTStatement::Struct(decl)));
-                        },
-                        ASTStatement::Type(decl) => {
-                            let name = &decl.name.value;
-                            if temp_syms.contains_key(name) || local.contains_key(name) {
-                                errors.push(err!(DUPLICATE_IDENT, decl.name.range, &filename, name));
-                                continue;
-                            }
-                            let id = host.get_unique_id();
-                            exported.insert(name.to_string(), id);
-                            temp_syms.insert(name.to_string(), Symbol::empty(id, name.to_string(), ASTStatement::Type(decl)));
-                        },
-                        _ => {}
+                        ASTStatement::EnumDeclaration(decl) => Some((decl.name.value.clone(), decl.name.range, true, ASTStatement::EnumDeclaration(decl))),
+                        ASTStatement::Struct(decl) => Some((decl.name.value.clone(), decl.name.range, true, ASTStatement::Struct(decl))),
+                        ASTStatement::Type(decl) => Some((decl.name.value.clone(), decl.name.range, true, ASTStatement::Type(decl))),
+                        _ => None
                     }
                 }
-                _ => {}
-            };
+                _ => None
+            } {
+                if temp_syms.contains_key(&name) || local.contains_key(&name) {
+                    errors.push(err!(DUPLICATE_IDENT, range, &filename, &name));
+                    continue;
+                }
+                let id = host.get_unique_id();
+                if is_exported { exported.insert(name.to_string(), id); };
+                temp_syms.insert(name.to_string(), Symbol::empty(id, name, decl));
+            }
         }
         if !errors.is_empty() {
             Err(errors)

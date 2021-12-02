@@ -13,20 +13,20 @@ pub trait ErrorFormatter {
         let space_to_border = get_digits_in_num(err.range.end.line) + 1; // + 1 because of the padding between the number and the border
         let mut res = format!("{}{} {} {}: {}\n", " ".repeat(space_to_border), "┎──".cyan(), err.filename, err.range, err.msg.to_string().red());
         let file_contents = self.get_file_contents(&err.filename)?;
-        let mut lines = file_contents.lines();
+        let lines = file_contents.lines().collect::<Vec<&str>>();
         let cyan_wall = "┃".cyan();
+        let red_arrow = &format!("{}", "^".red());
         for ind in err.range.start.line..=err.range.end.line {
-            let line_text = lines.nth(ind as usize - 1)?;
+            let line_text = lines[ind as usize - 1];
             let mut line = format!("{}{}{}   {}\n", ind, " ".repeat(space_to_border - get_digits_in_num(ind)), cyan_wall, line_text);
             if err.highlighted {
             if ind == err.range.start.line {
                 let mut cols = format!("{} {}   ", " ".repeat(space_to_border - 1), cyan_wall);
                 if err.range.start.col == err.range.end.col && err.range.start.line == err.range.end.line {
-                    cols.push_str(&" ".repeat(err.range.start.col));
-                    cols.push_str(&format!("{}", "^".red()));
+                    cols.push_str(&format!("{}{}", &" ".repeat(err.range.start.col), "^".red()));
                 } else {
                 for col in 0..=line_text.len() {
-                    if col >= err.range.start.col && col < err.range.end.col { cols.push_str(&format!("{}", "^".red())); }
+                    if col >= err.range.start.col && col < err.range.end.col { cols.push_str(&red_arrow); }
                     else { cols.push(' '); }
                     }
                 }
@@ -36,28 +36,31 @@ pub trait ErrorFormatter {
             if ind == err.range.end.line && err.range.start.line != err.range.end.line {
                 let mut cols = format!("{} {}   ", " ".repeat(space_to_border - 1), cyan_wall);
                 for col in 0..=line_text.len() {
-                    if col >= err.range.end.col { cols.push_str(&format!("{}", "^".red())); }
+                    if col >= err.range.end.col { cols.push_str(&red_arrow); }
                     else { cols.push(' '); }
                 }
                 cols.push('\n');
                 line.push_str(&cols);
             }
         }
-            if let Some(lbl) = err.labels.iter().find(|i| i.range.start.line == ind) {
-                let mut col = format!("{} {}   ", " ".repeat(space_to_border - 1), cyan_wall);
-                let text_variant = match lbl.variant {
-                    ErrorLabelVariants::Primary => ("^".red(), lbl.msg.red()),
-                    ErrorLabelVariants::Secondary => ("─".bright_black(), lbl.msg.bright_black())
-                };
-                for col_ind in 0..=line_text.len() {
-                    if col_ind >= lbl.range.start.col && col_ind <= lbl.range.end.col { col.push_str(&format!("{}", text_variant.0)); }
-                    else { col.push(' '); }
-                }
-                col.push_str(&format!("{}\n", text_variant.1));
-                line.push_str(&col);
-            }
         res.push_str(&line);
-    } 
+        }
+        for label in &err.labels {
+            match label.variant {
+                ErrorLabelVariants::Help => {
+                    res.push_str(&format!("{}", format!("{} {}   Help: {}", " ".repeat(space_to_border - 1), cyan_wall, label.msg).bright_black()))
+                }
+                ErrorLabelVariants::Sub(range) => {
+                    let line_in_question = lines[range.start.line - 1];
+                    let mut cols = format!("\n{} {}   ", " ".repeat(space_to_border - 1), cyan_wall);
+                    for col in 0..=line_in_question.len() {
+                        if col >= range.start.col && col < range.end.col { cols.push_str(&red_arrow); }
+                        else { cols.push(' '); }
+                    }
+                    res.push_str(&format!("{}\n{} {}   {}{}", cyan_wall, cyan_wall, " ".repeat(space_to_border - 1), line_in_question, cols));
+                }
+            }
+        }
         Some(res)
     }
 }

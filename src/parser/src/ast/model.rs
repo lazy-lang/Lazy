@@ -331,6 +331,23 @@ pub enum ASTStatement {
     Impl(ASTImpl)
 }
 
+impl ASTStatement {
+    
+    pub fn range(&self) -> Range {
+        match self {
+            Self::EnumDeclaration(en) => en.range,
+            Self::Struct(ty) => ty.range,
+            Self::Static(st) => st.range,
+            Self::Type(ty) => ty.range,
+            Self::Main(main) => main.range,
+            Self::Export(ex) => ex.range,
+            Self::Import(im) => im.range,
+            Self::Meta(m) => m.range,
+            Self::Impl(im) => im.range
+        }
+    }
+}
+
 bitflags! {
     pub struct ASTModifiers: u32 {
         const PRIVATE = 1 << 0;

@@ -59,34 +59,13 @@ impl Range {
 }
 
 pub enum ErrorLabelVariants {
-    Primary,
-    Secondary
+    Help,
+    Sub(Range)
 }
 
 pub struct ErrorLabel {
     pub msg: String,
-    pub range: Range,
     pub variant: ErrorLabelVariants
-}
-
-impl ErrorLabel {
-    
-    pub fn new<T: Into<String>>(msg: T, range: Range) -> Self {
-        ErrorLabel {
-            msg: msg.into(),
-            range,
-            variant: ErrorLabelVariants::Secondary
-        }
-    }
-
-    pub fn new_primary<T: Into<String>>(msg: T, range: Range) -> Self {
-        ErrorLabel {
-            msg: msg.into(),
-            range,
-            variant: ErrorLabelVariants::Primary
-        }
-    }
-
 }
 
 /* These errors are used only for the sterr output
@@ -158,11 +137,24 @@ macro_rules! err {
                 labels: vec![$(
                     ErrorLabel {
                         msg: String::from($label_text),
-                        variant: ErrorLabelVariants::Secondary,
-                        range: $label_range
+                        variant: ErrorLabelVariants::Sub($label_range)
                     }
                 ),*]
             }
+    };
+    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*; $([$label_text: expr]),*) => {
+        Error {
+            msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
+            highlighted: true,
+            range: $range,
+            filename: $filename.to_string(),
+            labels: vec![$(
+                ErrorLabel {
+                    msg: String::from($label_text),
+                    variant: ErrorLabelVariants::Help,
+                }
+            ),*]
+        }
     };
     ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*) => {
         Error {
