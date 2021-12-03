@@ -281,14 +281,25 @@ impl Parser {
                     }
                     },
                     TokenType::Kw(kw) => {
-                        if !allow_fn_keyword {
-                            return Err(err!(UNEXPECTED, self.tokens.range_here(), self.tokens.filename, "keyword fn"; ["Only function signatures are allowed here. Remove the `fn` and the function body, if there is one."]));
-                        }
                         match kw.as_str() {
                             "fn" => {
+                                if !allow_fn_keyword {
+                                    return Err(err!(UNEXPECTED, self.tokens.range_here(), self.tokens.filename, "keyword fn"; ["Only function signatures are allowed here. Remove the `fn` and the function body, if there is one."]));
+                                }
                                 self.tokens.consume();
                                 Some(ASTTypings::Function(self.parse_function(true)?))
                             },
+                            "impl" => {
+                                self.tokens.consume();
+                                let val = self.parse_typing(false, false, true)?;
+                                match val {
+                                    ASTTypings::Var(_) | ASTTypings::Mod(_) => Some(ASTTypings::Impl(ASTImplTyping { 
+                                        value: Box::from(val),
+                                        range: range.end(&self.tokens.last_loc)
+                                    })),
+                                    _ => return Err(err!(EXPECTED, range.end(&self.tokens.last_loc), self.tokens.filename, "identifier or module access"; ["Save the typing via the \"type\" keyword."]))
+                                }
+                            }
                             _ => None
                         }
                     }

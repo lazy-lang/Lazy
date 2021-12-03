@@ -398,6 +398,11 @@ pub struct ASTBoundTyping {
     pub range: Range
 }
 
+pub struct ASTImplTyping {
+    pub value: Box<ASTTypings>,
+    pub range: Range
+}
+
 pub enum ASTTypings {
     Var(ASTVarTyping),
     Mod(ASTModAccess),
@@ -406,7 +411,8 @@ pub enum ASTTypings {
     Optional(Box<ASTTypings>),
     Tuple(ASTListTyping),
     Combine(ASTCombineTyping),
-    Bound(ASTBoundTyping)
+    Bound(ASTBoundTyping),
+    Impl(ASTImplTyping)
 }
 
 impl fmt::Display for ASTVarTyping {
@@ -494,7 +500,8 @@ impl fmt::Display for ASTTypings {
             Self::Function(func) => func.fmt(f),
             Self::Combine(c) => c.fmt(f),
             Self::Mod(m) => m.fmt(f),
-            Self::Bound(b) => b.fmt(f)
+            Self::Bound(b) => b.fmt(f),
+            Self::Impl(b) => write!(f, "impl {}", b.value)
         }
     }
 }
