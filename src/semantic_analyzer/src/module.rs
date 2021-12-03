@@ -19,16 +19,9 @@ impl Module {
         let mut exported: HashMap<String, u32> = HashMap::new();
         let mut parser =  Parser::new(&content, filename.to_string());
         let (ast, mut errs) = parser.parse();
-        if !errs.is_empty() || !parser.tokens.errors.is_empty() {
-            let mut new_vec: Vec<Error> = vec![];
-            new_vec.append(&mut parser.tokens.errors);
-            new_vec.append(&mut errs);
-            return Err(new_vec);
-        }
-        if !parser.tokens.errors.is_empty() {
-            return Err(parser.tokens.errors);
-        }
         let mut errors: Vec<Error> = vec![];
+        errors.append(&mut parser.tokens.errors);
+        errors.append(&mut errs);
         for statement in ast {
             if let Some((name, range, is_exported, decl)) = match statement {
                 ASTStatement::Import(decl) => {

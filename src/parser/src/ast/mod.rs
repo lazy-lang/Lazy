@@ -275,7 +275,7 @@ impl Parser {
                     } else {
                         let typings = if self.tokens.is_next(TokenType::Op(String::from("<"))) {
                         self.tokens.consume();
-                        Some(self.parse_typing_list(false, false, TokenType::Op(String::from(">")))?)
+                        Some(self.parse_typing_list(true, false, TokenType::Op(String::from(">")))?)
                         } else { None };
                         Some(ASTTypings::Var(ASTVarTyping { value: var, range: tok_range, typings }))
                     }
@@ -339,7 +339,7 @@ impl Parser {
                 Ok(typing)
             }
         } else {
-            Ok(t.unwrap())
+            Err(err!(EXPECTED, range.to_range(), &self.tokens.filename, "typing"))
         }
     }
 

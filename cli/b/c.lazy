@@ -1,3 +1,2 @@
-import * from "../b"
 
 export type A = {};

@@ -9,12 +9,13 @@ struct Animal<T: Addable> {
     make_noise: fn(noise: str?) print(noise || "*quiet*")
 }
 
-struct Human {
+struct Human<T: impl T::A> {
     name: str
     age: i8
     job: str
 
     make_noise: fn() print("Hello World")
+
 }
 
 type A = {}
