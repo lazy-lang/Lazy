@@ -1,6 +1,8 @@
 import * from "./b/c.lazy"
 
-struct Animal<T> {
+type Addable = { add: () -> void }
+
+struct Animal<T: Addable> {
     name: str
     age: i8
 
