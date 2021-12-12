@@ -1,4 +1,5 @@
 
+use super::input_parser::InputSequence;
 use super::tokenizer::{Tokenizer, TokenType};
 pub use errors::{LoC};
 pub mod model;
@@ -994,7 +995,7 @@ impl Parser {
                         return Err(err!(EXPECTED_FOUND, token.range, self.tokens.filename, &format!("keyword \"{}\"", val)));
                     }
                 }
-            }
+            },
         }
         };
         Ok(Some(self.parse_suffix(exp, parse_generics_in_suffix)?))
@@ -1196,6 +1197,14 @@ impl Parser {
                                range: range.end(&self.tokens.last_loc)
                            }
                        ))
+                   },
+                   "macro" => {
+                       let name = self.parse_varname(false, false, false, false)?.0.value;
+                       self.tokens.handle_macro_decl(&name);
+                       Ok(ASTStatement::MacroDecl(ASTMacroDecl {
+                           name: name,
+                           range: range.end(&self.tokens.last_loc)
+                       }))
                    },
                    _ => {
                     self.tokens.input.skip_line();

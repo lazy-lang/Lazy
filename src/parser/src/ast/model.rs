@@ -4,7 +4,7 @@ pub use errors::{Range};
 use super::{TokenType};
 pub use std::collections::hash_map::HashMap;
 
-// A string literalz
+// A string literal
 pub struct ASTStr {
     pub value: String,
     pub range: Range
@@ -286,6 +286,11 @@ pub struct ASTMeta {
     pub range: Range
 }
 
+pub struct ASTMacroDecl {
+    pub name: String,
+    pub range: Range
+}
+
 // Any expression
 pub enum ASTExpression {
     Str(ASTStr),
@@ -328,6 +333,7 @@ pub enum ASTStatement {
     Export(ASTExport),
     Import(ASTImport),
     Meta(ASTMeta),
+    MacroDecl(ASTMacroDecl),
     Impl(ASTImpl)
 }
 
@@ -343,7 +349,8 @@ impl ASTStatement {
             Self::Export(ex) => ex.range,
             Self::Import(im) => im.range,
             Self::Meta(m) => m.range,
-            Self::Impl(im) => im.range
+            Self::Impl(im) => im.range,
+            Self::MacroDecl(mc) => mc.range
         }
     }
 }
@@ -413,6 +420,11 @@ pub enum ASTTypings {
     Combine(ASTCombineTyping),
     Bound(ASTBoundTyping),
     Impl(ASTImplTyping)
+}
+
+pub enum ASTAny {
+    Statement(ASTStatement),
+    Expression(ASTExpression)
 }
 
 impl fmt::Display for ASTVarTyping {
@@ -517,7 +529,8 @@ impl fmt::Display for ASTStatement {
             Self::Export(ex) => ex.fmt(f),
             Self::Import(imp) => imp.fmt(f),
             Self::Impl(imp) => imp.fmt(f),
-            Self::Meta(m) => m.fmt(f)
+            Self::Meta(m) => m.fmt(f),
+            Self::MacroDecl(m) => write!(f, "macro {}", m.name.to_string())
         } 
     }
 }

@@ -132,6 +132,11 @@ impl Diagnostics {
         1028,
         "Unexpected end of file."
     ], [
+        INVALID_MACRO_PARAM,
+        1029,
+        "Invalid macro parameter value: \"$\"."
+    ],
+    [
         TYPE_NOT_FOUND_FROM_MOD,
         2001,
         "Type $ not found from module $."

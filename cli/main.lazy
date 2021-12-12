@@ -1,44 +1,11 @@
 import * from "./b/c.lazy"
 
-type Addable = { add: () -> void }
-
-struct Animal<T: Addable> {
-    name: str
-    age: i8
-
-    make_noise: fn(noise: str?) print(noise || "*quiet*")
-}
-
-struct Human<T: impl T::A> {
-    name: str
-    age: i8
-    job: str
-
-    make_noise: fn() print("Hello World")
-
-}
-
-type A = {}
-
-type WithName = { name: str }
-
-// Requires the type to have a "make_noise" method - we don't care about params or return value in this case
-type MakesNoise<T> = { make_noise: () }
-
-main {
-    let me = new Human{name: "Google", job: "Programmer", age: 19};
-    let some_animal = new Animal{name: "Perry", age: 2};
-
-    let stuff_that_makes_noise = Vec::create<MakesNoise>();
-    stuff_that_makes_noise.push(me);
-    stuff_that_makes_noise.push(some_animal);
-
-    stuff_that_makes_noise[0]?.make_noise(); // "Hello World"
-    stuff_that_makes_noise[1]?.make_noise(); // *quiet*
-}
-
-static println = fn(...strs: Stringable?) {
-    for string in strs {
-        print(string?.to_string() + "\n");
-    }
+macro name {
+    (a, b, $c: expr, +d: expr,) => {
+         print($c, ++(
+             5 + (10);
+             add($c, $d)
+         ))
+     }
+     (b, c, $d: ident) => {}
 }

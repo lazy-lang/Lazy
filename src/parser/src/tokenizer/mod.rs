@@ -1,7 +1,9 @@
 use std::fmt;
 use errors::*;
 use diagnostics::*;
-use super::input_parser::{InputParser};
+use super::input_parser::{InputParser, InputSequence};
+use std::collections::{VecDeque, HashMap};
+use crate::macros::*;
 
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -54,18 +56,21 @@ macro_rules! match_str {
     };
 }
 
+#[derive(Clone)]
 pub struct Token {
     pub range: Range,
     pub val: TokenType
 }
-
 
 pub struct Tokenizer {
     current: Option<Token>,
     pub filename: String,
     pub errors: Vec<Error>,
     pub input: InputParser,
+    pub pre_tokens: VecDeque<Token>,
+    pub macros: HashMap<String, Macro>,
     pub is_last_num_as_str: bool,
+    pub macro_context: bool,
     pub last_loc: LoC
 }
 
@@ -76,7 +81,10 @@ impl Tokenizer {
             current: None,
             errors: vec![],
             is_last_num_as_str: false,
+            macro_context: false,
             input: InputParser::new(code),
+            pre_tokens: VecDeque::new(),
+            macros: HashMap::new(),
             last_loc: LoC::default(),
             filename: filename
         }
@@ -249,12 +257,33 @@ impl Tokenizer {
                 None => break
             }
         };
-        if ident == "true" { return Token { val: TokenType::Bool(true), range: Range {start, end: self.input.loc()} } }
-        else if ident == "false" { return Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()} } }
-        else if ident == "none" { return Token { val: TokenType::None, range: Range { start, end: self.input.loc() } } }
+        match ident.as_str() {
+            "true" => Token { val: TokenType::Bool(true), range: Range {start, end: self.input.loc()}},
+            "false" => Token { val: TokenType::Bool(false), range: Range {start, end: self.input.loc()}},
+            "none" => Token { val: TokenType::None, range: Range { start, end: self.input.loc() }},
+            "main" | "let" | "for" | "while" | "if" | "else" | "enum" | "struct" | "fn" | "type" | "const" | "yield" | "match" | "static" | "new" | "private" | "export" | "import" | "as" | "await" | "impl" | "in" | "from" | "macro" => Token { val: TokenType::Kw(ident), range: Range {start, end: self.input.loc() } },
+            _ => Token { val: TokenType::Var(ident), range: Range {start, end: self.input.loc() } }
+        }
+    }
 
-        let token_type = if match_str!(ident.as_str(), "main", "let", "for", "while", "if", "else", "enum", "struct", "fn", "type", "const", "yield", "match", "static", "new", "private", "export", "import", "as", "await", "impl", "in", "from") { TokenType::Kw(ident) } else { TokenType::Var(ident) };
-        Token { val: token_type, range: Range {start, end: self.input.loc() } }
+    pub fn parse_text(&mut self) -> String {
+        let mut ident = String::new();
+        while Some(' ') == self.input.peek(0) {
+            self.input.consume();
+        }
+        while !self.input.is_eof() {
+            match self.input.peek(0) {
+                Some(ch) => {
+                    match ch {
+                        'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => ident.push(self.input.consume().unwrap()),
+                        _ => break
+                    }
+                },
+                None => break
+            }
+        };
+        self.last_loc = self.input.loc();
+        return ident;
     }
 
     fn parse_punc(&mut self) -> Token {
@@ -281,6 +310,9 @@ impl Tokenizer {
     }
 
     fn _next(&mut self) -> Option<Token> {
+        if !self.pre_tokens.is_empty() {
+            return self.pre_tokens.pop_front()
+        }
         if self.input.is_eof() { return None; };
         self.last_loc = self.input.loc();
         let tok = self.input.peek(0)?;
@@ -331,6 +363,13 @@ impl Tokenizer {
         }
     }
 
+    pub fn consume_input(&mut self) -> Option<char> {
+        let val = self.input.consume();
+        self.last_loc = self.input.loc();
+        self.current = None;
+        val
+    }
+
     pub fn consume(&mut self) -> Option<Token> {
         if self.current.is_some() {
             self.current.take()
@@ -377,6 +416,14 @@ impl Tokenizer {
         }
     }
 
+    pub fn skip_or_err_here(&mut self, tok: TokenType) -> Option<()> {
+        if let Err(err) = self.skip_or_err(tok, None) {
+            self.errors.push(err);
+            return None;
+        };
+        Some(())
+    }
+
     pub fn expect_punc(&mut self, puncs: &[char], loc: Option<Range>) -> LazyResult<char> {
         let location = loc.unwrap_or(Range { start: self.last_loc.clone(), end: self.last_loc.clone() });
         match self.peek() {
@@ -396,6 +443,13 @@ impl Tokenizer {
                 Err(err!(EXPECTED, location, self.filename, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))))
             }
         }
+    }
+
+    pub fn handle_macro_decl(&mut self, name: &str) -> Option<()> {
+        self.skip_or_err_here(TokenType::Punc('{'))?;
+        let mac = Macro::parse(self)?;
+        self.macros.insert(name.to_string(), mac);
+        Some(())
     }
 
     pub fn is_confusable(ch: char) -> Option<String> {
