@@ -132,6 +132,10 @@ impl Diagnostics {
         1028,
         "Unexpected end of file."
     ], [
+        EMPTY_TYPE_PARAMS,
+        1029,
+        "Expected at least one type parameter."
+    ], [
         TYPE_NOT_FOUND_FROM_MOD,
         2001,
         "Type $ not found from module $."
@@ -147,6 +151,10 @@ impl Diagnostics {
         FILE_RECURSION,
         2004,
         "Detected recursive importing. Module \"$\" requires \"$\" and vice-versa."
+    ], [
+        NAME_NOT_FOUND,
+        2005,
+        "Couldn't find name $."
     ]
 );
 

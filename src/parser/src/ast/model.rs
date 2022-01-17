@@ -66,10 +66,16 @@ pub struct ASTStatic {
     pub range: Range
 }
 
+pub struct ASTTypeParameter {
+    pub name: ASTVar,
+    pub constraint: Option<ASTTypings>,
+    pub range: Range
+}
+
 pub struct ASTStruct {
     pub name: ASTVar,
     pub fields: ASTPairListTyping,
-    pub typings: Option<ASTListTyping>,
+    pub typings: Vec<ASTTypeParameter>,
     pub range: Range
 }
 
@@ -113,7 +119,7 @@ pub struct ASTOptional {
 pub struct ASTEnumDeclaration {
     pub name: ASTVar,
     pub values: ASTPairListTyping,
-    pub typings: Option<ASTListTyping>,
+    pub typings: Vec<ASTTypeParameter>,
     pub range: Range
 }
 
@@ -121,7 +127,7 @@ pub struct ASTFunction {
     pub params: Box<ASTPairListTyping>,
     pub body: Option<Box<ASTExpression>>,
     pub return_type: Option<Box<ASTTypings>>,
-    pub typings: Option<ASTListTyping>,
+    pub typings: Vec<ASTTypeParameter>,
     pub range: Range
 }
 
@@ -190,7 +196,7 @@ pub struct ASTWhile {
 
 pub struct ASTType {
     pub name: ASTVar,
-    pub typings: Option<ASTListTyping>,
+    pub typings: Vec<ASTTypeParameter>,
     pub value: ASTTypings,
     pub range: Range
 }
@@ -392,12 +398,6 @@ pub struct ASTCombineTyping {
     pub range: Range
 }
 
-pub struct ASTBoundTyping {
-    pub name: ASTVar,
-    pub bound: Box<ASTTypings>,
-    pub range: Range
-}
-
 pub struct ASTImplTyping {
     pub value: Box<ASTTypings>,
     pub range: Range
@@ -411,7 +411,6 @@ pub enum ASTTypings {
     Optional(Box<ASTTypings>),
     Tuple(ASTListTyping),
     Combine(ASTCombineTyping),
-    Bound(ASTBoundTyping),
     Impl(ASTImplTyping)
 }
 
@@ -440,7 +439,7 @@ impl fmt::Display for ASTPairListTyping {
 
 impl fmt::Display for ASTFunction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "fn<{}>({}) -> {} {}", if self.typings.is_some() { self.typings.as_ref().unwrap().to_string() } else { String::from("none") }, self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() {  self.body.as_ref().unwrap().to_string() } else { String::from("") })
+        write!(f, "fn<{}>({}) -> {} {}", self.typings.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", "), self.params, if self.return_type.is_some() { self.return_type.as_ref().unwrap().to_string() } else { String::from("none") } ,if self.body.is_some() {  self.body.as_ref().unwrap().to_string() } else { String::from("") })
     }
 }
 
@@ -500,7 +499,6 @@ impl fmt::Display for ASTTypings {
             Self::Function(func) => func.fmt(f),
             Self::Combine(c) => c.fmt(f),
             Self::Mod(m) => m.fmt(f),
-            Self::Bound(b) => b.fmt(f),
             Self::Impl(b) => write!(f, "impl {}", b.value)
         }
     }
@@ -662,19 +660,19 @@ impl fmt::Display for ASTDeclare {
 
 impl fmt::Display for ASTType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "type {}{} = {}", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.value)
+        writeln!(f, "type {}{} = {}", self.name, if !self.typings.is_empty() { format!("<{}>", self.typings.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ")) } else { String::from("") }, self.value)
    }
 }
 
 impl fmt::Display for ASTEnumDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "enum {}{} {{\n {} }}", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap() )} else { String::from("") }, self.values)
+        writeln!(f, "enum {}{} {{\n {} }}", self.name, if !self.typings.is_empty() { format!("<{}>", self.typings.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ") )} else { String::from("") }, self.values)
    }
 }
 
 impl fmt::Display for ASTStruct {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "struct {}{} {{\n {} }}\n", self.name, if self.typings.is_some() { format!("<{}>", self.typings.as_ref().unwrap().to_string()) } else { String::from("") }, self.fields)
+        write!(f, "struct {}{} {{\n {} }}\n", self.name, if !self.typings.is_empty() { format!("<{}>", self.typings.iter().map(|t| t.to_string()).collect::<Vec<String>>().join(", ")) } else { String::from("") }, self.fields)
    }
 }
 
@@ -827,8 +825,8 @@ impl fmt::Display for ASTTempStr {
    }
 }
 
-impl fmt::Display for ASTBoundTyping {
+impl fmt::Display for ASTTypeParameter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.name, self.bound)
+        write!(f, "{}{}", self.name.value, if let Some(c) = &self.constraint { format!(": {}", c) } else { String::from("") })
    }
 }

@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 parser = { path = "../parser" }
 errors = { path = "../errors" }
+rustc-hash = "1.1.0"

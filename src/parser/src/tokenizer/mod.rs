@@ -13,7 +13,7 @@ pub enum TokenType {
     Kw(String),
     Bool(bool),
     Var(String),
-    Op(String),
+    Op(char),
     Char(char),
     Punc(char),
     None
@@ -263,21 +263,18 @@ impl Tokenizer {
     }
 
     fn parse_op(&mut self) -> Token {
-        let start = self.input.loc();
-        let mut op = String::new();
+        let range = Range { start: self.input.loc(), end: self.input.loc() };
+        Token { val: TokenType::Op(self.input.consume().unwrap()), range }
+    }
+
+    pub fn parse_full_op<'a>(&mut self, start_of_op: Option<char>) -> String {
+        let mut op = if let Some(start_op) = start_of_op { start_op.to_string() } else { String::new() };
         while !self.input.is_eof() {
-            // Invalid operators
-            if match_str!(op.as_str(), "<>") {
-                self.errors.push(err!(UNEXPECTED_OP, Range { start, end: self.input.loc()}, self.filename, &op.clone()));
-                break;
-            }
-            // Operators which cannot be followed by other operators
-            if match_str!(op.as_str(), "?", ">") { break; };
             let ch = self.input.peek(0).unwrap();
             if match_str!(ch, '+', '-', '>', '<', '=', '!', '%', '|', '&', '.', '?', '~', '^', '*', '/') { op.push(self.input.consume().unwrap()) }
             else { break; };
         };
-        Token {val: TokenType::Op(op), range: Range {start, end: self.input.loc()}}
+        op
     }
 
     fn _next(&mut self) -> Option<Token> {
@@ -357,6 +354,45 @@ impl Tokenizer {
         match next {
             Some(token) => token.val == tok,
             None => true
+        }
+    }
+
+    pub fn is_next_full_op(&mut self, op: &[char]) -> bool {
+        if let Some(first_ch) = self.peek() {
+            if first_ch.val != TokenType::Op(op[0]) {
+                return false;
+            };
+            for i in 1..op.len() {
+                if self.input.peek(i - 1) == Some(op[i]) {
+                    continue;
+                } else {
+                    return false;
+                }
+            }
+            for _ in op {
+                self.consume();
+            }
+            return true;
+        } else {
+            false
+        }
+    }
+
+    pub fn skip_or_err_full_op(&mut self, op: &str, err: Option<Error>) -> LazyResult<()> {
+        let ch = if let Some(tok) = &self.current {
+            match tok.val {
+                TokenType::Op(ch) => {
+                    self.current = None;
+                    Some(ch)
+                },
+                _ => None
+            }
+        } else { None };
+        let tok = self.parse_full_op(ch);
+        if tok != op {
+            Err(err.unwrap_or(err!(EXPECTED_FOUND, self.last_loc.to_range(), self.filename, op, &tok)))
+        } else {
+            Ok(())
         }
     }
 

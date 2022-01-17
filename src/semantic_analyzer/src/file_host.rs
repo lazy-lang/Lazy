@@ -1,5 +1,5 @@
 
-use crate::{module::Module, symbol::{Symbol, SymbolCollector}};
+use crate::{module::Module};
 use std::collections::HashMap;
 use errors::{builder::ErrorFormatter, LazyMultiResult};
 use std::fs;
@@ -14,7 +14,6 @@ pub trait FileHost: ErrorFormatter {
 
 pub struct VirtualFileHost {
     pub id_counter: u32,
-    pub symbols: HashMap<u32, Symbol>,
     pub files: HashMap<String, Module>,
     pub file_contents: HashMap<String, String>,
     pub file_cache: HashMap<String, String>,
@@ -52,22 +51,12 @@ impl FileHost for VirtualFileHost {
 
 }
 
-impl SymbolCollector for VirtualFileHost {
-    fn insert_symbol(&mut self, sym: Symbol) {
-        self.symbols.insert(sym.id, sym);
-    }
-
-    fn get_symbol(&self, sym: &u32) -> Option<&Symbol> {
-        self.symbols.get(sym)
-    }
-}
-
 impl VirtualFileHost {
 
     pub fn new() -> Self {
         Self {
             id_counter: 0,
-            symbols: HashMap::new(),
+
             files: HashMap::new(),
             file_contents: HashMap::new(),
             file_cache: HashMap::new()
@@ -88,7 +77,6 @@ impl VirtualFileHost {
 
 pub struct FSFileHost {
     pub id_counter: u32,
-    pub symbols: HashMap<u32, Symbol>,
     pub files: HashMap<String, Module>,
     pub file_contents: HashMap<String, String>,
 }
@@ -135,24 +123,11 @@ impl FileHost for FSFileHost {
 
 }
 
-impl SymbolCollector for FSFileHost {
-    
-    fn get_symbol(&self, name: &u32) -> Option<&Symbol> {
-        self.symbols.get(name)
-    }
-
-    fn insert_symbol(&mut self, sym: Symbol) {
-        self.symbols.insert(sym.id, sym);
-    }
-
-}
-
 impl FSFileHost {
 
     pub fn new() -> Self {
         Self {
             id_counter: 0,
-            symbols: HashMap::new(),
             files: HashMap::new(),
             file_contents: HashMap::new()
         }
