@@ -1072,7 +1072,7 @@ impl Parser {
                         Ok(ASTStatement::Struct(ASTStruct {
                             name,
                             typings,
-                            fields: self.parse_typing_pair_list(false, true, false, true, false, '}')?,
+                            fields: self.parse_typing_pair_list(true, true, false, true, true, '}')?,
                             range: range.end(&self.tokens.last_loc)
                         }))
                    }

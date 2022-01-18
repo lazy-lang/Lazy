@@ -1,4 +1,4 @@
-//import * from "./b/c.lazy"
+import * from "./b/c.lazy"
 
 type Addable = { add: () -> void }
 
@@ -10,14 +10,12 @@ struct Animal<T: Addable, B> {
 }
 
 struct Human {
-    name: str
+    name = "Hello"
     age: i8
     job: str
 
     make_noise: fn() print("Hello World")
 }
-
-type A = {}
 
 export type WithName = { name: str }
 

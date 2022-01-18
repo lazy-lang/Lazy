@@ -13,6 +13,10 @@ pub struct Module {
 }
 
 impl Module {
+
+    pub fn get_sym(&self, name: &str) -> Option<&SymbolLike> {
+        self.local.get(name).or_else(|| self.exported.get(name))
+    }
     
     pub fn from_str<T: FileHost>(host: &mut T, filename: &str, content: &str) -> LazyMultiResult<Self> {
         let mut temp_syms: HashMap<String, Symbol> = HashMap::new();
@@ -73,7 +77,9 @@ impl Module {
                     continue;
                 }
                 let id = host.get_unique_id();
-                if is_exported { exported.insert(name.to_string(), SymbolLike::Ref(id)); };
+                let reference = SymbolLike::Ref(id);
+                if is_exported { exported.insert(name.to_string(), reference); }
+                else { local.insert(name.to_string(), reference); };
                 temp_syms.insert(name.to_string(), Symbol::empty(id, name, decl));
             }
         }

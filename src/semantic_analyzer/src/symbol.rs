@@ -1,4 +1,3 @@
-
 pub use parser::ast::{model::*};
 
 pub trait SymbolCollector {
@@ -10,21 +9,20 @@ pub enum StatementOrExpression {
     EnumStatement(ASTEnumDeclaration),
     StructStatement(ASTStruct),
     TypeStatement(ASTType),
-    FnExp(ASTFunction),
     None
 }
 
 pub enum SymbolKind {
     Struct{
-        properties: Vec<(String, SymbolLike)>,
+        properties: HashMap<String, SymbolLike>,
         impls: Vec<SymbolLike>
     },
     Enum{
-        members: Vec<(String, SymbolLike)>,
+        members: HashMap<String, SymbolLike>,
         impls: Vec<SymbolLike>
     },
     Fn{
-        parameters: Vec<(String, SymbolLike)>,
+        parameters: HashMap<String, SymbolLike>,
         return_type: SymbolLike
     },
     Module{
@@ -35,23 +33,34 @@ pub enum SymbolKind {
 
 #[derive(Clone)]
 pub enum SymbolLike {
-    Instance(SymbolInstance),
-    Ref(u32)
+    Instance(u32, usize),
+    Ref(u32),
+    Optional(Box<SymbolLike>)
 }
 
 impl SymbolLike {
 
     pub fn to_symbol<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a Symbol {
         match self {
-            Self::Instance(inst) => collector.get_symbol(&inst.id).unwrap(),
-            Self::Ref(r) => collector.get_symbol(r).unwrap()
+            Self::Instance(sym, _) => collector.get_symbol(sym).unwrap(),
+            Self::Ref(r) => collector.get_symbol(r).unwrap(),
+            Self::Optional(sym) => sym.to_symbol(collector)
         }
     }
 
     pub fn get_id(&self) -> u32 {
         match self {
-            Self::Instance(inst) => inst.id,
-            Self::Ref(id) => *id
+            Self::Instance(inst, _) => *inst,
+            Self::Ref(id) => *id,
+            Self::Optional(sym) => sym.get_id()
+        }
+    }
+
+    pub fn get_kind<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a SymbolKind {
+        match self {
+            Self::Instance(sym, inst) => &collector.get_symbol(sym).unwrap().instances[*inst].kind,
+            Self::Ref(id) => &collector.get_symbol(id).unwrap().kind,
+            Self::Optional(sym) =>sym.get_kind(collector)
         }
     }
 
@@ -62,21 +71,13 @@ pub struct Symbol {
     pub id: u32,
     pub kind: SymbolKind,
     pub type_params: HashMap<String, Option<SymbolLike>>,
+    pub instances: Vec<SymbolInstance>,
     pub declaration: StatementOrExpression
 }
 
-#[derive(Clone)]
 pub struct SymbolInstance {
-    pub id: u32,
+    pub kind: SymbolKind,
     pub type_args: Vec<SymbolLike>
-}
-
-impl SymbolInstance {
-
-    pub fn to_symbol<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a Symbol {
-        return collector.get_symbol(&self.id).unwrap()
-    }
-
 }
 
 impl Symbol {
@@ -87,15 +88,35 @@ impl Symbol {
             name,
             kind: SymbolKind::None,
             type_params: HashMap::new(),
+            instances: Vec::new(),
             declaration: decl
         }
     }
 
-    pub fn instance(&self, type_args: Vec<SymbolLike>) -> SymbolLike {
-        SymbolLike::Instance(SymbolInstance {
-            id: self.id,
-            type_args
-        })
+    pub fn create_or_get_instance(&mut self, params: Vec<SymbolLike>) -> Option<&SymbolInstance> {
+        let params_len = params.len();
+        if params_len != self.type_params.len() { 
+            return None;
+        };
+        'outer: for instance in &self.instances {
+            for ind in 0..params_len {
+                if params[ind].get_id() != instance.type_args[ind].get_id() {
+                    continue 'outer;
+                }
+            }
+            return Some(&instance);
+        };
+        // TDB: Create an instance, add it to the instances vector and return a ref to it
+        None
+    }
+
+
+    pub fn reference(&self) -> SymbolLike {
+        SymbolLike::Ref(self.id)
+    }
+
+    pub fn optional(&self) -> SymbolLike {
+        SymbolLike::Optional(Box::from(SymbolLike::Ref(self.id)))
     }
 
 }
