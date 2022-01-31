@@ -4,7 +4,7 @@ pub use errors::{Range};
 use super::{TokenType};
 pub use std::collections::hash_map::HashMap;
 
-// A string literalz
+// A string literal
 pub struct ASTStr {
     pub value: String,
     pub range: Range

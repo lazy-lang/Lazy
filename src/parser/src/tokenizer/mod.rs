@@ -1,6 +1,5 @@
 use std::fmt;
 use errors::*;
-use diagnostics::*;
 use super::input_parser::{InputParser};
 
 #[derive(PartialEq)]

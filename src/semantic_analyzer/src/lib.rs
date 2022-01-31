@@ -1,7 +1,7 @@
 
-pub use parser;
 pub mod symbol;
 pub mod file_host;
 pub mod module;
 pub mod path;
+pub mod value;
 pub mod checker;

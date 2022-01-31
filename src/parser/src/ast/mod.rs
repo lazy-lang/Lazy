@@ -5,7 +5,6 @@ pub mod model;
 pub mod utils;
 use model::*;
 use errors::*;
-use errors::diagnostics::*;
 
 pub struct Parser {
     pub tokens: Tokenizer,

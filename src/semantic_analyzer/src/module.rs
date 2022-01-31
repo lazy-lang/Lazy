@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use crate::{file_host::{FileHost}, symbol::{Symbol, SymbolLike, StatementOrExpression}};
 use parser::{ast::{Parser, model::{ASTImportThing, ASTStatement}}};
 use errors::*;
-use diagnostics::*;
 use crate::path::file_dir_and_join;
 
 pub struct Module {

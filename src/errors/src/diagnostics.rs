@@ -155,6 +155,14 @@ impl Diagnostics {
         NAME_NOT_FOUND,
         2005,
         "Couldn't find name $."
+    ], [
+        VAL_AS_TYPE,
+        2006,
+        "A value is being used as a type here."
+    ], [
+        INVALID_AMOUNT_OF_TYPE_PARAMS,
+        2007,
+        "Invalid amount of type parameters. Expected $, found $."
     ]
 );
 

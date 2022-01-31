@@ -56,7 +56,6 @@ impl VirtualFileHost {
     pub fn new() -> Self {
         Self {
             id_counter: 0,
-
             files: HashMap::new(),
             file_contents: HashMap::new(),
             file_cache: HashMap::new()

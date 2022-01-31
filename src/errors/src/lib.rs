@@ -2,6 +2,8 @@ pub mod builder;
 pub mod diagnostics;
 use std::fmt;
 
+pub use diagnostics::*;
+
 #[derive(Copy)]
 #[derive(Default)]
 pub struct LoC {
@@ -125,6 +127,7 @@ impl std::error::Error for Error {}
 
 pub type LazyResult<T> = Result<T, Error>;
 pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
+pub type LazyResultDiagnostic<T> = Result<T, String>;
 
 #[macro_export]
 macro_rules! err {
@@ -173,6 +176,15 @@ macro_rules! err {
             range: $range,
             labels: vec![]
         }
+    };
+    ($diagnostic: expr, $range: expr, $filename: expr) => {
+        Error {
+            msg: $diagnostic,
+            highlighted: true,
+            filename: $filename.to_string(),
+            range: $range,
+            labels: vec![]
+        }
     }
 }
 
@@ -180,5 +192,8 @@ macro_rules! err {
 macro_rules! dia {
     ($diagnostic: ident, $($vars: expr),*) => {
         format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*])
-    } 
+    };
+    ($diagnostic: ident) => {
+        format_diagnostic(&Diagnostics::$diagnostic, vec![])
+    }
 }
