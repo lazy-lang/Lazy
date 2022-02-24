@@ -1,6 +1,14 @@
 use errors::*;
 pub use parser::ast::{model::*};
 
+bitflags::bitflags! {
+    pub struct SymbolFlags: u32 {
+        const STATIC = 1 << 0;
+        const CONST = 1 << 1;
+        const OPTIONAL = 1 << 2;
+    }
+}
+
 pub trait SymbolCollector {
     fn insert_symbol(&mut self, sym: Symbol);
     fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
@@ -14,18 +22,18 @@ pub enum StatementOrExpression {
 }
 
 pub struct SymbolProperty {
-    kind: SymbolLike,
+    kind: SymbolRef,
     flags: ASTModifiers
 }
 
 pub enum SymbolKind {
     Struct(HashMap<String, SymbolProperty>),
-    Enum(HashMap<String, SymbolLike>),
+    Enum(HashMap<String, SymbolRef>),
     Fn{
-        parameters: HashMap<String, SymbolLike>,
-        return_type: SymbolLike
+        parameters: HashMap<String, SymbolRef>,
+        return_type: SymbolRef
     },
-    Module(HashMap<String, SymbolLike>),
+    Module(HashMap<String, SymbolRef>),
     None
 }
 
@@ -48,36 +56,56 @@ impl SymbolKind {
 }
 
 #[derive(Clone)]
-pub enum SymbolLike {
-    Instance(u32, usize),
-    Ref(u32),
-    Optional(u32, Option<usize>)
+pub struct SymbolRef {
+    pub id: u32,
+    pub instance_id: Option<usize>,
+    flags: SymbolFlags
 }
 
-impl SymbolLike {
+impl SymbolRef {
 
-    pub fn get_id(&self) -> u32 {
-        match self {
-            Self::Instance(inst, _) => *inst,
-            Self::Ref(id) => *id,
-            Self::Optional(id, _) => *id,
-        }
+    pub fn new_ref(id: u32) -> Self {
+        SymbolRef { id, instance_id: None, flags: SymbolFlags::empty() }
     }
 
     pub fn get_kind<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a SymbolKind {
-        match self {
-            Self::Instance(sym, inst) => &collector.get_symbol(sym).unwrap().instances[*inst].kind,
-            Self::Ref(id) => &collector.get_symbol(id).unwrap().kind,
-            Self::Optional(id, inst) => {
-                if let Some(instance_id) = inst {
-                    &collector.get_symbol(id).unwrap().instances[*instance_id].kind
-                } else {
-                    &collector.get_symbol(id).unwrap().kind
-                }
-            }
+        let sym = collector.get_symbol(&self.id).unwrap();
+        match self.instance_id {
+            Some(id ) => &sym.instances[id].kind,
+            None => &sym.kind
         }
     }
 
+    pub fn is_value(&self) -> bool {
+        self.flags.contains(SymbolFlags::CONST) | self.flags.contains(SymbolFlags::STATIC)
+    }
+
+    pub fn is_optional(&self) -> bool {
+        self.flags.contains(SymbolFlags::OPTIONAL)
+    }
+
+    pub fn is_const(&self) -> bool {
+        self.flags.contains(SymbolFlags::CONST)
+    }
+
+    pub fn is_static(&self) -> bool {
+        self.flags.contains(SymbolFlags::STATIC)
+    }
+
+    pub fn make_optional(mut self) -> Self {
+        self.flags.set(SymbolFlags::OPTIONAL, true);
+        self
+    }
+
+    pub fn make_const(mut self) -> Self {
+        self.flags.set(SymbolFlags::CONST, true);
+        self
+    }
+
+    pub fn make_static(mut self) -> Self {
+        self.flags.set(SymbolFlags::STATIC, true);
+        self
+    }
 }
 
 pub trait ToSymbol {
@@ -90,13 +118,9 @@ impl ToSymbol for u32 {
     }
 }
 
-impl ToSymbol for SymbolLike {
+impl ToSymbol for SymbolRef {
     fn to_symbol<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a Symbol {
-        match self {
-            Self::Instance(sym, _) => collector.get_symbol(sym).unwrap(),
-            Self::Ref(r) => collector.get_symbol(r).unwrap(),
-            Self::Optional(sym, _) => collector.get_symbol(sym).unwrap()
-        }
+        collector.get_symbol(&self.id).unwrap()
     }
 }
 
@@ -104,16 +128,16 @@ pub struct Symbol {
     pub name: String,
     pub id: u32,
     pub kind: SymbolKind,
-    pub type_params: HashMap<String, Option<SymbolLike>>,
+    pub type_params: HashMap<String, Option<SymbolRef>>,
     pub instances: Vec<SymbolInstance>,
     pub declaration: StatementOrExpression,
-    pub impls: Vec<SymbolLike>
+    pub impls: Vec<SymbolRef>
 }
 
 pub struct SymbolInstance {
     pub id: usize,
     pub kind: SymbolKind,
-    pub type_args: Vec<SymbolLike>
+    pub type_args: Vec<SymbolRef>
 }
 
 impl Symbol {
@@ -130,14 +154,14 @@ impl Symbol {
         }
     }
 
-    pub fn create_or_get_instance(&mut self, params: Vec<SymbolLike>) -> LazyResultDiagnostic<&SymbolInstance> {
+    pub fn create_or_get_instance(&mut self, params: Vec<SymbolRef>) -> LazyResultDiagnostic<&SymbolInstance> {
         let params_len = params.len();
         if params_len != self.type_params.len() { 
             return Err(dia!(INVALID_AMOUNT_OF_TYPE_PARAMS, &self.type_params.len().to_string(), &params_len.to_string()));
         };
         'outer: for instance in &self.instances {
             for ind in 0..params_len {
-                if params[ind].get_id() != instance.type_args[ind].get_id() {
+                if params[ind].id != instance.type_args[ind].id {
                     continue 'outer;
                 }
             }
@@ -147,15 +171,11 @@ impl Symbol {
         Err(dia!(UNEXPECTED_EOF))
     }
 
-    pub fn as_ref(&self) -> SymbolLike {
-        SymbolLike::Ref(self.id)
+    pub fn to_ref(&self) -> SymbolRef {
+        SymbolRef { id: self.id, instance_id: None, flags: SymbolFlags::empty() }
     }
 
-    pub fn optional(&self) -> SymbolLike {
-        SymbolLike::Optional(self.id, None)
-    }
-
-    pub fn get_mod_type<'a, C: SymbolCollector>(&'a self, collector: &'a C, name: &str) -> Option<&'a SymbolLike> {
+    pub fn get_mod_type<'a, C: SymbolCollector>(&'a self, collector: &'a C, name: &str) -> Option<&'a SymbolRef> {
         match &self.kind {
             SymbolKind::Struct(props) => {
                 let prop = props.get(name)?;
