@@ -43,8 +43,8 @@ if let Some(exe_file) = matches.value_of("run") {
             }
             match module {
                 Err(errors) => {
-                    for error in errors {
-                        println!("{}", files.format_err(&error).unwrap());
+                    for error in errors.collected {
+                        println!("{}", files.format_err(&error, &errors.filename).unwrap());
                     }
                 },
                 Ok(_module) => {

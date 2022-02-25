@@ -12,6 +12,7 @@ bitflags::bitflags! {
 pub trait SymbolCollector {
     fn insert_symbol(&mut self, sym: Symbol);
     fn get_symbol(&self, name: &u32) -> Option<&Symbol>;
+    fn get_mut_symbol(&mut self, name: &u32) -> Option<&mut Symbol>;
 }
 
 pub enum StatementOrExpression {
@@ -66,6 +67,10 @@ impl SymbolRef {
 
     pub fn new_ref(id: u32) -> Self {
         SymbolRef { id, instance_id: None, flags: SymbolFlags::empty() }
+    }
+
+    pub fn new_instance(id: u32, instance_id: usize) -> Self {
+        SymbolRef { id: id, instance_id: Some(instance_id), flags: SymbolFlags::empty() }
     }
 
     pub fn get_kind<'a, T: SymbolCollector>(&self, collector: &'a T) -> &'a SymbolKind {
@@ -154,10 +159,10 @@ impl Symbol {
         }
     }
 
-    pub fn create_or_get_instance(&mut self, params: Vec<SymbolRef>) -> LazyResultDiagnostic<&SymbolInstance> {
+    pub fn create_or_get_instance(&mut self, params: Vec<SymbolRef>, ast: &ASTListTyping) -> LazyResult<SymbolRef> {
         let params_len = params.len();
         if params_len != self.type_params.len() { 
-            return Err(dia!(INVALID_AMOUNT_OF_TYPE_PARAMS, &self.type_params.len().to_string(), &params_len.to_string()));
+            return Err(err!(INVALID_AMOUNT_OF_TYPE_PARAMS, ast.range, &self.type_params.len().to_string(), &params_len.to_string()));
         };
         'outer: for instance in &self.instances {
             for ind in 0..params_len {
@@ -165,10 +170,10 @@ impl Symbol {
                     continue 'outer;
                 }
             }
-            return Ok(&instance);
+            return Ok(SymbolRef::new_instance(self.id, instance.id));
         };
         // TDB: Create an instance, add it to the instances vector and return a ref to it
-        Err(dia!(UNEXPECTED_EOF))
+        Err(err!(UNEXPECTED_EOF, Range::default()))
     }
 
     pub fn to_ref(&self) -> SymbolRef {

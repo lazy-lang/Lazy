@@ -3,9 +3,9 @@ pub mod diagnostics;
 use std::fmt;
 
 pub use diagnostics::*;
+pub use builder::*;
 
-#[derive(Copy)]
-#[derive(Default)]
+#[derive(Copy, Default)]
 pub struct LoC {
     pub line: usize,
     pub col: usize,
@@ -58,6 +58,7 @@ impl Range {
     pub fn end_with(self, end: &LoC) -> Range {
         Range { start: self.start, end: end.clone() }
     }
+
 }
 
 pub enum ErrorLabelVariants {
@@ -76,39 +77,33 @@ pub struct ErrorLabel {
     - Be between the main error range
 */
 
-pub struct Error {
+pub struct BaseError {
     pub range: Range,
     pub msg: String,
-    pub highlighted: bool,
-    pub filename: String,
     pub labels: Vec<ErrorLabel>
 }
 
-impl Error {
+impl BaseError {
 
-    pub fn new(msg: String, range: Range, filename: String) -> Error {
-        Error {
+    pub fn new(msg: String, range: Range) -> Self {
+        Self {
             msg,
             range: range,
-            labels: vec![],
-            highlighted: true,
-            filename
+            labels: vec![]
         }
     }
 
-    pub fn new_with_labels(msg: String, range: Range, filename: String, labels: Vec<ErrorLabel>) -> Error {
-        Error {
+    pub fn new_with_labels(msg: String, range: Range, labels: Vec<ErrorLabel>) -> Self {
+        Self {
             msg,
             range: range,
-            labels,
-            highlighted: true,
-            filename
+            labels
         }
     }
 
 }
 
-impl fmt::Debug for Error {
+impl fmt::Debug for BaseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Error")
          .field("msg", &self.msg.to_string())
@@ -117,26 +112,42 @@ impl fmt::Debug for Error {
     }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for BaseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Error: {}", self.msg.to_string())
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for BaseError {}
 
-pub type LazyResult<T> = Result<T, Error>;
-pub type LazyMultiResult<T> = Result<T, Vec<Error>>;
-pub type LazyResultDiagnostic<T> = Result<T, String>;
+pub type LazyResult<T> = Result<T, BaseError>;
+pub type LazyMultiResult<T> = Result<T, ErrorCollector>;
+
+pub struct ErrorCollector {
+    pub collected: Vec<BaseError>,
+    pub filename: String 
+} 
+
+impl ErrorCollector {
+    pub fn new(filename: &str) -> Self {
+        ErrorCollector {
+            collected: vec![],
+            filename: filename.to_string()
+        }
+    }
+
+    pub fn push(&mut self, err: BaseError) {
+        self.collected.push(err);
+    }
+
+}
 
 #[macro_export]
 macro_rules! err {
-    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
-            Error {
+    ($diagnostic: ident, $range: expr, $($vars: expr),*; $([$label_text: expr, $label_range: expr]),*) => {
+            BaseError {
                 msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
-                highlighted: true,
                 range: $range,
-                filename: $filename.to_string(),
                 labels: vec![$(
                     ErrorLabel {
                         msg: String::from($label_text),
@@ -145,12 +156,10 @@ macro_rules! err {
                 ),*]
             }
     };
-    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*; $([$label_text: expr]),*) => {
-        Error {
+    ($diagnostic: ident, $range: expr, $($vars: expr),*; $([$label_text: expr]),*) => {
+        BaseError {
             msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
-            highlighted: true,
             range: $range,
-            filename: $filename.to_string(),
             labels: vec![$(
                 ErrorLabel {
                     msg: String::from($label_text),
@@ -159,29 +168,23 @@ macro_rules! err {
             ),*]
         }
     };
-    ($diagnostic: ident, $range: expr, $filename: expr, $($vars: expr),*) => {
-        Error {
+    ($diagnostic: ident, $range: expr, $($vars: expr),*) => {
+        BaseError {
             msg: format_diagnostic(&Diagnostics::$diagnostic, vec![$($vars),*]),
-            highlighted: true,
-            filename: $filename.to_string(),
             range: $range,
             labels: vec![]
         }
     };
-    ($diagnostic: ident, $range: expr, $filename: expr) => {
-        Error {
+    ($diagnostic: ident, $range: expr) => {
+        BaseError {
             msg: Diagnostics::$diagnostic.message.to_string(),
-            highlighted: true,
-            filename: $filename.to_string(),
             range: $range,
             labels: vec![]
         }
     };
-    ($diagnostic: expr, $range: expr, $filename: expr) => {
-        Error {
+    ($diagnostic: expr, $range: expr) => {
+        BaseError {
             msg: $diagnostic,
-            highlighted: true,
-            filename: $filename.to_string(),
             range: $range,
             labels: vec![]
         }

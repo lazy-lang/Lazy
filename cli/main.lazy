@@ -1,5 +1,6 @@
-import * from "./b/c.lazy"
+import * from "./b/c"
 
+type A = B
 type Addable = { add: () -> void }
 
 struct Animal<T: Addable, B> {

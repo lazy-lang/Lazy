@@ -12,6 +12,10 @@ impl SymbolCollector for TypeChecker {
         self.symbols.get(name)
     }
 
+    fn get_mut_symbol(&mut self, name: &u32) -> Option<&mut Symbol> {
+        self.symbols.get_mut(name)
+    }
+
     fn insert_symbol(&mut self, sym: Symbol) {
         self.symbols.insert(sym.id, sym);
     }
@@ -27,9 +31,9 @@ impl TypeChecker {
     fn check_struct(&mut self, module: &mut Module, structure: &ASTStruct) -> LazyResult<SymbolKind> {
         let mut props: HashMap<String, SymbolRef> =  HashMap::new();
         for prop in &structure.fields.pairs {
-            let sym_id = self.get_sym_from_type(module, prop.value.as_ref().unwrap(), structure.name.value == prop.name)?;
+            let sym_id = self.get_sym_from_type(module, prop.value.as_ref().unwrap(), structure.name.value == prop.name)?.to_symbol(self);
             // TODO: If the property has a default value, get the type from it. The property's not guaranteed to have a type.
-            props.insert(prop.name.clone(), sym_id);
+            props.insert(prop.name.clone(), sym_id.to_ref());
         }
         panic!("TODO")
     }
@@ -42,9 +46,14 @@ impl TypeChecker {
             ASTTypings::Var(name) => {
                 let sym_id = self.get_sym_from_var(module, &name.value, handle_temps)?;
                 let sym = self.symbols.get(&sym_id).unwrap();
-                // TODO: Check for type parameters by getting the symbol
-                //let sym = self.symbols.get(&self.get_sym_from_var(module, &name.value)?).unwrap();
-                Ok(SymbolRef::new_ref(sym.id))
+                if let Some(generics) = &name.typings {
+                    let checked_list = self.check_list(module, generics, handle_temps)?;
+                    let sym = self.symbols.get_mut(&sym_id).unwrap();
+                    Ok(sym.create_or_get_instance(checked_list, generics)?)
+                }
+                else {
+                    Ok(SymbolRef::new_ref(sym.id))
+                }
             },
             ASTTypings::Mod(name) => {
                 let mut val = self.get_sym_from_var(module, &name.path[0], handle_temps)?.to_symbol(self);
@@ -55,11 +64,11 @@ impl TypeChecker {
                         if val.kind.is_enum() { is_enum = true };
                         val = typ.to_symbol(self);
                     } else {
-                        return Err(err!(NAME_NOT_FOUND, var.range, module.filename, &var.value))
+                        return Err(err!(NAME_NOT_FOUND, var.range, &var.value))
                     }
                 };
                 if is_enum {
-                    Err(err!(VAL_AS_TYPE, name.range, module.filename))
+                    Err(err!(VAL_AS_TYPE, name.range))
                 } else {
                     Ok(val.to_ref())
                 }
@@ -87,6 +96,14 @@ impl TypeChecker {
                 }
             }
         }
+    }
+
+    fn check_list(&mut self, module: &mut Module, list: &ASTListTyping, handle_temps: bool) -> LazyResult<Vec<SymbolRef>> {
+        let mut result: Vec<SymbolRef> = Vec::new();
+        for typing in &list.entries {
+            result.push(self.get_sym_from_type(module, typing, handle_temps)?);
+        }
+        Ok(result)
     }
 
 }

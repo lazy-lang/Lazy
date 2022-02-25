@@ -59,25 +59,23 @@ pub struct Token {
 }
 
 
-pub struct Tokenizer {
+pub struct Tokenizer<'a> {
     current: Option<Token>,
-    pub filename: String,
-    pub errors: Vec<Error>,
+    pub errors: &'a mut ErrorCollector,
     pub input: InputParser,
     pub is_last_num_as_str: bool,
     pub last_loc: LoC
 }
 
-impl Tokenizer {
+impl<'a> Tokenizer<'a> {
 
-    pub fn new(code: &str, filename: String) -> Self {
+    pub fn new(code: &str, errors: &'a mut ErrorCollector) -> Self {
         Tokenizer {
             current: None,
-            errors: vec![],
+            errors,
             is_last_num_as_str: false,
             input: InputParser::new(code),
-            last_loc: LoC::default(),
-            filename: filename
+            last_loc: LoC::default()
         }
     }
 
@@ -92,7 +90,7 @@ impl Tokenizer {
                     str.push(character);
                 },
                 None => {
-                    self.errors.push(err!(END_OF_STR, Range { start, end: self.last_loc }, self.filename));
+                    self.errors.push(err!(END_OF_STR, Range { start, end: self.last_loc }));
                     break;
                 }
             }
@@ -107,13 +105,13 @@ impl Tokenizer {
         let val = match maybe_ch {
             Some(ch) => ch,
             None => {
-                self.errors.push(err!(EMPTY_CHAR_LITERAL, self.range_here(), self.filename));
+                self.errors.push(err!(EMPTY_CHAR_LITERAL, self.range_here()));
                 '_'
             }
         };
         let next = self.input.consume();
         if next == None || next.unwrap() != '\'' {
-            self.errors.push(err!(ONE_CHAR_ENDPOINT, Range { start, end: self.last_loc }, self.filename));
+            self.errors.push(err!(ONE_CHAR_ENDPOINT, Range { start, end: self.last_loc }));
         }
         Token { val: TokenType::Char(val), range: Range { start, end: self.input.loc() }}
     }
@@ -157,11 +155,11 @@ impl Tokenizer {
                 '1'..='9' => {
                     match num_type {
                         NumberType::Binary if ch > '1' => {
-                            self.errors.push(err!(INVALID_DIGIT, self.range_here(), self.filename));
+                            self.errors.push(err!(INVALID_DIGIT, self.range_here()));
                             num_type = NumberType::None;
                         },
                         NumberType::Octal if ch > '7' => {
-                            self.errors.push(err!(INVALID_DIGIT, self.range_here(), self.filename));
+                            self.errors.push(err!(INVALID_DIGIT, self.range_here()));
                             num_type = NumberType::None;
                         },
                         _ => {}
@@ -172,7 +170,7 @@ impl Tokenizer {
                     if num_type == NumberType::Hex {
                         num.push(self.input.consume().unwrap())
                     } else {
-                        self.errors.push(err!(INVALID_DIGIT, self.range_here(), self.filename));
+                        self.errors.push(err!(INVALID_DIGIT, self.range_here()));
                         break;
                     }
                 },
@@ -185,7 +183,7 @@ impl Tokenizer {
                     }
                     if dot {
                         self.input.consume();
-                        self.errors.push(err!(DECIMAL_POINT, Range {start, end: self.input.loc()}, self.filename)); 
+                        self.errors.push(err!(DECIMAL_POINT, Range {start, end: self.input.loc()})); 
                         break;
                      };
                     self.input.consume();
@@ -266,7 +264,7 @@ impl Tokenizer {
         Token { val: TokenType::Op(self.input.consume().unwrap()), range }
     }
 
-    pub fn parse_full_op<'a>(&mut self, start_of_op: Option<char>) -> String {
+    pub fn parse_full_op(&mut self, start_of_op: Option<char>) -> String {
         let mut op = if let Some(start_op) = start_of_op { start_op.to_string() } else { String::new() };
         while !self.input.is_eof() {
             let ch = self.input.peek(0).unwrap();
@@ -318,10 +316,10 @@ impl Tokenizer {
                 let loc = self.input.loc();
                 self.input.consume();
                 if let Some(confused_err) = Self::is_confusable(ch) {
-                    self.errors.push(Error::new(confused_err, loc.to_range(), self.filename.to_string()));
+                    self.errors.push(BaseError::new(confused_err, loc.to_range()));
                     return None;
                 };
-                self.errors.push(err!(INVALID_CHAR, loc.to_range(), self.filename, &ch.to_string()));
+                self.errors.push(err!(INVALID_CHAR, loc.to_range(), &ch.to_string()));
                 None
             } 
         }
@@ -377,7 +375,7 @@ impl Tokenizer {
         }
     }
 
-    pub fn skip_or_err_full_op(&mut self, op: &str, err: Option<Error>) -> LazyResult<()> {
+    pub fn skip_or_err_full_op(&mut self, op: &str, err: Option<BaseError>) -> LazyResult<()> {
         let ch = if let Some(tok) = &self.current {
             match tok.val {
                 TokenType::Op(ch) => {
@@ -389,25 +387,25 @@ impl Tokenizer {
         } else { None };
         let tok = self.parse_full_op(ch);
         if tok != op {
-            Err(err.unwrap_or(err!(EXPECTED_FOUND, self.last_loc.to_range(), self.filename, op, &tok)))
+            Err(err.unwrap_or(err!(EXPECTED_FOUND, self.last_loc.to_range(), op, &tok)))
         } else {
             Ok(())
         }
     }
 
-    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<Error>) -> LazyResult<()> {
+    pub fn skip_or_err(&mut self, tok: TokenType, err: Option<BaseError>) -> LazyResult<()> {
         match self.peek() {
             Some(token) => {
                 if token.val != tok {
                     let other = token.val.to_string();
-                    Err(err.unwrap_or(err!(EXPECTED_FOUND, self.last_loc.to_range(), self.filename, &tok.to_string(), &other;)))
+                    Err(err.unwrap_or(err!(EXPECTED_FOUND, self.last_loc.to_range(), &tok.to_string(), &other;)))
                 } else {
                     self.consume();
                     Ok(())
                 }
             },
             None => {
-                Err(err.unwrap_or(err!(EXPECTED, self.last_loc.to_range(), self.filename, &tok.to_string())))
+                Err(err.unwrap_or(err!(EXPECTED, self.last_loc.to_range(), &tok.to_string())))
             }
         }
     }
@@ -423,12 +421,12 @@ impl Tokenizer {
                     },
                     _ => {
                         let tstr = tok.val.to_string();
-                        Err(err!(EXPECTED_FOUND, location, self.filename, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), &tstr))
+                        Err(err!(EXPECTED_FOUND, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", ")), &tstr))
                     }
                 }
             },
             None => {
-                Err(err!(EXPECTED, location, self.filename, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))))
+                Err(err!(EXPECTED, location, &format!("one of {}", puncs.iter().map(|i| format!("({})", i.to_string())).collect::<Vec<_>>().join(", "))))
             }
         }
     }

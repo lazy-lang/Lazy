@@ -12,6 +12,7 @@ pub struct Module {
 }
 
 impl Module {
+    
 
     pub fn get_sym(&self, name: &str) -> Option<&SymbolRef> {
         self.local.get(name).or_else(|| self.exported.get(name))
@@ -21,11 +22,9 @@ impl Module {
         let mut temp_syms: HashMap<String, Symbol> = HashMap::new();
         let mut local: HashMap<String, SymbolRef> = HashMap::new();
         let mut exported: HashMap<String, SymbolRef> = HashMap::new();
-        let mut parser =  Parser::new(&content, filename.to_string());
-        let (ast, mut errs) = parser.parse();
-        let mut errors: Vec<Error> = vec![];
-        errors.append(&mut parser.tokens.errors);
-        errors.append(&mut errs);
+        let mut errors = ErrorCollector::new(filename);
+        let mut parser =  Parser::new(&content, &mut errors);
+        let ast = parser.parse();
         for statement in ast {
             if let Some((name, range, is_exported, decl)) = match statement {
                 ASTStatement::Import(decl) => {
@@ -72,7 +71,7 @@ impl Module {
                 _ => None
             } {
                 if temp_syms.contains_key(&name) || local.contains_key(&name) {
-                    errors.push(err!(DUPLICATE_IDENT, range, &filename, &name));
+                    errors.push(err!(DUPLICATE_IDENT, range, &name));
                     continue;
                 }
                 let id = host.get_unique_id();
@@ -82,10 +81,10 @@ impl Module {
                 temp_syms.insert(name.to_string(), Symbol::empty(id, name, decl));
             }
         }
-        if !errors.is_empty() {
-            Err(errors)
-        } else {
+        if errors.collected.is_empty() {
             Ok(Self { local, exported, filename: filename.to_string(), temporary: temp_syms })
+        } else {
+            Err(errors)
         }
     }
 

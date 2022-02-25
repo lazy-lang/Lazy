@@ -1,2 +1,4 @@
 
+import * from "../main"
+
 export type A = {};
