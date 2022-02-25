@@ -55,6 +55,10 @@ impl TypeChecker {
                     Ok(SymbolRef::new_ref(sym.id))
                 }
             },
+            ASTTypings::Optional(typ) => {
+                let typing = self.get_sym_from_type(module, typ, handle_temps)?;
+                Ok(typing.clone().make_optional())
+            }
             ASTTypings::Mod(name) => {
                 let mut val = self.get_sym_from_var(module, &name.path[0], handle_temps)?.to_symbol(self);
                 let mut is_enum = false;

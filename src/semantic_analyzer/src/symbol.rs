@@ -6,6 +6,7 @@ bitflags::bitflags! {
         const STATIC = 1 << 0;
         const CONST = 1 << 1;
         const OPTIONAL = 1 << 2;
+        const TYPE_PARAM = 1 << 3;
     }
 }
 
@@ -97,6 +98,10 @@ impl SymbolRef {
         self.flags.contains(SymbolFlags::STATIC)
     }
 
+    pub fn is_type_param(&self) -> bool {
+        self.flags.contains(SymbolFlags::TYPE_PARAM)
+    }
+
     pub fn make_optional(mut self) -> Self {
         self.flags.set(SymbolFlags::OPTIONAL, true);
         self
@@ -111,6 +116,12 @@ impl SymbolRef {
         self.flags.set(SymbolFlags::STATIC, true);
         self
     }
+
+    pub fn make_type_param(mut self) -> Self {
+        self.flags.set(SymbolFlags::TYPE_PARAM, true);
+        self
+    }
+    
 }
 
 pub trait ToSymbol {
@@ -172,8 +183,14 @@ impl Symbol {
             }
             return Ok(SymbolRef::new_instance(self.id, instance.id));
         };
-        // TDB: Create an instance, add it to the instances vector and return a ref to it
-        Err(err!(UNEXPECTED_EOF, Range::default()))
+        let instance_id = self.instances.len() + 1;
+        self.instances.push(SymbolInstance {
+            id: instance_id,
+            // Create a new kind from this symbol's kind, but replace type arguments with actual values
+            kind: SymbolKind::None,
+            type_args: params
+        });
+        Ok(SymbolRef::new_instance(self.id, instance_id))
     }
 
     pub fn to_ref(&self) -> SymbolRef {
