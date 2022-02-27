@@ -1,48 +1,21 @@
 # Welcome
 
-This book acts as the **specification** for the **Lazy** programming language! Every detail about the language (grammar, data types, memory management, JIT) is provided, as well as examples. 
+This book acts as the **specification** for the **Lazy** programming language! Every detail about the language (grammar, data types, as well as internals such as memory management and optimizations) is provided, as well as examples. 
 
-Lazy is a statically typed, interpreted programming language. 
+Lazy is a statically typed, multi-paradigm general purpose programming language with a strucutral typing system, which compiles to machine code. It's a language heavily inspired by Rust, Typescript and purely functional languages like F# and Haskell.
 
 ## A taste
 
 ```
-struct Person {
-    name: str,
-    age: f32,
-    hobby: str?,
 
-    age_up: fn() {
-        self.age += 1;
-    }
-
+fn add(num1: i32, num2: i32) -> i32 {
+    num1 + num2
 }
-
-enum AnimalTypes {
-    Dog,
-    Cat,
-    Fish,
-    Bird
-}
-
-struct Animal {
-    name: str,
-    age: i8,
-    type: AnimalTypes
-}
-
-type ThingWithName = {name: str};
 
 main {
-    let me = new Person { name: "Google", age: 19 };
-    let my_pet = new Animal { name: "Baby", age: 1, type: AnimalTypes::Bird };
-
-    let things = new Vec<ThingWithName>{};
-    things.push(me);
-    things.push(my_pet);
-
-    for thing in things {
-        print(thing.name);
-    }
+    add(1, 5) 
+    |> print
 }
 ```
+
+
